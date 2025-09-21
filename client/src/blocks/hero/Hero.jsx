@@ -1,4 +1,4 @@
-import '/src/components/hero/Hero.css'
+import '/src/blocks/hero/Hero.css'
 
 import { FaArrowRight,FaLocationArrow } from "react-icons/fa";
 
