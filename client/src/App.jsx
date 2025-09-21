@@ -1,23 +1,19 @@
-// App.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Preloader from "./pages/preloader/Preloader.jsx";
-import Userpage from './pages/userpage/Userpage.jsx'
+import Userpage from "./pages/userpage/Userpage.jsx";
+import { IMAGES_TO_PRELOAD } from "/src/utils/Imagestack.jsx";
+import { preloadImages } from "/src/utils/usePreloadImages.jsx";
 
-function App() {
-  const [loading, setLoading] = useState(true);
+export default function App() {
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    preloadImages(IMAGES_TO_PRELOAD, 2000).then(() => {
+      if (!cancelled) setReady(true);
+    });
+    return () => { cancelled = true; };
   }, []);
 
-  return loading ? (
-    <Preloader />
-  ) : (
-    <Userpage/>
-  );
+  return ready ? <Userpage /> : <Preloader />;
 }
-
-export default App;
