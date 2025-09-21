@@ -1,0 +1,40 @@
+
+.cat-carousel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+
+.cat-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;          
+  flex: 1 1 auto;                  
+}
+.cat-track::-webkit-scrollbar {    
+  display: none;
+}
+
+
+.cat-chip {
+  flex: 0 0 auto;               
+  scroll-snap-align: center;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;             
+  cursor: pointer;
+  border: 1px solid #E5E7EB;
+}
+.cat-chip:active { transform: scale(0.98); }
+
+

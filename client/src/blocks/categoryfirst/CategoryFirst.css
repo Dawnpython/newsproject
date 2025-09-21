@@ -8,7 +8,8 @@
   border: none;
   border-radius: 24px;
   top: 462px;
-  padding: 10px 0px;
+  padding: 16px 0px;
+  gap: 15px;
 }
 .category-first .info-bar-request {
   height: 192px;
