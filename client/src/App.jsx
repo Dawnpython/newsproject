@@ -9,7 +9,7 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    preloadImages(IMAGES_TO_PRELOAD, 2000).then(() => {
+    preloadImages(IMAGES_TO_PRELOAD, 3000).then(() => {
       if (!cancelled) setReady(true);
     });
     return () => { cancelled = true; };
