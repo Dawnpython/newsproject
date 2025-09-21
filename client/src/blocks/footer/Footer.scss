@@ -1,0 +1,11 @@
+.footer{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    .footer-part-1{
+        display: flex;
+         background-color: #1B191F;
+         height: 134px;
+    }
+}
