@@ -8,7 +8,7 @@ export default function Userpage() {
   return (
     <div className="userpage">
       <Hero />
-      <CategoryFirst/>
+     
       <Navbar />
     </div>
   );
