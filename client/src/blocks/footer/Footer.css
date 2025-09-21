@@ -78,6 +78,14 @@
 }
 .footer .footer-part-3 {
   display: flex;
+  justify-content: center;
   background-color: #000000;
   height: 110px;
+}
+.footer .footer-part-3 p {
+  margin-top: 12px;
+  font-size: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  text-align: center;
 }/*# sourceMappingURL=Footer.css.map */
