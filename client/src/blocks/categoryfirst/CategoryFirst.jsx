@@ -1,7 +1,7 @@
 import '/src/blocks/categoryfirst/CategoryFirst.css'
 import '/src/assets/img-banner-local.png'
 
-import { FaEnvelope, FaRegEnvelope, FaEnvelopeOpen, FaPaperPlane } from "react-icons/fa";
+import {FaRegEnvelope} from "react-icons/fa";
 
 export default function CategoryFirst(){
     return(
