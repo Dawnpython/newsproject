@@ -1,21 +1,47 @@
-.footer{
+.footer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  .footer-part-1 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background-color: hsl(260, 11%, 11%);
+    height: 134px;
+    padding: 20px 20px 0px 20px;
+    h1 {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    p {
+      font-size: 9px;
+      font-weight: 400;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      color: hsla(0, 0%, 100%, 0.4);
+    }
+    a {
+      font-size: 9px;
+      font-weight: 400;
+      color: #01afff;
+    }
+    img {
+      grid-row-start: 1;
+      grid-column-start: 2;
+      width: 63px;
+      height: 30px;
+       justify-self: end;     /* прижать к правому краю */
+    }
+  }
+  .footer-part-2 {
     display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    .footer-part-1{
-        display: flex;
-         background-color: #1B191F;
-         height: 134px;
-    }
-    .footer-part-2{
-        display: flex;
-         background-color: #0F0D13;
-         height: 93px;
-    }
-    .footer-part-3{
-        display: flex;
-         background-color: #000000;
-         height: 110px;
-    }
+    background-color: #0f0d13;
+    height: 93px;
+  }
+  .footer-part-3 {
+    display: flex;
+    background-color: #000000;
+    height: 110px;
+  }
 }
