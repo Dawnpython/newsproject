@@ -1,7 +1,7 @@
 import '/src/pages/userpage/Userpage.css'
 
 import Navbar from '../../components/navbar/Navbar';
-import Hero from '../../components/hero/Hero';
+import Hero from '../../blocks/hero/Hero';
 
 export default function Userpage() {
   return (
