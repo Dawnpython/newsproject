@@ -1,5 +1,5 @@
 import "/src/blocks/footer/Footer.css";
-import logo from '/src/assets/logo.png'
+import logo from "/src/assets/logo.png";
 
 export default function Footer() {
   return (
@@ -18,7 +18,14 @@ export default function Footer() {
         </p>
         <img src={logo}></img>
       </div>
-      <div className="footer-part-2"></div>
+      <div className="footer-part-2">
+        <h1>
+          Хочешь такое приложение
+          <br />в своем городе/курорте?{" "}
+        </h1>
+        <p>Напишите нам - мы ищем местных партнеров</p>
+        <button>Написать</button>
+      </div>
       <div className="footer-part-3"></div>
     </div>
   );
