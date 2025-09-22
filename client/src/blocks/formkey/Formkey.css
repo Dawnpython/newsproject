@@ -1,0 +1,70 @@
+.formkey {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 297px;
+  background-color: #e0eef8;
+  padding: 0px 10px;
+}
+.formkey form {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0px 28px;
+  gap: 12px;
+  width: 370px;
+  height: 257px;
+  background: linear-gradient(180deg, #00c4ff 0%, #005be3 100%);
+  border-radius: 24px;
+}
+.formkey form h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+.formkey form span {
+  color: #fff000;
+  font-size: 19px;
+  font-weight: 400;
+  font-family: "Sun Day", sans-serif;
+}
+.formkey form p {
+  font-size: 12px;
+  color: white;
+  font-weight: 200;
+}
+.formkey form textarea {
+  width: 290px;
+  height: 61px;
+  border-radius: 12px;
+  border: none;
+  font-size: 12px;
+  padding: 10px;
+}
+.formkey form .form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.formkey form .form-row p {
+  font-size: 7px;
+  color: white;
+  font-weight: 400;
+}
+.formkey form .form-row button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 126px;
+  height: 36px;
+  background-color: #7cea00;
+  border: none;
+  border-radius: 99px;
+  color: white;
+}
+.formkey form .form-row button svg {
+  height: 10px;
+  width: 10px;
+  color: white;
+}/*# sourceMappingURL=Formkey.css.map */
