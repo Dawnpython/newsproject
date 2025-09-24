@@ -35,6 +35,11 @@
   height: 82px;
 }
 
+.tile:nth-child(2) {
+  width: 82px;
+  height: 82px;
+}
+
 /* маленькая «подсветка»-hover */
 /* текст */
 .tile__label {
