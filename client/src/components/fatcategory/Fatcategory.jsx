@@ -24,7 +24,6 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
             className="tile"
             style={{ background: bg, color: color ?? "#fff" }}
             onClick={() => onSelect?.(label)}
-            aria-label={label}
           >
             <span className="tile__label">{label}</span>
           </button>
