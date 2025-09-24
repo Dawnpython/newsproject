@@ -1,16 +1,22 @@
 import { useRef } from "react";
 import "/src/components/slimcategory/slimCategory.css";
 
-import iconCloud from '/src/assets/icon-cloud.svg'
+import iconNews from '/src/assets/icons/slimcategory/icon-doc.svg'
+import iconCloud from '/src/assets/icons/slimcategory/icon-cloud.svg'
+import iconSale from '/src/assets/icons/slimcategory/icon-sale.svg'
+import iconCar from '/src/assets/icons/slimcategory/icon-car.svg'
+import iconBank from '/src/assets/icons/slimcategory/icon-money.svg'
+import iconFarm from '/src/assets/icons/slimcategory/icon-pharm.svg'
+import iconChuch from '/src/assets/icons/slimcategory/icon-church.svg'
 
 const DEFAULT_CATEGORIES = [
-  { label: "Новости",        icon: "/src/assets/hero.png" },
+  { label: "Новости",        icon: iconNews },
   { label: "Погода",         icon: iconCloud },
-  { label: "Скидки города",  icon: "/src/assets/icon-sale.svg" },
-  { label: "Авторемонт",     icon: "/src/assets/icon-car.svg" },
-  { label: "Банкоматы",      icon: "/src/assets/icon-money.svg" },
-  { label: "Аптеки",         icon: "/src/assets/icon-pharm.svg" },
-  { label: "Церкви и храмы", icon: "/src/assets/icon-church.svg" },
+  { label: "Скидки города",  icon: iconSale},
+  { label: "Авторемонт",     icon: iconCar},
+  { label: "Банкоматы",      icon: iconBank },
+  { label: "Аптеки",         icon: iconFarm },
+  { label: "Церкви и храмы", icon: iconChuch },
 ];
 
 export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
