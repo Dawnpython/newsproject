@@ -1,5 +1,4 @@
 @charset "UTF-8";
-/* контейнер для горизонтального скролла */
 .tiles-scroll {
   overflow-x: auto;
   overflow-y: hidden;
@@ -7,22 +6,20 @@
   padding: 12px 12px 4px;
 }
 
-/* обёртка для 2 строк */
 .tiles-wrapper {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: -moz-max-content;
-  width: max-content; /* ширина под контент → ровный горизонтальный скролл */
+  width: max-content;
 }
 
-/* каждая строка — это flex */
 .tiles-row {
   display: flex;
   gap: 12px;
 }
 
-/* плитки */
+/* обычная плитка */
 .tile {
   flex: 0 0 auto;
   width: 132px;
@@ -38,19 +35,27 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* 👇 узкая плитка для Такси */
+.tile--small {
+  width: 82px;
+}
+
+/* текст */
 .tile__label {
   font-size: 16px;
-  font-weight: 600;
   line-height: 1.15;
+  font-weight: 600;
   letter-spacing: 0.2px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
-/* адаптив */
 @media (max-width: 420px) {
   .tile {
     width: 120px;
     height: 74px;
+  }
+  .tile--small {
+    width: 74px;
   }
   .tile__label {
     font-size: 14px;
