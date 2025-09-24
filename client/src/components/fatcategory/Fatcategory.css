@@ -15,6 +15,7 @@
   gap: 12px;
   scroll-snap-type: x mandatory;
   padding-bottom: 8px;
+  overflow-y: hidden;
 }
 
 /* сама плитка */
