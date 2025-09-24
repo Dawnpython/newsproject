@@ -9,7 +9,7 @@ const DEFAULT_TILES = [
   { label: "Гиды", bg: "linear-gradient(135deg,#f6d365,#fda085)" },
   { label: "Экскурсии", bg: "linear-gradient(135deg,#74ebd5,#9face6)" },
   { label: "Аренда жилья", bg: "linear-gradient(135deg,#fbd786,#f7797d)" },
-  { label: "Магазины и рынки", bg: "linear-gradient(135deg,#fdfbfb,#ebedee)", color:"#222" },
+  { label: "Магазины и рынки", bg: "linear-gradient(135deg,#fdfbfb,#ebedee)", color: "#222" },
   { label: "Скидки и акции города", bg: "linear-gradient(135deg,#ff8177,#cf556c)" },
 ];
 
@@ -18,15 +18,20 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
     <div className="tiles-scroll">
       <div className="tiles-track">
         {items.map(({ label, bg, color }, i) => (
-          <button
-            key={`${label}-${i}`}
-            type="button"
-            className="tile"
-            style={{ background: bg, color: color ?? "#fff" }}
-            onClick={() => onSelect?.(label)}
-          >
-            <span className="tile__label">{label}</span>
-          </button>
+          <>
+            <button
+              key={`${label}-${i}`}
+              type="button"
+              className="tile"
+              style={{ background: bg, color: color ?? "#fff" }}
+              onClick={() => onSelect?.(label)}
+            >
+              <span className="tile__label">{label}</span>
+            </button>
+
+            {/* 👇 Добавляем перенос после 5-го и 6-го элементов */}
+            {(i === 4 || i === 5) && <div className="break" key={`break-${i}`} />}
+          </>
         ))}
       </div>
     </div>

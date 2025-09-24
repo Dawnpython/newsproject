@@ -1,63 +1,57 @@
-/* контейнер со скроллом */
 .tiles-scroll {
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 12px 12px 4px;
-   overflow-y: hidden;
 }
 
-/* 2 строки, горизонтальный поток по колонкам */
+/* делаем flex с переносом */
 .tiles-track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 200px;     /* ширина плитки */
-  grid-template-rows: repeat(2, 96px); /* две строки по высоте */
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  
-  padding-bottom: 8px;
-  overflow-y: hidden; 
+  width: max-content; /* чтобы скролл шёл вправо */
 }
 
-/* сама плитка */
+/* плитка */
 .tile {
-  scroll-snap-align: start;
+  flex: 0 0 auto;
+  width: 132px;
+  height: 82px;
   border: 0;
   border-radius: 16px;
   padding: 12px;
-  text-align: left;
   display: flex;
-  align-items: flex-end; /* текст внизу, как на примере */
-  transition: transform .15s ease, box-shadow .15s ease;
+  align-items: flex-end;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  width: 132px;
-  height: 82px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
-.tile:nth-child(3){
-    width: 82px;
-    height: 82px;
-}
-
-/* маленькая «подсветка»-hover */
 
 /* текст */
 .tile__label {
   font-size: 16px;
   line-height: 1.15;
   font-weight: 600;
-  letter-spacing: .2px;
-  text-shadow: 0 1px 1px rgba(0,0,0,.15);
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
-/* адаптив — на маленьких экранах ужмём */
+/* 👇 разделитель строки */
+.break {
+  flex-basis: 100%; /* занимает всю ширину → перенос вниз */
+  height: 0;
+  padding: 0;
+  margin: 0;
+}
+
 @media (max-width: 420px) {
-  .tiles-track {
-    grid-auto-columns: 1fr;
-    grid-template-rows: repeat(2, 84px);
+  .tile {
+    width: 120px;
+    height: 74px;
   }
-  .tile__label { font-size: 14px; }
+  .tile__label {
+    font-size: 14px;
+  }
 }
-
-
