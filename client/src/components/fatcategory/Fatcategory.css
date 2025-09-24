@@ -31,6 +31,8 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  width: 132px;
+  height: 82px;
 }
 
 /* маленькая «подсветка»-hover */
