@@ -53,7 +53,7 @@
 /* адаптив — на маленьких экранах ужмём */
 @media (max-width: 420px) {
   .tiles-track {
-    grid-auto-columns: 160px;
+    grid-auto-columns: 1fr;
     grid-template-rows: repeat(2, 84px);
   }
   .tile__label {
