@@ -14,13 +14,16 @@ const DEFAULT_TILES = [
 ];
 
 export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
+  const firstRow = items.slice(0, 5);
+  const secondRow = items.slice(5);
+
   return (
     <div className="tiles-scroll">
-      <div className="tiles-track">
-        {items.map(({ label, bg, color }, i) => (
-          <>
+      <div className="tiles-wrapper">
+        <div className="tiles-row">
+          {firstRow.map(({ label, bg, color }, i) => (
             <button
-              key={`${label}-${i}`}
+              key={`row1-${i}`}
               type="button"
               className="tile"
               style={{ background: bg, color: color ?? "#fff" }}
@@ -28,11 +31,21 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
             >
               <span className="tile__label">{label}</span>
             </button>
-
-            {/* 👇 Добавляем перенос после 5-го и 6-го элементов */}
-            {(i === 4 || i === 5) && <div className="break" key={`break-${i}`} />}
-          </>
-        ))}
+          ))}
+        </div>
+        <div className="tiles-row">
+          {secondRow.map(({ label, bg, color }, i) => (
+            <button
+              key={`row2-${i}`}
+              type="button"
+              className="tile"
+              style={{ background: bg, color: color ?? "#fff" }}
+              onClick={() => onSelect?.(label)}
+            >
+              <span className="tile__label">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
