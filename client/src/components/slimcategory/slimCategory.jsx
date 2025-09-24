@@ -1,19 +1,14 @@
-
 import { useRef } from "react";
-
-import '/src/components/slimcategory/slimCategory.css'
+import "/src/components/slimcategory/slimCategory.css";
 
 const DEFAULT_CATEGORIES = [
-  "Новости",
-  "Медицина",
-  "Спорт",
-  "Технологии",
-  "Игры",
-  "Путешествия",
-  "Еда",
-  "Музыка",
-  "Фильмы",
-  "Бизнес",
+  { label: "Новости",        icon: "/src/assets/icons/slimcategory/icon-doc.svg" },
+  { label: "Погода",         icon: "/src/assets/icons/slimcategory/icon-cloud.svg" },
+  { label: "Скидки города",  icon: "/src/assets/icons/slimcategory/icon-sale.svg" },
+  { label: "Авторемонт",     icon: "/src/assets/icons/slimcategory/icon-car.svg" },
+  { label: "Банкоматы",      icon: "/src/assets/icons/slimcategory/icon-money.svg" },
+  { label: "Аптеки",         icon: "/src/assets/icons/slimcategory/icon-pharm.svg" },
+  { label: "Церкви и храмы", icon: "/src/assets/icons/slimcategory/icon-church.svg" },
 ];
 
 export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
@@ -21,20 +16,20 @@ export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
 
   return (
     <div className="cat-carousel">
-
       <div className="cat-track" ref={trackRef}>
-        {items.map((label) => (
+        {items.map(({ label, icon }) => (
           <button
             key={label}
             type="button"
             className="cat-chip"
             onClick={() => onSelect?.(label)}
+            aria-label={label}
           >
-            {label}
+            <img className="cat-chip__icon" src={icon} alt="" aria-hidden />
+            <span className="cat-chip__label">{label}</span>
           </button>
         ))}
       </div>
-
     </div>
   );
 }

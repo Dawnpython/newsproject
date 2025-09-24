@@ -20,6 +20,9 @@
 }
 
 .cat-chip {
+  display: flex;
+  gap: 6px;
+  align-items: center;
   flex: 0 0 auto;
   scroll-snap-align: center;
   padding: 10px 14px;
