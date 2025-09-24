@@ -4,11 +4,13 @@ import '/src/assets/img-banner-local.png'
 import {FaRegEnvelope} from "react-icons/fa";
 
 import SlimCategory from '../../components/slimcategory/slimCategory';
+import Fatcategory from "../../components/fatcategory/Fatcategory";
 
 export default function CategoryFirst(){
     return(
         <div className="category-first">
 <SlimCategory/>
+<Fatcategory/>
             <div className="info-bar-request">
 <h1>Обращайтесь к местным<br/>
 с любым запросом!</h1>
