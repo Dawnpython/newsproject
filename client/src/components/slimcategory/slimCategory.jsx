@@ -6,7 +6,7 @@ const DEFAULT_CATEGORIES = [
   { label: "Погода",         icon: "/assets/icon-cloud.svg" },
   { label: "Скидки города",  icon: "/assets/icon-sale.svg" },
   { label: "Авторемонт",     icon: "/assets/icon-car.svg" },
-  { label: "Банкоматы",      icon: "/assets/icon-money.svg" },
+  { label: "Банкоматы",      icon: "/assets/logo.png" },
   { label: "Аптеки",         icon: "/assets/icon-pharm.svg" },
   { label: "Церкви и храмы", icon: "/assets/icon-church.svg" },
 ];
