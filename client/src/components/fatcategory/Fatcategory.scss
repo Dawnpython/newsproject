@@ -1,46 +1,47 @@
-/* контейнер со скроллом */
+/* контейнер со скроллом (только по X) */
 .tiles-scroll {
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 12px 12px 4px;
-   overflow-y: hidden;
+  scroll-snap-type: x proximity; /* можно убрать, если не нужен snap */
 }
 
-/* 2 строки, горизонтальный поток по колонкам */
+/* трек: 2 строки по высоте, колонки растут вправо */
 .tiles-track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;     /* ширина плитки */
-  grid-template-rows: repeat(2, 96px); /* две строки по высоте */
+  display: flex;
+  flex-direction: column; /* строим по столбцам сверху вниз */
+  flex-wrap: wrap;        /* затем переносим в следующий столбец вправо */
   gap: 12px;
-  padding-bottom: 8px;
-  overflow-y: hidden; 
+  height: calc(82px * 2 + 12px); /* 2 ряда по 82px + промежуток 12px */
+  width: max-content;            /* ширина = сумме колонок → ровный горизонт. скролл */
 }
 
-/* сама плитка */
+/* плитка (задаёт ширину своей колонки) */
 .tile {
-    box-sizing: border-box;
+  box-sizing: border-box;
+  flex: 0 0 auto; /* не растягивать */
+  width: 132px;
+  height: 82px;
   scroll-snap-align: start;
+
   border: 0;
   border-radius: 16px;
   padding: 12px;
   text-align: left;
   display: flex;
-  align-items: flex-end; /* текст внизу, как на примере */
+  align-items: flex-end;
   transition: transform .15s ease, box-shadow .15s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  width: 132px;
+}
+
+/* узкая колонка для 3-й плитки */
+.tile:nth-child(3) {
+  width: 82px;
   height: 82px;
 }
-
-.tile:nth-child(3){
-    width: 82px;
-    height: 82px;
-}
-
-/* маленькая «подсветка»-hover */
 
 /* текст */
 .tile__label {
@@ -51,12 +52,18 @@
   text-shadow: 0 1px 1px rgba(0,0,0,.15);
 }
 
-/* адаптив — на маленьких экранах ужмём */
+/* адаптив — при желании можно уменьшить плитки */
 @media (max-width: 420px) {
   .tiles-track {
-    grid-auto-columns: 1fr;
-    grid-template-rows: repeat(2, 84px);
+    height: calc(74px * 2 + 12px); /* если меняешь высоту плиток — подстрой и контейнер */
+  }
+  .tile {
+    width: 120px;
+    height: 74px;
+  }
+  .tile:nth-child(3) {
+    width: 74px;
+    height: 74px;
   }
   .tile__label { font-size: 14px; }
 }
-
