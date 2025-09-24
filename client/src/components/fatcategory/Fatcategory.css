@@ -1,45 +1,47 @@
 @charset "UTF-8";
-/* контейнер: только горизонтальный скролл */
+/* контейнер со скроллом (только по X) */
 .tiles-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 12px 12px 4px;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: x proximity; /* можно убрать, если не нужен snap */
 }
 
-/* главная фишка: flex + column + wrap */
+/* трек: 2 строки по высоте, колонки растут вправо */
 .tiles-track {
   display: flex;
-  flex-direction: column; /* строим сверху вниз */
-  flex-wrap: wrap; /* переносим вправо */
+  flex-direction: column; /* строим по столбцам сверху вниз */
+  flex-wrap: wrap; /* затем переносим в следующий столбец вправо */
   gap: 12px;
-  height: 176px; /* высота на 2 ряда (82px + gap) */
+  height: 176px; /* 2 ряда по 82px + промежуток 12px */
   width: -moz-max-content;
-  width: max-content; /* ширина по контенту */
+  width: max-content; /* ширина = сумме колонок → ровный горизонт. скролл */
 }
 
-/* плитка */
+/* плитка (задаёт ширину своей колонки) */
 .tile {
   box-sizing: border-box;
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* не растягивать */
   width: 132px;
   height: 82px;
   scroll-snap-align: start;
   border: 0;
   border-radius: 16px;
   padding: 12px;
+  text-align: left;
   display: flex;
   align-items: flex-end;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* узкая плитка */
-.tile--small {
+/* узкая колонка для 3-й плитки */
+.tile:nth-child(3) {
   width: 82px;
+  height: 82px;
 }
 
 /* текст */
@@ -51,17 +53,18 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
-/* адаптив */
+/* адаптив — при желании можно уменьшить плитки */
 @media (max-width: 420px) {
   .tiles-track {
-    height: 160px;
+    height: 160px; /* если меняешь высоту плиток — подстрой и контейнер */
   }
   .tile {
     width: 120px;
     height: 74px;
   }
-  .tile--small {
+  .tile:nth-child(3) {
     width: 74px;
+    height: 74px;
   }
   .tile__label {
     font-size: 14px;
