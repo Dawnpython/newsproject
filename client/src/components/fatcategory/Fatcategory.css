@@ -11,7 +11,7 @@
 .tiles-track {
   display: grid;
   grid-auto-flow: column;
-  grid-template-columns: 200px 200px 82px repeat(auto-fill, 200px); /* ширина плитки */
+  grid-auto-columns: 200px; /* ширина плитки */
   grid-template-rows: repeat(2, 96px); /* две строки по высоте */
   gap: 12px;
   padding-bottom: 8px;
