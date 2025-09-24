@@ -1,67 +1,58 @@
 @charset "UTF-8";
-/* контейнер со скроллом */
 .tiles-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 12px 4px;
-}
-
-/* 2 строки, горизонтальный поток по колонкам */
-.tiles-track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 200px; /* ширина плитки */
-  grid-template-rows: repeat(2, 96px); /* две строки по высоте */
-  gap: 12px;
+  padding: 12px;
   scroll-snap-type: x mandatory;
-  padding-bottom: 8px;
+  scrollbar-width: none; /* Firefox */
 }
 
-/* сама плитка */
+.tiles-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* ключевой блок: flex + wrap */
+.tiles-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: -moz-max-content;
+  width: max-content; /* контейнер растягивается ровно под контент */
+}
+
+/* плитка фиксированной ширины */
 .tile {
-  scroll-snap-align: start;
-  border: 0;
+  flex: 0 0 180px;
+  height: 90px;
+  border: none;
   border-radius: 16px;
   padding: 12px;
   text-align: left;
   display: flex;
-  align-items: flex-end; /* текст внизу, как на примере */
+  align-items: flex-end;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  scroll-snap-align: start;
 }
 
-/* маленькая «подсветка»-hover */
-.tile:active,
 .tile:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
-/* текст */
 .tile__label {
   font-size: 16px;
-  line-height: 1.15;
   font-weight: 600;
-  letter-spacing: 0.2px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
-/* адаптив — на маленьких экранах ужмём */
 @media (max-width: 420px) {
-  .tiles-track {
-    grid-auto-columns: 160px;
-    grid-template-rows: repeat(2, 84px);
+  .tile {
+    flex: 0 0 150px;
+    height: 80px;
   }
   .tile__label {
     font-size: 14px;
-  }
-}
-/* тёмная тема (если нужна) */
-@media (prefers-color-scheme: dark) {
-  .tile {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
   }
 }/*# sourceMappingURL=Fatcategory.css.map */
