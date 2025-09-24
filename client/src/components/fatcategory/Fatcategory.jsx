@@ -1,4 +1,4 @@
-import "client/src/components/fatcategory/Fatcategory.css";
+import "src/components/fatcategory/Fatcategory.css";
 
 const DEFAULT_TILES = [
   { label: "Лодки и паромы", bg: "linear-gradient(135deg,#21d4fd,#b721ff)" },
