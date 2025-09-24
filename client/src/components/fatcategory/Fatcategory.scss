@@ -33,11 +33,6 @@
 }
 
 /* маленькая «подсветка»-hover */
-.tile:active,
-.tile:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0,0,0,.12);
-}
 
 /* текст */
 .tile__label {
@@ -57,9 +52,3 @@
   .tile__label { font-size: 14px; }
 }
 
-/* тёмная тема (если нужна) */
-@media (prefers-color-scheme: dark) {
-  .tile {
-    box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  }
-}
