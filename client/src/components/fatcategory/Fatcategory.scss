@@ -2,7 +2,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 10px ;
+  padding: auto;
 }
 
 .tiles-wrapper {
@@ -10,6 +10,7 @@
   flex-direction: column;
   gap: 12px;
   width: max-content;
+  padding: 10px 16px;
 }
 
 .tiles-row {
