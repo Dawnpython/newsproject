@@ -13,7 +13,6 @@
   grid-auto-columns: 200px; /* ширина плитки */
   grid-template-rows: repeat(2, 96px); /* две строки по высоте */
   gap: 12px;
-  scroll-snap-type: x mandatory;
   padding-bottom: 8px;
   overflow-y: hidden;
 }
@@ -27,7 +26,6 @@
   text-align: left;
   display: flex;
   align-items: flex-end; /* текст внизу, как на примере */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   position: relative;
