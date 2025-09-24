@@ -2,13 +2,13 @@ import { useRef } from "react";
 import "/src/components/slimcategory/slimCategory.css";
 
 const DEFAULT_CATEGORIES = [
-  { label: "Новости",        icon: "/assets/icon-doc.svg" },
-  { label: "Погода",         icon: "/assets/icon-cloud.svg" },
-  { label: "Скидки города",  icon: "/assets/icon-sale.svg" },
-  { label: "Авторемонт",     icon: "/assets/icon-car.svg" },
-  { label: "Банкоматы",      icon: "/assets/logo.png" },
-  { label: "Аптеки",         icon: "/assets/icon-pharm.svg" },
-  { label: "Церкви и храмы", icon: "/assets/icon-church.svg" },
+  { label: "Новости",        icon: "/src/assets/icon-doc.svg" },
+  { label: "Погода",         icon: "/src/assets/icon-cloud.svg" },
+  { label: "Скидки города",  icon: "/src/assets/icon-sale.svg" },
+  { label: "Авторемонт",     icon: "/src/assets/icon-car.svg" },
+  { label: "Банкоматы",      icon: "/src/assets/icon-money.svg" },
+  { label: "Аптеки",         icon: "/src/assets/icon-pharm.svg" },
+  { label: "Церкви и храмы", icon: "/src/assets/icon-church.svg" },
 ];
 
 export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
