@@ -2,7 +2,7 @@ import { useRef } from "react";
 import "/src/components/slimcategory/slimCategory.css";
 
 const DEFAULT_CATEGORIES = [
-  { label: "Новости",        icon: "/src/assets/icon-doc.svg" },
+  { label: "Новости",        icon: "/src/assets/hero.png" },
   { label: "Погода",         icon: "/src/assets/icon-cloud.svg" },
   { label: "Скидки города",  icon: "/src/assets/icon-sale.svg" },
   { label: "Авторемонт",     icon: "/src/assets/icon-car.svg" },
