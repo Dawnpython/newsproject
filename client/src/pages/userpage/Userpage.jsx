@@ -13,7 +13,6 @@ export default function Userpage() {
     <div className="userpage">
       <Hero />
       <CategoryFirst/>
-      <Popularcategory/>
       <Formkey/>
       <Footer/>
       <Navbar />
