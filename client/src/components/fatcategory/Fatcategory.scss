@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: 12px;
   width: max-content;
-  padding: 10px 16px;
+  padding: 0px 10px;
 }
 
 .tiles-row {
@@ -35,6 +35,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  position: relative;
 }
 
 /* 👇 узкая плитка для Такси */
@@ -45,10 +46,8 @@
 /* 👇 абсолютная иконка */
 .tile__icon {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 36px;
-  height: 36px;
+  bottom: 0;
+  right: 0px;
   object-fit: contain;
   z-index: 2;
   pointer-events: none; /* чтобы не мешала кликам */
@@ -67,28 +66,17 @@
 
 /* текст */
 .tile__label {
-  position: relative;
+  position: absolute;
+    font-size: 13px;
+    font-weight: 500;
+    top: 10px;
+    left:10px;
   z-index: 3;
-  font-size: 16px;
   line-height: 1.15;
-  font-weight: 600;
   letter-spacing: 0.2px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  white-space: pre-line;
+  text-align: left;
 }
 
-@media (max-width: 420px) {
-  .tile {
-    width: 120px;
-    height: 74px;
-  }
-  .tile--small {
-    width: 74px;
-  }
-  .tile__label {
-    font-size: 14px;
-  }
-  .tile__icon {
-    width: 28px;
-    height: 28px;
-  }
-}
+

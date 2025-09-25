@@ -12,7 +12,7 @@
   gap: 12px;
   width: -moz-max-content;
   width: max-content;
-  padding: 10px 16px;
+  padding: 0px 10px;
 }
 
 .tiles-row {
@@ -31,9 +31,13 @@
   display: flex;
   align-items: flex-end;
   cursor: pointer;
-  position: relative;
+  position: relative; /* 👈 обязательно для абсолютного позиционирования иконки */
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
 }
 
 /* 👇 узкая плитка для Такси */
@@ -41,24 +45,39 @@
   width: 82px;
 }
 
-/* текст */
-.tile__label {
-  font-size: 16px;
-  line-height: 1.15;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+/* 👇 абсолютная иконка */
+.tile__icon {
+  position: absolute;
+  bottom: 0;
+  right: 0px;
+  -o-object-fit: contain;
+     object-fit: contain;
+  z-index: 2;
+  pointer-events: none; /* чтобы не мешала кликам */
+  opacity: 0.95;
 }
 
-@media (max-width: 420px) {
-  .tile {
-    width: 120px;
-    height: 74px;
-  }
-  .tile--small {
-    width: 74px;
-  }
-  .tile__label {
-    font-size: 14px;
-  }
+/* затемнение, если фон — картинка */
+.tile[style*="url("]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 16px;
+  z-index: 1;
+}
+
+/* текст */
+.tile__label {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 500;
+  top: 10px;
+  left: 10px;
+  z-index: 3;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  white-space: pre-line;
+  text-align: left;
 }/*# sourceMappingURL=Fatcategory.css.map */
