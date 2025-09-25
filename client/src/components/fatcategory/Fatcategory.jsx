@@ -2,15 +2,15 @@ import "/src/components/fatcategory/Fatcategory.css";
 
 import otelImg from "/src/assets/img-category-bg-3.png";
 import firstIcon from '/src/assets/icons/ fatcategory/img-category-1.png'
-import secondIcon from '/src/assets/icons/ fatcategory/img-category-2.svg'
-import thirdIcon from '/src/assets/icons/ fatcategory/img-category-3.svg'
-import fourIcon from '/src/assets/icons/ fatcategory/img-category-4.svg'
-import fiveIcon from '/src/assets/icons/ fatcategory/img-category-5.svg'
-import sixIcon from '/src/assets/icons/ fatcategory/img-category-6.svg'
-import sevenIcon from '/src/assets/icons/ fatcategory/img-category-7.svg'
-import eightIcon from '/src/assets/icons/ fatcategory/img-category-8.svg'
-import nineIcon from '/src/assets/icons/ fatcategory/img-category-9.svg'
-import tenIcon from '/src/assets/icons/ fatcategory/img-category-10.svg'
+import secondIcon from '/src/assets/icons/ fatcategory/img-category-2.png'
+import thirdIcon from '/src/assets/icons/ fatcategory/img-category-3.png'
+import fourIcon from '/src/assets/icons/ fatcategory/img-category-4.png'
+import fiveIcon from '/src/assets/icons/ fatcategory/img-category-5.png'
+import sixIcon from '/src/assets/icons/ fatcategory/img-category-6.png'
+import sevenIcon from '/src/assets/icons/ fatcategory/img-category-7.png'
+import eightIcon from '/src/assets/icons/ fatcategory/img-category-8.png'
+import nineIcon from '/src/assets/icons/ fatcategory/img-category-9.png'
+import tenIcon from '/src/assets/icons/ fatcategory/img-category-10.png'
 
 const DEFAULT_TILES = [
   { label: "Лодки \nи паромы", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)", icon: firstIcon },
