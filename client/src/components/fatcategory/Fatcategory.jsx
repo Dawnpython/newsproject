@@ -1,16 +1,16 @@
 import "/src/components/fatcategory/Fatcategory.css";
 
 const DEFAULT_TILES = [
-  { label: "Лодки и паромы", bg: "linear-gradient(135deg,#21d4fd,#b721ff)" },
-  { label: "Такси", bg: "linear-gradient(135deg,#ffd86f,#fc6262)" }, // 👈 эта будет узкой
-  { label: "Отели и турбазы", bg: "linear-gradient(135deg,#7fefbd,#21cdc3)" },
-  { label: "Где поесть", bg: "linear-gradient(135deg,#ffe29f,#ffa99f)" },
-  { label: "Маркетплейс", bg: "linear-gradient(135deg,#a18cd1,#fbc2eb)" },
-  { label: "Гиды", bg: "linear-gradient(135deg,#f6d365,#fda085)" },
-  { label: "Экскурсии", bg: "linear-gradient(135deg,#74ebd5,#9face6)" },
-  { label: "Аренда жилья", bg: "linear-gradient(135deg,#fbd786,#f7797d)" },
-  { label: "Магазины и рынки", bg: "linear-gradient(135deg,#fdfbfb,#ebedee)", color: "#222" },
-  { label: "Скидки и акции города", bg: "linear-gradient(135deg,#ff8177,#cf556c)" },
+  { label: "Лодки и паромы", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)" },
+  { label: "Такси", bg: "#F3F4F6" }, 
+  { label: "Отели и турбазы", bg: "#1DDA94" },
+  { label: "Где поесть", bg: "#FFDC4C" },
+  { label: "Маркетплейс", bg: "#7952EB" },
+  { label: "Гиды", bg: "#F3F4F6" },
+  { label: "Экскурсии", bg: "#27D9FE" },
+  { label: "Аренда жилья", bg: "linear-gradient(135deg,#FFC300,#FF8E00)" },
+  { label: "Магазины и рынки", bg: "#F3F4F6", color: "#222" },
+  { label: "Скидки и акции города", bg: "#FF0043" },
 ];
 
 export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
