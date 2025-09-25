@@ -1,7 +1,7 @@
 import "/src/components/fatcategory/Fatcategory.css";
 
 import otelImg from "/src/assets/img-category-bg-3.png";
-import firstIcon from '/src/assets/icons/ fatcategory/img-category-1.svg'
+import firstIcon from '/src/assets/icons/ fatcategory/img-category-1.png'
 import secondIcon from '/src/assets/icons/ fatcategory/img-category-2.svg'
 import thirdIcon from '/src/assets/icons/ fatcategory/img-category-3.svg'
 import fourIcon from '/src/assets/icons/ fatcategory/img-category-4.svg'
