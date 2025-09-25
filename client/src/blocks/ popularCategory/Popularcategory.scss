@@ -86,12 +86,28 @@
   outline-offset: 2px;
 }
 
+/* === НИЖНИЕ КАРТОЧКИ: горизонтальный скролл === */
 .cards {
   display: grid;
-  grid-template-columns: repeat(2, 280px);
+  grid-auto-flow: column;       /* лента */
+  grid-auto-columns: 280px;     /* ширина карточки */
   gap: 14px;
+  overflow-x: auto;             /* скроллим по горизонтали */
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; /* плавность на iOS */
 }
+.cards::-webkit-scrollbar {
+  height: 8px;
+}
+.cards::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
 .card {
+  scroll-snap-align: start;     /* прилипание при скролле */
   position: relative;
   width: 280px;
   height: 186px;
