@@ -1,12 +1,15 @@
 import "/src/components/fatcategory/Fatcategory.css";
 
+import otelImg from '/src/assets/img-category-bg-3.png'
+import gidImg from '/src/assets/img-category-bg-6.png'
+
 const DEFAULT_TILES = [
   { label: "Лодки и паромы", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)" },
   { label: "Такси", bg: "#F3F4F6" },
-  { label: "Отели и турбазы", bg: "#1DDA94", bgImage: "/src/assets/img-category-bg-6.png" },
+  { label: "Отели и турбазы", bg: "#1DDA94", bgImage: otelImg },
   { label: "Где поесть", bg: "#FFDC4C" },
   { label: "Маркетплейс", bg: "#7952EB" }, 
-  { label: "Гиды", bg: "#F3F4F6", bgImage: "/src/assets/img-category-bg-3.png" },
+  { label: "Гиды",color: "black", bg: "#F3F4F6", bgImage: gidImg },
   { label: "Экскурсии", bg: "#27D9FE" },
   { label: "Аренда жилья", bg: "linear-gradient(135deg,#FFC300,#FF8E00)" },
   { label: "Магазины и рынки", bg: "#F3F4F6", color: "#222" },
