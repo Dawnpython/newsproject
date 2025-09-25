@@ -9,7 +9,7 @@ const DEFAULT_TILES = [
   { label: "Отели и турбазы", bg: "#1DDA94", bgImage: otelImg },
   { label: "Где поесть", bg: "#FFDC4C" },
   { label: "Маркетплейс", bg: "#7952EB" },
-  { label: "Гиды", color: "black", bg: "#d2d3d5ff", bgImage: gidImg },
+  { label: "Гиды", color: "black", bg: "#F3F4F6", bgImage: gidImg },
   { label: "Экскурсии", bg: "#27D9FE" },
   { label: "Аренда жилья", bg: "linear-gradient(135deg,#FFC300,#FF8E00)" },
   { label: "Магазины и рынки", bg: "#F3F4F6", color: "#222" },
