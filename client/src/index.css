@@ -2,4 +2,6 @@
   margin: 0;
   padding: 0;
    font-family: "Onest", sans-serif;
+   scrollbar-width: none;
 }
+

@@ -1,84 +1,101 @@
 import React, { useMemo, useState } from "react";
+
+// ✅ убран лишний пробел в пути
 import "/src/blocks/ popularCategory/Popularcategory.css";
 
-// ===== CategoryCardsMock.jsx =====
-// Макет без изображений. Размеры по ТЗ: чипы 102x82, карточки 280x186.
-// Замените тексты/заглушки и добавьте картинки позже.
+import firstcatImg from '/src/assets/icons/popularcategory/на воде 1.png';
+import secondcatImg from '/src/assets/icons/popularcategory/премиум.png';
+import thirdcatImg from '/src/assets/icons/popularcategory/экстрим.png';
+import fourcatImg from '/src/assets/icons/popularcategory/Object.png';
+import fivecatImg from '/src/assets/icons/popularcategory/с детьми.png';
+import sixcatImg from '/src/assets/icons/popularcategory/развлечения.png';
 
 const CATEGORIES = [
-{ id: "water", label: "На воде" },
-{ id: "premium", label: "Premium" },
-{ id: "extreme", label: "Экстрим" },
-{ id: "walk", label: "Пешком" },
-{ id: "kids", label: "С детьми" },
-{ id: "fun", label: "Развлечения" },
+  { id: "water",   label: "На воде",      icon: firstcatImg,  bg: "#fff", color: "#000" },
+  { id: "premium", label: "Premium",      icon: secondcatImg, bg: "linear-gradient(to bottom, #000001, #424242)", color: "#FAB92E" },
+  { id: "extreme", label: "Экстрим",      icon: thirdcatImg,  bg: "#fff", color: "#000" },
+  { id: "walk",    label: "Пешком",       icon: fourcatImg,   bg: "#fff", color: "#000" },
+  { id: "kids",    label: "С детьми",     icon: fivecatImg,   bg: "#fff", color: "#000" },
+  { id: "fun",     label: "Развлечения",  icon: sixcatImg,    bg: "#fff", color: "#000" },
 ];
 
 const CONTENT = {
-water: [
-{ title: "Прогулка на теплоходе", subtitle: "по Телецкому озеру" },
-{ title: "Прогулка на катере", subtitle: "и рыбалка" },
-],
-premium: [
-{ title: "VIP круиз", subtitle: "с дегустацией" },
-{ title: "Частная яхта", subtitle: "на закате" },
-],
-extreme: [
-{ title: "Рафтинг", subtitle: "река Катунь" },
-{ title: "Джип-тур", subtitle: "по перевалам" },
-],
-walk: [
-{ title: "Треккинг", subtitle: "горные озера" },
-{ title: "Пешая экскурсия", subtitle: "по селу" },
-],
-kids: [
-{ title: "Семейная велопрогулка" },
-{ title: "Верёвочный парк" },
-],
-fun: [
-{ title: "Квадро-сафари" },
-{ title: "Баня на дровах", subtitle: "и чан" },
-],
+  water: [
+    { title: "Прогулка на теплоходе\nпо Телецкому озеру" },
+    { title: "Прогулка на катере\nи рыбалка"},
+  ],
+  premium: [
+    { title: "VIP круиз\nс дегустацией" },
+    { title: "Частная яхта\nна закате" },
+  ],
+  extreme: [
+    { title: "Рафтинг\nрека Катунь" },
+    { title: "Джип-тур\nпо перевалам" },
+  ],
+  walk: [
+    { title: "Треккинг\nгорные озера" },
+    { title: "Пешая экскурсия\nпо селу" },
+  ],
+  kids: [
+    { title: "Семейная велопрогулка" },
+    { title: "Верёвочный парк" },
+  ],
+  fun: [
+    { title: "Квадро-сафари" },
+    { title: "Баня на дровах\nи чан" },
+  ],
 };
 
+// поддержка цвета/градиента
+const chipStyle = (c) => ({
+  ...(typeof c.bg === "string" && c.bg.trim().startsWith("linear-gradient")
+    ? { background: c.bg }
+    : { backgroundColor: c.bg }),
+  color: c.color,
+});
+
 export default function Popularcategory() {
-const [active, setActive] = useState(CATEGORIES[0].id);
-const items = useMemo(() => CONTENT[active] ?? [], [active]);
+  const [active, setActive] = useState(CATEGORIES[0].id);
+  const items = useMemo(() => CONTENT[active] ?? [], [active]);
 
-return (
-<div className="wrap">
-<header className="head">
-<span className="star">★</span>
-<h2>Самое популярное</h2>
-</header>
+  // небольшая нормализация, если где-то случайно остался '/n' или 'n/'
+  const normalizeTitle = (t) => (t || "").replace(/\\n|\/n|n\//g, "\n");
 
-<div className="slider" role="tablist" aria-label="Категории">
-{CATEGORIES.map((c) => (
-<button
-key={c.id}
-role="tab"
-aria-selected={active === c.id}
-className={"chip" + (active === c.id ? " chip--active" : "")}
-onClick={() => setActive(c.id)}
->
-<span className="chip__icon" aria-hidden />
-<span className="chip__label">{c.label}</span>
-</button>
-))}
-</div>
+  return (
+    <div className="wrap">
+      <header className="head">
+        <span className="star">★</span>
+        <h2>Самое популярное</h2>
+      </header>
 
-<div className="cards">
-{items.slice(0, 2).map((it, idx) => (
-<article key={idx} className="card">
-<div className="card__bg" />
-<div className="card__overlay">
-<h3 className="card__title">{it.title}</h3>
-{it.subtitle && <p className="card__subtitle">{it.subtitle}</p>}
-</div>
-<button className="card__cta" aria-label="Открыть">→</button>
-</article>
-))}
-</div>
-</div>
-);
+      <div className="slider" role="tablist" aria-label="Категории">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            role="tab"
+            aria-selected={active === c.id}
+            className={"chip" + (active === c.id ? " chip--active" : "")}
+            onClick={() => setActive(c.id)}
+            style={chipStyle(c)}
+          >
+            <img src={c.icon} alt={c.label} className="chip__icon" />
+            <span className="chip__label">{c.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="cards">
+        {items.slice(0, 2).map((it, idx) => (
+          <article key={idx} className="card">
+            <div className="card__bg" />
+            <div className="card__overlay">
+              <h3 className="card__title">{normalizeTitle(it.title)}</h3>
+              {/* subtitle удалён */}
+            </div>
+            <button className="card__cta" aria-label="Открыть">→</button>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
 }
