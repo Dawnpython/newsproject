@@ -1,5 +1,6 @@
 .navbar {
   width: calc(100% - 20px);
+  z-index: 999;
   height: 58px;
   display: flex;
   background-color: #00c3ff;
