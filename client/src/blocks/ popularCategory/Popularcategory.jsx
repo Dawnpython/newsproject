@@ -84,18 +84,18 @@ export default function Popularcategory() {
         ))}
       </div>
 
-      <div className="cards">
-        {items.slice(0, 2).map((it, idx) => (
-          <article key={idx} className="card">
-            <div className="card__bg" />
-            <div className="card__overlay">
-              <h3 className="card__title">{normalizeTitle(it.title)}</h3>
-              {/* subtitle удалён */}
-            </div>
-            <button className="card__cta" aria-label="Открыть">→</button>
-          </article>
-        ))}
+      <div className="cards" key={active} data-anim="slide">
+  {items.slice(0, 2).map((it, idx) => (
+    <article key={idx} className="card">
+      <div className="card__bg" />
+      <div className="card__overlay">
+        <h3 className="card__title">{normalizeTitle(it.title)}</h3>
       </div>
+      <button className="card__cta" aria-label="Открыть">→</button>
+    </article>
+  ))}
+</div>
+
     </div>
   );
 }
