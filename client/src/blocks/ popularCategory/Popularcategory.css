@@ -38,14 +38,14 @@
   font-size: 14px;
 }
 
-/* === ЧИПЫ (категории) === */
+/* чипы */
 .slider {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 102px;
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 10px 4px; /* 🔥 слева/справа по 10px */
+  padding: 10px 10px 4px; /* слева/справа по 10px */
   margin-bottom: 16px;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -94,7 +94,7 @@
   border-radius: 12px;
   opacity: 0.9;
   max-width: 80%;
-  height: auto; /* 🔧 не форсим апскейл */
+  height: auto;
 }
 
 .chip--active {
@@ -108,15 +108,15 @@
   outline-offset: 2px;
 }
 
-/* === КАРТОЧКИ (горизонтальная лента) === */
+/* карточки */
 .cards {
   display: grid;
-  grid-auto-flow: column; /* лента */
-  grid-auto-columns: 280px; /* ширина карточки */
+  grid-auto-flow: column;
+  grid-auto-columns: 280px;
   gap: 14px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 10px 10px; /* 🔥 слева/справа по 10px */
+  padding: 0 10px 10px; /* слева/справа по 10px */
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
@@ -137,24 +137,14 @@
   height: 186px;
   border-radius: 16px;
   overflow: hidden;
-  background: #000; /* фон под фото */
   color: #fff;
-  background-image: url("/src/assets/icons/popularcategory/Image-test.png");
+  background-color: #000; /* подложка */
+  background-size: cover; /* ← фон как cover */
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* ✅ реальная картинка вместо background-image */
-.card__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover;
-  border-radius: inherit;
-  transform: translateZ(0); /* сглаживание на ретине */
-}
-
-/* градиент снизу для читаемости */
+/* градиент для читаемости текста */
 .card__overlay {
   position: absolute;
   inset: 0;
@@ -190,7 +180,7 @@
           backdrop-filter: blur(6px);
 }
 
-/* анимация появления */
+/* анимация */
 @keyframes card-slide-up {
   from {
     opacity: 0;
