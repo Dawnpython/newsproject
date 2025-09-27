@@ -1,129 +1,198 @@
 .wrap {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, "Noto Sans";
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter,
+    Arial, "Noto Sans";
   color: #0f172a;
-  padding: 40px 10px 0 10px;
+  padding: 40px 10px 0px 10px;
   background: #E0EEF8;
   background-image: url('/src/assets/icons/popularcategory/img-bg-popular.png');
   background-position: top;
   background-repeat: no-repeat;
   transform: translateY(-40px);
-  margin-bottom: -40px;
+  margin-bottom: -40px; 
   z-index: 1;
 }
-
 .head {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .head h2 {
-  margin: 0; font-weight: 600; font-size: 16px; color: #fff;
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+  color: white;
 }
 .star {
-  width: 20px; height: 20px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #ffd166; color: #3a2f00; font-size: 14px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffd166;
+  color: #3a2f00;
+  font-size: 14px;
 }
 
-/* === ЧИПЫ (категории) === */
 .slider {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 102px;
   gap: 8px;
   overflow-x: auto;
-  padding: 10px 10px 4px;      /* 🔥 слева/справа по 10px */
+  padding: 10px 4px 4px;
   margin-bottom: 16px;
   scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
 }
-.slider::-webkit-scrollbar { height: 8px; }
-.slider::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
+.slider::-webkit-scrollbar {
+  height: 8px;
+}
+.slider::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
 
 .chip {
   position: relative;
-  width: 102px; height: 82px;
+  width: 102px;
+  height: 82px;
   scroll-snap-align: start;
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   padding: 8px;
   border-radius: 18px;
-  background: #fff; border: none;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
-  cursor: pointer; transition: .2s ease;
-  text-align: left; color: inherit;
+  background: #fff;
+  border: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: 0.2s ease;
+  text-align: left;
 }
 .chip__label {
-  position: absolute; top: 5px; left: 10px;
-  font-size: 13px; font-weight: 400; letter-spacing: .2px;
+    position: absolute;
+    top:5px;
+    left: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
 }
 .chip__icon {
-  position: absolute; bottom: 0; right: 0;
-  border-radius: 12px; opacity: .9;
-  max-width: 80%; height: auto;              /* 🔧 не форсим апскейл */
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border-radius: 12px;
+  opacity: 0.9;
+  width: 80%;
 }
-.chip--active { box-shadow: 0 8px 20px rgba(59,130,246,.2); transform: translateY(-2px); border: 1px solid #FE8501; }
-.chip:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.chip--active {
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+  border:  1px solid #FE8501;
+}
+.chip:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 2px;
+}
 
-/* === КАРТОЧКИ (горизонтальная лента) === */
+/* === НИЖНИЕ КАРТОЧКИ: горизонтальный скролл === */
 .cards {
   display: grid;
-  grid-auto-flow: column;      /* лента */
-  grid-auto-columns: 280px;    /* ширина карточки */
+  grid-auto-flow: column;       /* лента */
+  grid-auto-columns: 280px;     /* ширина карточки */
   gap: 14px;
-  overflow-x: auto;
+  overflow-x: auto;             /* скроллим по горизонтали */
   overflow-y: hidden;
-  padding: 0 10px 10px;        /* 🔥 слева/справа по 10px */
+  padding-bottom: 10px;
   scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch; /* плавность на iOS */
 }
-.cards::-webkit-scrollbar { height: 8px; }
-.cards::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
+.cards::-webkit-scrollbar {
+  height: 8px;
+}
+.cards::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
 
 .card {
-  scroll-snap-align: start;
+  scroll-snap-align: start;     /* прилипание при скролле */
   position: relative;
-  width: 280px; height: 186px;
+  width: 280px;
+  height: 186px;
   border-radius: 16px;
   overflow: hidden;
-  background: #000;            /* фон под фото */
+  background-image: url('/src/assets/icons/popularcategory/Image-test.png');
   color: #fff;
 }
 
-/* ✅ реальная картинка вместо background-image */
-.card__img {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
-  transform: translateZ(0);     /* сглаживание на ретине */
-}
-
-/* градиент снизу для читаемости */
 .card__overlay {
-  position: absolute; inset: 0; padding: 16px;
-  display: flex; flex-direction: column; justify-content: flex-end;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.45) 100%);
+  position: absolute;
+  inset: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 40%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
 }
 .card__title {
-  margin: 0; font-weight: 400; font-size: 14px; line-height: 1.05; white-space: pre-line;
+  margin: 0;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.05;
+  white-space: pre-line;
 }
-
+.card__subtitle {
+  margin: 2px 0 0;
+  opacity: 0.9;
+  font-size: 18px;
+}
 .card__cta {
-  position: absolute; right: 10px; bottom: 10px;
-  width: 32px; height: 32px; border-radius: 50%; border: none;
-  background: transparent; color: #FFFFFF66; border: 1px solid #FFFFFF66;
-  font-size: 15px; cursor: pointer; backdrop-filter: blur(6px);
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #FFFFFF66;
+  border: 1px solid #FFFFFF66;
+  font-size: 15px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
 }
 
-/* анимация появления */
+
 @keyframes card-slide-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
+/* Запускаем анимацию для карточек при маунте контейнера с data-anim="slide" */
 .cards[data-anim="slide"] .card {
   animation: card-slide-up 1760ms cubic-bezier(.16,.1,.3,1) both;
   will-change: transform, opacity;
 }
-.cards[data-anim="slide"] .card:nth-child(2) { animation-delay: 90ms; }
 
+/* Лёгкая ступенька для второй карточки */
+.cards[data-anim="slide"] .card:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+/* Уважение настроек пользователя */
 @media (prefers-reduced-motion: reduce) {
-  .cards[data-anim="slide"] .card { animation: none; }
+  .cards[data-anim="slide"] .card {
+    animation: none;
+  }
 }
