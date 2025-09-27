@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: 16px;
   height: 611px;
   background-color: white;
   border-radius: 24px;
@@ -11,4 +12,5 @@
   display: flex;
   justify-content: center;
   transform: translateY(-15px);
+  margin-bottom: -16px;
 }/*# sourceMappingURL=Recomendation.css.map */

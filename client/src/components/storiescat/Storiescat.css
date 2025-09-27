@@ -1,0 +1,75 @@
+@charset "UTF-8";
+.storiescat-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.storiescat-track {
+  display: flex;
+  gap: 12px;
+  padding-left: 10px; /* отступ слева */
+}
+
+.storiescat-spacer {
+  flex-shrink: 0;
+  width: 1px; /* отступ справа */
+}
+
+.storiescat-tile {
+  flex: 0 0 auto;
+  width: 132px;
+  height: 82px;
+  border: none;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-end;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.storiescat-tile:hover {
+  transform: scale(1.03);
+}
+
+.storiescat-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  -o-object-fit: contain;
+     object-fit: contain;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+/* затемнение если фон картинка */
+.storiescat-tile[style*="url("]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 16px;
+  z-index: 1;
+}
+
+.storiescat-label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+  z-index: 3;
+  white-space: pre-line;
+  text-align: left;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  color: inherit;
+}/*# sourceMappingURL=Storiescat.css.map */

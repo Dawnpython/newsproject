@@ -27,17 +27,20 @@
   transition: transform 0.2s ease;
 }
 
+.carousel-item:hover {
+  transform: scale(1.03);
+}
+
 .carousel-label {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 6px;
+  left: 6px;
   background: white;
   color: #000;
   padding: 6px 14px;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
