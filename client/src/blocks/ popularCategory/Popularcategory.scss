@@ -73,9 +73,9 @@
   border-radius: 16px;
   overflow: hidden;
   color: #fff;
-  background-color: #000;     /* подложка */
   background-size: cover;     /* ← фон как cover */
   background-position: center;
+  background-image: url('/src/assets/icons/popularcategory/Image-test.png');
   background-repeat: no-repeat;
 }
 
