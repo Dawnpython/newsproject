@@ -1,6 +1,7 @@
 .recomendation {
   display: flex;
   flex-direction: column;
+  align-items: center;
   width: 100%;
   gap: 16px;
   height: 611px;
@@ -15,4 +16,9 @@
   margin-bottom: -16px;
   max-width: 100%;
   height: auto;
+}
+.recomendation .insta-banner {
+  position: relative;
+  width: 100%;
+  height: 149px;
 }/*# sourceMappingURL=Recomendation.css.map */
