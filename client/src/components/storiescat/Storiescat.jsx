@@ -7,9 +7,9 @@ import fourIcon from "/src/assets/icons/storiescat/storycat-4.png";
 import fiveIcon from "/src/assets/icons/storiescat/storycat-5.png";
 
 const DEFAULT_ITEMS = [
-  { label: "Любимые места   \n туристов", bg: "#00D6FF", icon: firstIcon },
+  { label: "Любимые места  \nтуристов", bg: "#00D6FF", icon: firstIcon },
   { label: "Без гидов \nи программ", bg: "linear-gradient(135deg,#0072FF,#7810D3)", icon: secondIcon, color: "white" },
-  { label: " Дорогие\n удовольствия", bg: "#000000ff", icon: thirdIcon },
+  { label: "Дорогие\nудовольствия", bg: "#000000", icon: thirdIcon },
   { label: "Где поесть", bg: "linear-gradient(135deg,#FF9F00,#FF6200)", icon: fourIcon, color: "white" },
   { label: "Маркетплейс", bg: "#00E989", icon: fiveIcon },
 ];
@@ -41,7 +41,7 @@ export default function Storiescat({ items = DEFAULT_ITEMS, onSelect }) {
             <span className="storiescat-label">{it.label}</span>
           </button>
         ))}
-        {/* Заглушка для отступа справа */}
+        {/* отступ справа, чтобы не прилипало */}
         <div className="storiescat-spacer" />
       </div>
     </div>

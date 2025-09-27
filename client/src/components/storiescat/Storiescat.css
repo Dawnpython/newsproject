@@ -5,17 +5,22 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.storiescat-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .storiescat-track {
   display: flex;
   gap: 12px;
-  padding-left: 10px; /* отступ слева */
+  padding-left: 10px; /* слева 10px */
 }
 
 .storiescat-spacer {
   flex-shrink: 0;
-  width: 1px; /* отступ справа */
+  width: 10px; /* справа 10px */
 }
 
+/* плитка */
 .storiescat-tile {
   flex: 0 0 auto;
   width: 132px;
@@ -32,12 +37,14 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  color: inherit;
 }
 
 .storiescat-tile:hover {
   transform: scale(1.03);
 }
 
+/* иконка */
 .storiescat-icon {
   position: absolute;
   bottom: 0;
@@ -47,9 +54,11 @@
   z-index: 2;
   pointer-events: none;
   opacity: 0.95;
+  max-width: 44%; /* чтобы не переросла плитку */
+  height: auto;
 }
 
-/* затемнение если фон картинка */
+/* затемнение если фон картинка (на будущее) */
 .storiescat-tile[style*="url("]::before {
   content: "";
   position: absolute;
@@ -59,6 +68,7 @@
   z-index: 1;
 }
 
+/* текст */
 .storiescat-label {
   position: absolute;
   top: 10px;
@@ -68,8 +78,7 @@
   line-height: 1.15;
   letter-spacing: 0.2px;
   z-index: 3;
-  white-space: pre-line;
+  white-space: pre-line; /* перенос по \n */
   text-align: left;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
-  color: inherit;
 }/*# sourceMappingURL=Storiescat.css.map */
