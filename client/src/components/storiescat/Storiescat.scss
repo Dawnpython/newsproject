@@ -2,6 +2,8 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .storiescat-scroll::-webkit-scrollbar {
@@ -12,6 +14,7 @@
   display: flex;
   gap: 12px;
   padding-left: 10px; /* слева 10px */
+  
 }
 
 .storiescat-spacer {
@@ -53,10 +56,7 @@
   height: auto;
 }
 
-.storiescat-icon:nth-child(2){
-  bottom: 15px;
-  right: 15px;
-}
+
 
 
 .storiescat-tile[style*="url("]::before {

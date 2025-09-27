@@ -16,9 +16,17 @@
     max-width: 100%;
     height: auto;
   }
-  .insta-banner{
+  .insta-banner {
     position: relative;
-    width: 100%;
     height: 149px;
+    p {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    img {
+      border-radius: 25px;
+    }
   }
 }

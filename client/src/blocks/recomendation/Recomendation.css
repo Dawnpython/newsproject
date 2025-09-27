@@ -19,6 +19,14 @@
 }
 .recomendation .insta-banner {
   position: relative;
-  width: 100%;
   height: 149px;
+}
+.recomendation .insta-banner p {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.recomendation .insta-banner img {
+  border-radius: 25px;
 }/*# sourceMappingURL=Recomendation.css.map */
