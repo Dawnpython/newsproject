@@ -16,7 +16,7 @@
 
 .storiescat-spacer {
   flex-shrink: 0;
-  width: 10px; /* справа 10px */
+  width: 1px; /* справа 10px */
 }
 
 /* плитка */
@@ -49,11 +49,16 @@
   z-index: 2;
   pointer-events: none;
   opacity: 0.95;
-  max-width: 44%;   /* чтобы не переросла плитку */
+  max-width: 70%;   
   height: auto;
 }
 
-/* затемнение если фон картинка (на будущее) */
+.storiescat-icon:nth-child(2){
+  bottom: 15px;
+  right: 15px;
+}
+
+
 .storiescat-tile[style*="url("]::before {
   content: "";
   position: absolute;

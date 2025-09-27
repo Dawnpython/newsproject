@@ -27,10 +27,6 @@
   transition: transform 0.2s ease;
 }
 
-.carousel-item:hover {
-  transform: scale(1.03);
-}
-
 .carousel-label {
   position: absolute;
   bottom: 6px;
