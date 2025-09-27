@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 
-/* ✅ без лишнего пробела в пути */
+/* ✅ исправил пробел в пути */
 import "/src/blocks/ popularCategory/Popularcategory.css";
 
 import firstcatImg from "/src/assets/icons/popularcategory/на воде 1.png";
@@ -10,25 +10,44 @@ import fourcatImg from "/src/assets/icons/popularcategory/Object.png";
 import fivecatImg from "/src/assets/icons/popularcategory/с детьми.png";
 import sixcatImg from "/src/assets/icons/popularcategory/развлечения.png";
 
-/* дефолт для карточек, если у айтема нет своей картинки */
+/* ✅ одна дефолтная картинка для карточек (можешь заменить/добавить свои per-item) */
 const DEFAULT_CARD_IMG = "/src/assets/icons/popularcategory/Image-test.png";
 
 const CATEGORIES = [
   { id: "water",   label: "На воде",      icon: firstcatImg,  bg: "#fff", color: "#000" },
-  { id: "premium", label: "Premium",      icon: secondcatImg, bg: "linear-gradient(to bottom,#000001,#424242)", color: "#FAB92E" },
+  { id: "premium", label: "Premium",      icon: secondcatImg, bg: "linear-gradient(to bottom, #000001, #424242)", color: "#FAB92E" },
   { id: "extreme", label: "Экстрим",      icon: thirdcatImg,  bg: "#fff", color: "#000" },
   { id: "walk",    label: "Пешком",       icon: fourcatImg,   bg: "#fff", color: "#000" },
   { id: "kids",    label: "С детьми",     icon: fivecatImg,   bg: "#fff", color: "#000" },
   { id: "fun",     label: "Развлечения",  icon: sixcatImg,    bg: "#fff", color: "#000" },
 ];
 
+/* Можно позже добавить image/image2x/image3x на каждый айтем */
 const CONTENT = {
-  water:   [{ title: "Прогулка на теплоходе\nпо Телецкому озеру" }, { title: "Прогулка на катере\nи рыбалка" }],
-  premium: [{ title: "VIP круиз\nс дегустацией" }, { title: "Частная яхта\nна закате" }],
-  extreme: [{ title: "Рафтинг\nрека Катунь" }, { title: "Джип-тур\nпо перевалам" }],
-  walk:    [{ title: "Треккинг\nгорные озера" }, { title: "Пешая экскурсия\nпо селу" }],
-  kids:    [{ title: "Семейная велопрогулка" }, { title: "Верёвочный парк" }],
-  fun:     [{ title: "Квадро-сафари" }, { title: "Баня на дровах\nи чан" }],
+  water: [
+    { title: "Прогулка на теплоходе\nпо Телецкому озеру" },
+    { title: "Прогулка на катере\nи рыбалка" },
+  ],
+  premium: [
+    { title: "VIP круиз\nс дегустацией" },
+    { title: "Частная яхта\nна закате" },
+  ],
+  extreme: [
+    { title: "Рафтинг\nрека Катунь" },
+    { title: "Джип-тур\nпо перевалам" },
+  ],
+  walk: [
+    { title: "Треккинг\nгорные озера" },
+    { title: "Пешая экскурсия\nпо селу" },
+  ],
+  kids: [
+    { title: "Семейная велопрогулка" },
+    { title: "Верёвочный парк" },
+  ],
+  fun: [
+    { title: "Квадро-сафари" },
+    { title: "Баня на дровах\nи чан" },
+  ],
 };
 
 const chipStyle = (c) => ({
@@ -51,7 +70,7 @@ export default function Popularcategory() {
         <h2>Самое популярное</h2>
       </header>
 
-      {/* чипы */}
+      {/* категории (чипы) */}
       <div className="slider" role="tablist" aria-label="Категории">
         {CATEGORIES.map((c) => (
           <button
@@ -68,22 +87,33 @@ export default function Popularcategory() {
         ))}
       </div>
 
-      {/* карточки */}
+      {/* карточки контента */}
       <div className="cards" key={active} data-anim="slide">
         {items.slice(0, 2).map((it, idx) => {
-          const src = it.image || DEFAULT_CARD_IMG; // можно добавить поле image у айтема
-          return (
-            <article
-              key={idx}
-              className="card"
-              style={{ backgroundImage: `url(${src})` }}   /* ← фон картинкой */
-            >
-              <div className="card__overlay">
-                <h3 className="card__title">{normalizeTitle(it.title)}</h3>
-              </div>
-              <button className="card__cta" aria-label="Открыть">→</button>
-            </article>
-          );
+          const src = it.image || DEFAULT_CARD_IMG;
+          /* если добавишь it.image2x / it.image3x — раскомментируй srcSet ниже */
+          const srcSet =
+            it.image2x && it.image3x
+              ? `${it.image2x} 2x, ${it.image3x} 3x`
+              : it.image2x
+              ? `${it.image2x} 2x`
+              : undefined;
+
+        return (
+          <article key={idx} className="card">
+            <img
+              className="card__img"
+              src={src}
+              {...(srcSet ? { srcSet } : {})}
+              alt=""
+              loading="lazy"
+            />
+            <div className="card__overlay">
+              <h3 className="card__title">{normalizeTitle(it.title)}</h3>
+            </div>
+            <button className="card__cta" aria-label="Открыть">→</button>
+          </article>
+        );
         })}
       </div>
     </div>
