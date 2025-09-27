@@ -40,10 +40,6 @@
   color: inherit;
 }
 
-.storiescat-tile:hover {
-  transform: scale(1.03);
-}
-
 /* иконка */
 .storiescat-icon {
   position: absolute;
