@@ -1,18 +1,23 @@
 @charset "UTF-8";
+/* скролл-контейнер */
 .tiles-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: auto;
 }
 
+.tiles-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* внутренние отступы по 10px слева/справа */
 .tiles-wrapper {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: -moz-max-content;
   width: max-content;
-  padding: 0px 10px;
+  padding: 0 10px;
 }
 
 .tiles-row {
@@ -20,7 +25,7 @@
   gap: 12px;
 }
 
-/* обычная плитка */
+/* плитка */
 .tile {
   flex: 0 0 auto;
   width: 132px;
@@ -31,33 +36,48 @@
   display: flex;
   align-items: flex-end;
   cursor: pointer;
-  position: relative; /* 👈 обязательно для абсолютного позиционирования иконки */
+  position: relative;
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: relative;
+  color: inherit;
 }
 
-/* 👇 узкая плитка для Такси */
+.tile:hover {
+  transform: translateY(-1px);
+}
+
+/* узкая плитка */
 .tile--small {
   width: 82px;
 }
 
-/* 👇 абсолютная иконка */
-.tile__icon {
+/* фон-картинка через <img> — всегда максимально чёткая */
+.tile__bg {
   position: absolute;
-  bottom: 0;
-  right: 0px;
-  -o-object-fit: contain;
-     object-fit: contain;
-  z-index: 2;
-  pointer-events: none; /* чтобы не мешала кликам */
-  opacity: 0.95;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover; /* аналог background-size: cover */
+  border-radius: inherit;
+  transform: translateZ(0);
+  z-index: 0;
 }
 
-/* затемнение, если фон — картинка */
+/* если у плитки и градиент, и картинка — мягко накрываем картинку */
+.tile__gradient {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+  /* лёгкий затемняющий слой, чтобы текст читался */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.18));
+}
+
+/* прежнее затемнение, если фон задан именно как url(...) в style — оставил на случай старого варианта */
 .tile[style*="url("]::before {
   content: "";
   position: absolute;
@@ -67,17 +87,31 @@
   z-index: 1;
 }
 
+/* иконка */
+.tile__icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  -o-object-fit: contain;
+     object-fit: contain;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.95;
+  max-width: 44%;
+  height: auto;
+}
+
 /* текст */
 .tile__label {
   position: absolute;
-  font-size: 13px;
-  font-weight: 500;
   top: 10px;
   left: 10px;
   z-index: 3;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.15;
   letter-spacing: 0.2px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   white-space: pre-line;
   text-align: left;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }/*# sourceMappingURL=Fatcategory.css.map */
