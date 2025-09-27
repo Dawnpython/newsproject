@@ -6,6 +6,7 @@ import CategoryFirst from "/src/blocks/categoryfirst/CategoryFirst.jsx";
 import Footer from "/src/blocks/footer/Footer.jsx";
 import Formkey from "../../blocks/formkey/Formkey";
 import Popularcategory from "../../blocks/ popularCategory/Popularcategory";
+import Recomendation from "../../blocks/recomendation/Recomendation";
 
 
 export default function Userpage() {
@@ -14,6 +15,7 @@ export default function Userpage() {
       <Hero />
       <CategoryFirst/>
       <Popularcategory/>
+      <Recomendation/>
       <Formkey/>
       <Footer/>
       <Navbar />
