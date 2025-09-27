@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from "react";
 
-// ✅ убран лишний пробел в пути
-import "/src/blocks/ popularCategory/Popularcategory.css";
+/* ✅ исправил пробел в пути */
+import "/src/blocks/popularCategory/Popularcategory.css";
 
-import firstcatImg from '/src/assets/icons/popularcategory/на воде 1.png';
-import secondcatImg from '/src/assets/icons/popularcategory/премиум.png';
-import thirdcatImg from '/src/assets/icons/popularcategory/экстрим.png';
-import fourcatImg from '/src/assets/icons/popularcategory/Object.png';
-import fivecatImg from '/src/assets/icons/popularcategory/с детьми.png';
-import sixcatImg from '/src/assets/icons/popularcategory/развлечения.png';
+import firstcatImg from "/src/assets/icons/popularcategory/на воде 1.png";
+import secondcatImg from "/src/assets/icons/popularcategory/премиум.png";
+import thirdcatImg from "/src/assets/icons/popularcategory/экстрим.png";
+import fourcatImg from "/src/assets/icons/popularcategory/Object.png";
+import fivecatImg from "/src/assets/icons/popularcategory/с детьми.png";
+import sixcatImg from "/src/assets/icons/popularcategory/развлечения.png";
+
+/* ✅ одна дефолтная картинка для карточек (можешь заменить/добавить свои per-item) */
+const DEFAULT_CARD_IMG = "/src/assets/icons/popularcategory/Image-test.png";
 
 const CATEGORIES = [
   { id: "water",   label: "На воде",      icon: firstcatImg,  bg: "#fff", color: "#000" },
@@ -19,10 +22,11 @@ const CATEGORIES = [
   { id: "fun",     label: "Развлечения",  icon: sixcatImg,    bg: "#fff", color: "#000" },
 ];
 
+/* Можно позже добавить image/image2x/image3x на каждый айтем */
 const CONTENT = {
   water: [
     { title: "Прогулка на теплоходе\nпо Телецкому озеру" },
-    { title: "Прогулка на катере\nи рыбалка"},
+    { title: "Прогулка на катере\nи рыбалка" },
   ],
   premium: [
     { title: "VIP круиз\nс дегустацией" },
@@ -46,7 +50,6 @@ const CONTENT = {
   ],
 };
 
-// поддержка цвета/градиента
 const chipStyle = (c) => ({
   ...(typeof c.bg === "string" && c.bg.trim().startsWith("linear-gradient")
     ? { background: c.bg }
@@ -58,7 +61,6 @@ export default function Popularcategory() {
   const [active, setActive] = useState(CATEGORIES[0].id);
   const items = useMemo(() => CONTENT[active] ?? [], [active]);
 
-  // небольшая нормализация, если где-то случайно остался '/n' или 'n/'
   const normalizeTitle = (t) => (t || "").replace(/\\n|\/n|n\//g, "\n");
 
   return (
@@ -68,6 +70,7 @@ export default function Popularcategory() {
         <h2>Самое популярное</h2>
       </header>
 
+      {/* категории (чипы) */}
       <div className="slider" role="tablist" aria-label="Категории">
         {CATEGORIES.map((c) => (
           <button
@@ -84,18 +87,35 @@ export default function Popularcategory() {
         ))}
       </div>
 
+      {/* карточки контента */}
       <div className="cards" key={active} data-anim="slide">
-  {items.slice(0, 2).map((it, idx) => (
-    <article key={idx} className="card">
-      <div className="card__bg" />
-      <div className="card__overlay">
-        <h3 className="card__title">{normalizeTitle(it.title)}</h3>
-      </div>
-      <button className="card__cta" aria-label="Открыть">→</button>
-    </article>
-  ))}
-</div>
+        {items.slice(0, 2).map((it, idx) => {
+          const src = it.image || DEFAULT_CARD_IMG;
+          /* если добавишь it.image2x / it.image3x — раскомментируй srcSet ниже */
+          const srcSet =
+            it.image2x && it.image3x
+              ? `${it.image2x} 2x, ${it.image3x} 3x`
+              : it.image2x
+              ? `${it.image2x} 2x`
+              : undefined;
 
+        return (
+          <article key={idx} className="card">
+            <img
+              className="card__img"
+              src={src}
+              {...(srcSet ? { srcSet } : {})}
+              alt=""
+              loading="lazy"
+            />
+            <div className="card__overlay">
+              <h3 className="card__title">{normalizeTitle(it.title)}</h3>
+            </div>
+            <button className="card__cta" aria-label="Открыть">→</button>
+          </article>
+        );
+        })}
+      </div>
     </div>
   );
 }
