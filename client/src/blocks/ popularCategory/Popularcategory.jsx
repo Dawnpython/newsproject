@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 /* ✅ исправил пробел в пути */
-import "/src/blocks/popularCategory/Popularcategory.css";
+import "/src/blocks/ popularCategory/Popularcategory.css";
 
 import firstcatImg from "/src/assets/icons/popularcategory/на воде 1.png";
 import secondcatImg from "/src/assets/icons/popularcategory/премиум.png";
