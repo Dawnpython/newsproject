@@ -8,6 +8,7 @@ import Formkey from "../../blocks/formkey/Formkey";
 import Popularcategory from "../../blocks/ popularCategory/Popularcategory";
 import Recomendation from "../../blocks/recomendation/Recomendation";
 import Pr from "../../blocks/pr/Pr";
+import Economycat from "../../blocks/economyCat/EconomyCat";
 
 
 export default function Userpage() {
@@ -18,6 +19,7 @@ export default function Userpage() {
       <Popularcategory/>
       <Recomendation/>
       <Pr/>
+      <Economycat/>
       <Formkey/>
       <Footer/>
       <Navbar />

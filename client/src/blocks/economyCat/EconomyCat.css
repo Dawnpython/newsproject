@@ -1,0 +1,146 @@
+@charset "UTF-8";
+/* ====== Section ====== */
+.eco-section {
+  padding: 16px 12px 24px;
+  color: #0b0b0b;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+}
+
+/* Header */
+.eco-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.eco-subtitle {
+  margin: 0 0 14px;
+  color: #6a6a6a;
+  font-size: 18px;
+}
+
+/* ====== Tabs (chips 126x30) ====== */
+.eco-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 126px; /* ширина чипа */
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin: 8px -12px 18px;
+  padding-left: 12px;
+  padding-right: 12px;
+  scrollbar-width: none;
+}
+
+.eco-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.eco-tab {
+  height: 30px; /* высота чипа */
+  min-width: 126px;
+  border: 0;
+  border-radius: 999px;
+  background: #f0f1f3;
+  color: #1b1b1b;
+  display: flex; /* центрирование иконки и текста */
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.eco-tab__icon {
+  width: 18px;
+  height: 18px;
+  -o-object-fit: contain;
+     object-fit: contain;
+  display: block;
+}
+
+.eco-tab__label {
+  line-height: 1;
+  display: block;
+}
+
+.eco-tab--active {
+  background: #ff3b57;
+  color: #fff;
+}
+
+/* ====== Stories (cards 160x219) ====== */
+.eco-stories {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 160px; /* ширина карточки */
+  gap: 12px;
+  overflow-x: auto;
+  margin: 0 -12px;
+  padding: 2px 12px 8px;
+  scrollbar-width: none;
+}
+
+.eco-stories::-webkit-scrollbar {
+  display: none;
+}
+
+.eco-story {
+  position: relative;
+  width: 160px;
+  height: 219px; /* точный размер */
+  border-radius: 22px;
+  background-size: cover;
+  background-position: center;
+  background-color: #d9d9d9;
+  overflow: hidden;
+  text-decoration: none;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(14, 20, 40, 0.18);
+}
+
+.eco-story__fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0) 55%);
+}
+
+.eco-story__text {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.eco-story__title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  line-height: 1.08;
+  font-size: 20px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.eco-story__subtitle {
+  opacity: 0.95;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* адаптация */
+@media (min-width: 768px) {
+  .eco-section {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .eco-title {
+    font-size: 32px;
+  }
+}/*# sourceMappingURL=EconomyCat.css.map */
