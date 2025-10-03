@@ -1,0 +1,11 @@
+.pr {
+  height: 140px;
+  background-image: url("src/assets/adbanner.jpg");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: calc(100% - 20px); /* 100% минус 2 отступа по 10px */
+  margin: 0 10px;
+  border-radius: 16px;
+  overflow: hidden;
+}
