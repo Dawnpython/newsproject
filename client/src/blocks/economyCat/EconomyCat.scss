@@ -1,6 +1,6 @@
 /* ====== Section ====== */
 .eco-section {
-  padding: 16px 12px 24px;
+  padding: 0px 10px;
   color: #0b0b0b;
 }
 
@@ -8,22 +8,24 @@
 .eco-header {}
 .eco-title {
   margin: 0 0 6px;
-  font-size: 28px;
+  font-size: 20px;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  text-align: center;
 }
 .eco-subtitle {
   margin: 0 0 14px;
-  color: #6a6a6a;
-  font-size: 18px;
+  color: #111827;
+  font-size: 14px;
+  text-align: center;
 }
 
 /* ====== Tabs (chips 126x30) ====== */
 .eco-tabs {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 126px;    /* ширина чипа */
-  gap: 12px;
+  grid-auto-columns:auto;    /* ширина чипа */
+  gap: 4px;
   overflow-x: auto;
   padding-bottom: 8px;
   margin: 8px -12px 18px;
@@ -35,7 +37,7 @@
 
 .eco-tab {
   height: 30px;               /* высота чипа */
-  min-width: 126px;
+  width: auto;
   border: 0;
   border-radius: 999px;
   background: #f0f1f3;
@@ -44,7 +46,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 12px;
+  padding: 9px 16px;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -57,7 +59,8 @@
   object-fit: contain;
   display: block;
 }
-.eco-tab__label { line-height: 1; display: block; }
+.eco-tab__label { line-height: 1; display: block; 
+    font-weight: 400; }
 
 .eco-tab--active {
   background: #ff3b57;
@@ -124,4 +127,38 @@
 @media (min-width: 768px) {
   .eco-section { padding-left: 24px; padding-right: 24px; }
   .eco-title { font-size: 32px; }
+}
+
+
+/* ===== Анимация появления карточек ===== */
+@keyframes eco-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Запускаем анимацию, когда есть data-anim="slide" */
+.eco-stories[data-anim="slide"] .eco-story {
+  animation: eco-slide-up 700ms cubic-bezier(.16,.1,.3,1) both;
+  will-change: transform, opacity;
+}
+
+/* Лёгкая задержка для второй и третьей */
+.eco-stories[data-anim="slide"] .eco-story:nth-child(2) {
+  animation-delay: 80ms;
+}
+.eco-stories[data-anim="slide"] .eco-story:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+/* Если включено prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .eco-stories[data-anim="slide"] .eco-story {
+    animation: none;
+  }
 }
