@@ -6,9 +6,68 @@
 }
 .formkeycon .formkey {
   display: flex;
+  flex-direction: column;
+  position: relative;
   height: 240px;
   background: linear-gradient(to bottom, #00c4ff, #005be3);
   width: 100%;
   margin: 0px 10px;
   border-radius: 24px;
+  z-index: 2;
+  gap: 5px;
+}
+.formkeycon .formkey .top-form {
+  display: flex;
+  gap: 8px;
+  margin-left: 28px;
+  margin-top: 29px;
+  z-index: 2;
+}
+.formkeycon .formkey .top-form img {
+  width: 88px;
+  height: 40px;
+}
+.formkeycon .formkey .top-form p {
+  font-size: 9px;
+  font-weight: 400;
+  color: white;
+}
+.formkeycon .formkey .middle-form {
+  margin-left: 28px;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+  gap: 8px;
+}
+.formkeycon .formkey .middle-form h1 {
+  font-size: 18px;
+  color: white;
+}
+.formkeycon .formkey .middle-form p {
+  font-size: 12px;
+  color: white;
+  font-weight: 400;
+}
+.formkeycon .formkey .low-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2;
+  margin-left: 28px;
+}
+.formkeycon .formkey .low-form button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  width: 126px;
+  height: 36px;
+  background-color: #7CEA00;
+  border-radius: 99px;
+  border: none;
+  color: white;
+}
+.formkeycon .formkey .formkeyBackground {
+  position: absolute;
+  bottom: 0;
 }/*# sourceMappingURL=Formkey.css.map */

@@ -1,0 +1,15 @@
+.subscribe {
+  display: flex;
+  flex-direction: column;
+  background-image: url("/src/assets/img-bg-feedback.png");
+  background-position: bottom center;
+  background-repeat: no-repeat;
+  height: 225px;
+  width: 100%;
+}
+.subscribe .sub-top {
+  display: flex;
+  height: 92px;
+  margin: 0px 10px;
+  background-color: red;
+}/*# sourceMappingURL=Subscribe.css.map */
