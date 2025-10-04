@@ -6,10 +6,60 @@
   background-repeat: no-repeat;
   height: 225px;
   width: 100%;
+  gap: 20px;
 }
 .subscribe .sub-top {
   display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
   height: 92px;
   margin: 0px 10px;
   background-color: red;
+  border-radius: 24px;
+  overflow: hidden;
+  border: none;
+  gap: 15px;
+}
+.subscribe .sub-top img {
+  z-index: 2;
+}
+.subscribe .sub-top .backSub {
+  position: absolute;
+  z-index: 1 !important;
+}
+.subscribe .sub-top p {
+  color: black;
+  font-size: 14px;
+  text-align: center;
+  z-index: 2;
+  font-weight: 700;
+  line-height: 1;
+}
+.subscribe .sub-bottom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.subscribe .sub-bottom img:first-child {
+  width: 37px;
+  height: 11px;
+}
+.subscribe .sub-bottom p {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: #111827;
+}
+.subscribe .sub-bottom button {
+  width: 104px;
+  height: 36px;
+  border-radius: 99px;
+  background: linear-gradient(103.48deg, #00AFFF 40.33%, #0095FF 100%);
+  border: none;
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
 }/*# sourceMappingURL=Subscribe.css.map */
