@@ -1,4 +1,4 @@
-import { FaHome, FaMapMarkedAlt, FaUsers, FaCompass, FaUser } from "react-icons/fa";
+import { FaHome, FaBell, FaComments, FaCompass, FaUser } from "react-icons/fa";
 import '/src/components/navbar/Navbar.css'
 
 export default function Navbar() {
@@ -9,11 +9,11 @@ export default function Navbar() {
         <span>Главная</span>
       </div>
       <div className="nav-item">
-        <FaMapMarkedAlt size={20} />
-        <span>Карта</span>
+        <FaBell size={20} />
+        <span>Помощь</span>
       </div>
       <div className="nav-item">
-        <FaUsers size={20} />
+        <FaComments size={20} />
         <span>Местные</span>
       </div>
       <div className="nav-item">
