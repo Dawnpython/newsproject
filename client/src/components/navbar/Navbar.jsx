@@ -1,29 +1,34 @@
+import { NavLink } from "react-router-dom";
 import { FaHome, FaBell, FaComments, FaCompass, FaUser } from "react-icons/fa";
-import '/src/components/navbar/Navbar.css'
+import '/src/components/navbar/Navbar.css';
 
 export default function Navbar() {
   return (
     <nav className="navbar">
-      <div className="nav-item">
+      <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaHome size={20} />
         <span>Главная</span>
-      </div>
-      <div className="nav-item">
+      </NavLink>
+
+      <NavLink to="/help" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaBell size={20} />
         <span>Помощь</span>
-      </div>
-      <div className="nav-item">
+      </NavLink>
+
+      <NavLink to="/locals" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaComments size={20} />
         <span>Местные</span>
-      </div>
-      <div className="nav-item">
+      </NavLink>
+
+      <NavLink to="/navigator" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaCompass size={20} />
         <span>Навигатор</span>
-      </div>
-      <div className="nav-item">
+      </NavLink>
+
+      <NavLink to="/account" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaUser size={20} />
         <span>Аккаунт</span>
-      </div>
+      </NavLink>
     </nav>
   );
 }

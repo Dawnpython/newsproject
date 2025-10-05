@@ -1,3 +1,4 @@
+@charset "UTF-8";
 .navbar {
   width: calc(100% - 20px);
   z-index: 999;
@@ -17,11 +18,23 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: #ffffff;
-  font-size: 10px;
+  text-decoration: none;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6); /* серый по умолчанию */
+  transition: color 0.2s ease;
 }
 .navbar .nav-item svg {
   width: 24px;
   height: 24px;
-  color: rgb(255, 255, 255);
+  color: rgba(255, 255, 255, 0.6); /* серый по умолчанию */
+  transition: color 0.2s ease;
+}
+
+/* ✅ Активное состояние — белый цвет */
+.nav-item.active {
+  color: #ffffff;
+}
+
+.nav-item.active svg {
+  color: #ffffff;
 }/*# sourceMappingURL=Navbar.css.map */
