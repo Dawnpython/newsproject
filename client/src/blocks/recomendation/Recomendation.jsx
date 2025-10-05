@@ -16,8 +16,8 @@ export default function Recomendation() {
       <Stories />
       <Storiescat />
       <div className="insta-banner">
-        <img className="instalogo" src={bannerlogo}></img>
-        <img src={instabanner}></img>
+        <img className="instalogo"  src={bannerlogo}></img>
+        <img style={{width:370}} src={instabanner}></img>
         <p>Все статьи</p>
         <button>Смотреть всё</button>
       </div>
