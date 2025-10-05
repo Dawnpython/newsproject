@@ -4,6 +4,9 @@
   padding: 0 10px;
   color: #0b0b0b;
   box-sizing: border-box;
+  /* режем только горизонтальный оверфлоу (полоса справа) */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* Header */
@@ -22,17 +25,18 @@
   text-align: center;
 }
 
-/* ====== Tabs (chips 126x30) ====== */
+/* ====== Tabs (chips) ====== */
 .eco-tabs {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: auto; /* ширина чипа */
+  grid-auto-columns: max-content; /* ширина чипа по контенту */
   gap: 4px;
+  /* убираем отрицательные маргины — они и давали переполнение */
+  margin: 8px 0 18px;
+  /* внутренние отступы для «дорожки» */
+  padding: 0 12px 8px;
   overflow-x: auto;
-  padding-bottom: 8px;
-  margin: 8px -12px 18px;
-  padding-left: 12px;
-  padding-right: 12px;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -41,17 +45,17 @@
 }
 
 .eco-tab {
-  height: 30px; /* высота чипа */
+  height: 30px; /* фикс высота чипа */
   width: auto;
   border: 0;
   border-radius: 999px;
   background: #f0f1f3;
   color: #1b1b1b;
-  display: flex; /* центрирование иконки и текста */
+  display: inline-flex; /* центрирование иконки и текста */
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0px 16px;
+  padding: 0 16px; /* только по бокам — чтобы высота = 30px */
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -83,9 +87,12 @@
   grid-auto-flow: column;
   grid-auto-columns: 160px; /* ширина карточки */
   gap: 12px;
-  overflow-x: auto;
-  margin: 0 -12px;
+  /* убираем отрицательные маргины — возможный источник полосы */
+  margin: 0;
+  /* делаем внутреннюю «дорожку» слева/справа */
   padding: 2px 12px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -101,11 +108,21 @@
   background-size: cover;
   background-position: center;
   background-color: #d9d9d9;
-  overflow: hidden;
+  overflow: hidden; /* обрезаем содержимое по радиусу */
   text-decoration: none;
   color: #fff;
 }
 
+/* Само изображение — вписываем в карточку, без лишних зазоров */
+.eco-story__img {
+  display: block; /* убрать inline-gap */
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover; /* заполнить карточку без искажений */
+}
+
+/* Если используешь затемнение и текст поверх — оставил как было */
 .eco-story__fade {
   position: absolute;
   inset: 0;
@@ -157,7 +174,203 @@
     transform: translateY(0);
   }
 }
-/* Запускаем анимацию, когда есть data-anim="slide" */
+/* Запуск анимации */
+.eco-stories[data-anim=slide] .eco-story {
+  animation: eco-slide-up 700ms cubic-bezier(0.16, 0.1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Лёгкая задержка для второй и третьей */
+.eco-stories[data-anim=slide] .eco-story:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.eco-stories[data-anim=slide] .eco-story:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+/* Если включено prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .eco-stories[data-anim=slide] .eco-story {
+    animation: none;
+  }
+}
+/* ====== Section ====== */
+.eco-section {
+  padding: 0 10px;
+  color: #0b0b0b;
+  box-sizing: border-box;
+  /* режем только горизонтальный оверфлоу (полоса справа) */
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* Header */
+.eco-title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.eco-subtitle {
+  margin: 0 0 14px;
+  color: #111827;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ====== Tabs (chips) ====== */
+.eco-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content; /* ширина чипа по контенту */
+  gap: 4px;
+  /* убираем отрицательные маргины — они и давали переполнение */
+  margin: 8px 0 18px;
+  /* внутренние отступы для «дорожки» */
+  padding: 0 12px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.eco-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.eco-tab {
+  height: 30px; /* фикс высота чипа */
+  width: auto;
+  border: 0;
+  border-radius: 999px;
+  background: #f0f1f3;
+  color: #1b1b1b;
+  display: inline-flex; /* центрирование иконки и текста */
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px; /* только по бокам — чтобы высота = 30px */
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.eco-tab__icon {
+  width: 18px;
+  height: 18px;
+  -o-object-fit: contain;
+     object-fit: contain;
+  display: block;
+}
+
+.eco-tab__label {
+  line-height: 1;
+  display: block;
+  font-weight: 400;
+}
+
+.eco-tab--active {
+  background: #ff3b57;
+  color: #fff;
+}
+
+/* ====== Stories (cards 160x219) ====== */
+.eco-stories {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 160px; /* ширина карточки */
+  gap: 12px;
+  /* убираем отрицательные маргины — возможный источник полосы */
+  margin: 0;
+  /* делаем внутреннюю «дорожку» слева/справа */
+  padding: 2px 12px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.eco-stories::-webkit-scrollbar {
+  display: none;
+}
+
+.eco-story {
+  position: relative;
+  width: 160px;
+  height: 219px; /* точный размер */
+  border-radius: 22px;
+  background-size: cover;
+  background-position: center;
+  background-color: #d9d9d9;
+  overflow: hidden; /* обрезаем содержимое по радиусу */
+  text-decoration: none;
+  color: #fff;
+}
+
+/* Само изображение — вписываем в карточку, без лишних зазоров */
+.eco-story__img {
+  display: block; /* убрать inline-gap */
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover; /* заполнить карточку без искажений */
+}
+
+/* Если используешь затемнение и текст поверх — оставил как было */
+.eco-story__fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0) 55%);
+}
+
+.eco-story__text {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.eco-story__title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  line-height: 1.08;
+  font-size: 20px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.eco-story__subtitle {
+  opacity: 0.95;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* адаптация */
+@media (min-width: 768px) {
+  .eco-section {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .eco-title {
+    font-size: 32px;
+  }
+}
+/* ===== Анимация появления карточек ===== */
+@keyframes eco-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Запуск анимации */
 .eco-stories[data-anim=slide] .eco-story {
   animation: eco-slide-up 700ms cubic-bezier(0.16, 0.1, 0.3, 1) both;
   will-change: transform, opacity;
