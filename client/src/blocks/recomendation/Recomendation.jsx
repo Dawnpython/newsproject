@@ -9,7 +9,7 @@ import Storiescat from "../../components/storiescat/Storiescat";
 
 export default function Recomendation() {
   return (
-    <div className="recomendation">
+ <div className="recomendation">
       <div className="rec-logo">
         <img src={logrec}></img>
       </div>

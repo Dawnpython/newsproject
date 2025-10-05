@@ -1,54 +1,124 @@
+/* ===== Recomendation ===== */
 .recomendation {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+
   width: 100%;
   gap: 16px;
   height: 611px;
-  background-color: white;
-  border-radius: 24px;
-  margin-top: 15px;
-    overflow-x: clip;   /* лучше, чем hidden: не создаёт скролл-контейнер */
-  overflow-y: visible !important;
-  
-  .rec-logo {
-    display: flex;
-    justify-content: center;
-    transform: translateY(-15px);
-    margin-bottom: -16px;
-    height: 108px;
-  }
-  .insta-banner {
-    position: relative;
-    height: auto;
-    
-    p {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      color: #00c3ff;
-      font-weight: 500;
-    }
-    button {
-        width: 100px;
-        height: 28px;
-      border: 1px solid #ffffff4d;
-      background: transparent;
-      border-radius: 56px;
-      position: absolute;
-      font-size: 10px;
-      left: 28px;
-      bottom: 46px;
-      color: white;
-    }
-  
 
-    .instalogo{
-        position: absolute;
-        top:16px;
-        left: 28px;
-    }
-  }
+  /* ВАЖНО: фон и скругление переносим в псевдоэлемент,
+     чтобы контент (логотип) мог выходить за пределы */
+  background: transparent;
+  border-radius: 0;
+
+  margin-top: 15px;
+
+  /* Режем только горизонтальный «выплеск», вертикаль оставляем видимой */
+  overflow-x: clip;
+  overflow-y: visible !important;
+
+  /* всё содержимое над псевдофоном */
+}
+.recomendation > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Визуальная «карточка» со скруглением и белым фоном */
+.recomendation::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #fff;
+  border-radius: 24px;
+  z-index: 0;
+}
+
+/* ЛОГОТИП — может выходить за пределы блока */
+.recomendation .rec-logo {
+  display: flex;
+  justify-content: center;
+  transform: translateY(-15px);
+  margin-bottom: -16px;
+  height: 108px;
+  z-index: 2; /* поверх карточки */
+}
+.recomendation .rec-logo img {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+/* INSTAGRAM-BANNER */
+.recomendation .insta-banner {
+  position: relative;
+  height: auto;
+  width: 100%;
+  /* защита от дрожания при субпиксельных трансформациях */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ЛОГО INSTAGRAM в левом верхнем углу */
+.recomendation .insta-banner .instalogo {
+  position: absolute;
+  top: 16px;
+  left: 28px;
+  display: block;
+}
+
+/* Все IMG внутри баннера — адаптивные и без inline-gap */
+.recomendation .insta-banner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Большая картинка баннера — скругляем края */
+.recomendation .insta-banner > img:last-of-type {
+  border-radius: 25px;
+  margin: 0 auto; /* центрирование, если меньше контейнера */
+}
+
+/* Надпись «Все статьи» по центру снизу */
+.recomendation .insta-banner p {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #00c3ff;
+  font-weight: 500;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* Кнопка в левом нижнем углу */
+.recomendation .insta-banner button {
+  width: 100px;
+  height: 28px;
+  border: 1px solid #ffffff4d;
+  background: transparent;
+  border-radius: 56px;
+  position: absolute;
+  font-size: 10px;
+  left: 28px;
+  bottom: 46px;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Мелкие удобства для iOS прокруток (если внутри будут горизонтальные стрипы) */
+.recomendation {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* На всякий: базовая нормализация */
+html, body {
+  margin: 0;
+  padding: 0;
 }
