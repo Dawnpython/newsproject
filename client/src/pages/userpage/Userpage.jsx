@@ -20,7 +20,7 @@ export default function Userpage() {
       <Popularcategory/>
       <Recomendation/>
       <Pr/>
-      
+      <Economycat/>
       <Formkey/>
       <Subscribe/>
       <Footer/>
