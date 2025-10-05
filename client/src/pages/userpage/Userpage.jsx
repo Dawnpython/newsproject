@@ -18,8 +18,11 @@ export default function Userpage() {
       <Hero />
       <CategoryFirst/>
       <Popularcategory/>
-      <Recomendation/>
       
+      <Pr/>
+      <Economycat/>
+      <Formkey/>
+      <Subscribe/>
       <Footer/>
       <Navbar />
     </div>
