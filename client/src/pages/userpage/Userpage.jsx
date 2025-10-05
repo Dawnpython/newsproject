@@ -19,6 +19,7 @@ export default function Userpage() {
       <CategoryFirst/>
       <Popularcategory/>
       <Recomendation/>
+      <Pr/>
       
       <Footer/>
       <Navbar />
