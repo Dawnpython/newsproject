@@ -9,7 +9,7 @@ import Popularcategory from "../../blocks/ popularCategory/Popularcategory";
 import Recomendation from "../../blocks/recomendation/Recomendation";
 import Pr from "../../blocks/pr/Pr";
 import Economycat from "../../blocks/economyCat/EconomyCat";
-import Subscribe from "../../blocks/subscribe/Subscribe";
+import  Subscribe from '/src/blocks/subscribe/Subscribe.jsx';
 
 
 export default function Userpage() {
