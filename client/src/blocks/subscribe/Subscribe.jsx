@@ -16,8 +16,8 @@ export default function Subscribe() {
           <br />
           сетях
         </p>
-        <img src={tgImg}></img>
-        <img src={vkImg}></img>
+        <img style={{width:40}} src={tgImg}></img>
+        <img style={{width:40}} src={vkImg}></img>
         <img className="backSub" src={imgbackTop}></img>
       </div>
       <div className="sub-bottom">
