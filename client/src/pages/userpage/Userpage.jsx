@@ -17,9 +17,6 @@ export default function Userpage() {
     <div className="userpage">
       <Hero />
       <CategoryFirst/>
-      <Popularcategory/>
-      <Recomendation/>
-      <Pr/>
       
       <Footer/>
       <Navbar />
