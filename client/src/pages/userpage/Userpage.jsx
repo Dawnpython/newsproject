@@ -21,8 +21,7 @@ export default function Userpage() {
       <Recomendation/>
       <Pr/>
       <Economycat/>
-      <Formkey/>
-      <Subscribe/>
+      
       <Footer/>
       <Navbar />
     </div>
