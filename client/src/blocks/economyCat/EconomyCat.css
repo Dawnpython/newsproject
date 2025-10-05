@@ -1,9 +1,14 @@
 @charset "UTF-8";
 /* ====== Section ====== */
 .eco-section {
-  padding: 0 10px;
+  padding: 20px 10px;
   color: #0b0b0b;
   box-sizing: border-box;
+  background-color: white;
+  border-radius: 20px;
+  /* режем только горизонтальный оверфлоу (полоса справа) */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* Header */
@@ -22,17 +27,18 @@
   text-align: center;
 }
 
-/* ====== Tabs (chips 126x30) ====== */
+/* ====== Tabs (chips) ====== */
 .eco-tabs {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: auto; /* ширина чипа */
+  grid-auto-columns: max-content; /* ширина чипа по контенту */
   gap: 4px;
+  /* убираем отрицательные маргины — они и давали переполнение */
+  margin: 8px 0 18px;
+  /* внутренние отступы для «дорожки» */
+  padding: 0 12px 8px;
   overflow-x: auto;
-  padding-bottom: 8px;
-  margin: 8px -12px 18px;
-  padding-left: 12px;
-  padding-right: 12px;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -41,17 +47,17 @@
 }
 
 .eco-tab {
-  height: 30px; /* высота чипа */
+  height: 30px; /* фикс высота чипа */
   width: auto;
   border: 0;
   border-radius: 999px;
   background: #f0f1f3;
   color: #1b1b1b;
-  display: flex; /* центрирование иконки и текста */
+  display: inline-flex; /* центрирование иконки и текста */
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0px 16px;
+  padding: 0 16px; /* только по бокам — чтобы высота = 30px */
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -83,9 +89,12 @@
   grid-auto-flow: column;
   grid-auto-columns: 160px; /* ширина карточки */
   gap: 12px;
-  overflow-x: auto;
-  margin: 0 -12px;
+  /* убираем отрицательные маргины — возможный источник полосы */
+  margin: 0;
+  /* делаем внутреннюю «дорожку» слева/справа */
   padding: 2px 12px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
@@ -101,11 +110,21 @@
   background-size: cover;
   background-position: center;
   background-color: #d9d9d9;
-  overflow: hidden;
+  overflow: hidden; /* обрезаем содержимое по радиусу */
   text-decoration: none;
   color: #fff;
 }
 
+/* Само изображение — вписываем в карточку, без лишних зазоров */
+.eco-story__img {
+  display: block; /* убрать inline-gap */
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover; /* заполнить карточку без искажений */
+}
+
+/* Если используешь затемнение и текст поверх — оставил как было */
 .eco-story__fade {
   position: absolute;
   inset: 0;
@@ -157,7 +176,7 @@
     transform: translateY(0);
   }
 }
-/* Запускаем анимацию, когда есть data-anim="slide" */
+/* Запуск анимации */
 .eco-stories[data-anim=slide] .eco-story {
   animation: eco-slide-up 700ms cubic-bezier(0.16, 0.1, 0.3, 1) both;
   will-change: transform, opacity;
