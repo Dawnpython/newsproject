@@ -1,13 +1,13 @@
 import { useRef } from "react";
 import "/src/components/slimcategory/slimCategory.css";
 
-import iconNews from '/src/assets/icons/slimcategory/icon-doc.svg'
-import iconCloud from '/src/assets/icons/slimcategory/icon-cloud.svg'
-import iconSale from '/src/assets/icons/slimcategory/icon-sale.svg'
-import iconCar from '/src/assets/icons/slimcategory/icon-car.svg'
-import iconBank from '/src/assets/icons/slimcategory/icon-money.svg'
-import iconFarm from '/src/assets/icons/slimcategory/icon-pharm.svg'
-import iconChuch from '/src/assets/icons/slimcategory/icon-church.svg'
+import iconNews from '/src/assets/icons/slimcategory/icon-doc.png'
+import iconCloud from '/src/assets/icons/slimcategory/icon-cloud.png'
+import iconSale from '/src/assets/icons/slimcategory/icon-sale.png'
+import iconCar from '/src/assets/icons/slimcategory/icon-car.png'
+import iconBank from '/src/assets/icons/slimcategory/icon-money.png'
+import iconFarm from '/src/assets/icons/slimcategory/icon-pharm.png'
+import iconChuch from '/src/assets/icons/slimcategory/icon-church.png'
 
 const DEFAULT_CATEGORIES = [
   { label: "Новости",        icon: iconNews },
@@ -33,7 +33,7 @@ export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
             onClick={() => onSelect?.(label)}
             aria-label={label}
           >
-            <img className="cat-chip__icon" src={icon} alt="" aria-hidden />
+            <img className="cat-chip__icon" style={{width:12}} src={icon} alt="" aria-hidden />
             <span className="cat-chip__label">{label}</span>
           </button>
         ))}
