@@ -18,7 +18,7 @@ export default function Userpage() {
       <Hero />
       <CategoryFirst/>
       <Popularcategory/>
-      
+      <Recomendation/>
       
       <Footer/>
       <Navbar />
