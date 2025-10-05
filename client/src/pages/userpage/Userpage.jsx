@@ -9,7 +9,7 @@ import Popularcategory from "../../blocks/ popularCategory/Popularcategory";
 import Recomendation from "../../blocks/recomendation/Recomendation";
 import Pr from "../../blocks/pr/Pr";
 import Economycat from "../../blocks/economyCat/EconomyCat";
-import  Subscribe from '/src/blocks/subscribe/Subscribe.jsx';
+import Subscribe from '/src/blocks/subscribe/Subscribe.jsx';
 
 
 export default function Userpage() {
@@ -20,7 +20,7 @@ export default function Userpage() {
       <Popularcategory/>
       <Recomendation/>
       <Pr/>
-      <Economycat/>
+      
       <Formkey/>
       <Subscribe/>
       <Footer/>
