@@ -10,7 +10,7 @@
   border-radius: 24px;
   margin-top: 15px;
   overflow-x: clip; /* лучше, чем hidden: не создаёт скролл-контейнер */
-  overflow-y: visible;
+  overflow-y: visible !important;
 }
 .recomendation .rec-logo {
   display: flex;
