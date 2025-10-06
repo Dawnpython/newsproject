@@ -1,12 +1,12 @@
-import '/src/pages/loginPage/Login.css';
+import "/src/pages/loginPage/Login.css";
 import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-
 export default function Login() {
-    
-    
+  const [agree, setAgree] = useState(false);
+  const [agreeTouched, setAgreeTouched] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,19 +33,35 @@ export default function Login() {
         {isRegister ? (
           <>
             <label>Имя</label>
-            <input placeholder='Иван Иванов' type="text" />
+            <input placeholder="Иван Иванов" type="text" />
             <label>Почта</label>
-            <input placeholder='example@mail.ru' type="email" />
+            <input placeholder="example@mail.ru" type="email" />
             <label>Телефон</label>
-            <input placeholder='+7 (000) 000-00-00' type="password" />
+            <input placeholder="+7 (000) 000-00-00" type="password" />
             <label>Придумайте пароль</label>
-            <input placeholder='*********' type="password" />
+            <input placeholder="*********" type="password" />
             <label>Повторите пароль</label>
-            <input placeholder='*********' type="password" />
+            <input placeholder="*********" type="password" />
+            <label className="agree-row">
+              <input
+                type="checkbox"
+                className={`checkbox-20${
+                  !agree && agreeTouched ? " error" : ""
+                }`}
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)}
+                onBlur={() => setAgreeTouched(true)}
+              />
+              <span>
+                Согласен на обработку персональных данных в соответствии с{" "}
+                <a href="#" onClick={(e) => e.preventDefault()}>
+                  Политикой конфиденциальности
+                </a>
+              </span>
+            </label>
+            
             <button>Зарегистрироваться</button>
-            <div className="politics">
-                
-            </div>
+            <div className="politics"></div>
             <a className="no-acc">
               Уже есть аккаунт?
               <span onClick={() => setIsRegister(false)}> Войти</span>
@@ -61,7 +77,10 @@ export default function Login() {
             <a>Забыли пароль?</a>
             <a className="no-acc">
               Нет аккаунта?
-              <span onClick={() => setIsRegister(true)}> Зарегистрируйтесь</span>
+              <span onClick={() => setIsRegister(true)}>
+                {" "}
+                Зарегистрируйтесь
+              </span>
             </a>
           </>
         )}
