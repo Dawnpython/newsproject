@@ -6,8 +6,17 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 
+if (!process.env.DATABASE_URL) {
+  console.error("❌ Missing DATABASE_URL env var. Set it in Render → Environment.");
+  process.exit(1);
+}
+
 const app = express();
-app.use(cors());
+
+// CORS: разрешаем фронт с домена из env, иначе * (можно оставить как есть)
+const allowedOrigin = process.env.FRONTEND_ORIGIN || "*";
+app.use(cors({ origin: allowedOrigin }));
+
 app.use(express.json());
 
 // ==== DB ====
@@ -68,6 +77,11 @@ function authMiddleware(req, res, next) {
 
 // ==== routes ====
 
+// root — чтобы не видеть "Cannot GET /"
+app.get("/", (req, res) => {
+  res.type("text").send("Auth API is running. Try /api/health");
+});
+
 // health
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 
@@ -88,9 +102,12 @@ app.post("/api/auth/register", async (req, res) => {
     if (password !== password2)
       return res.status(400).json({ error: "PASSWORDS_NOT_MATCH" });
 
-    // проверка уникальности
+    // проверка уникальности (фикс 42P08 — кастим ко text)
     const exists = await dbQuery(
-      `SELECT id FROM users WHERE lower(email)=lower($1) OR ($2 IS NOT NULL AND phone=$2)`,
+      `SELECT 1
+         FROM users
+        WHERE lower(email)=lower($1)
+           OR ($2::text IS NOT NULL AND phone = $2::text)`,
       [email, phoneDigits]
     );
     if (exists.rowCount > 0) return res.status(409).json({ error: "USER_EXISTS" });
@@ -98,7 +115,7 @@ app.post("/api/auth/register", async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const insert = await dbQuery(
       `INSERT INTO users (name, email, phone, password_hash)
-       VALUES ($1, lower($2), $3, $4)
+       VALUES ($1, lower($2), $3::text, $4)
        RETURNING id, name, email, phone, created_at`,
       [name.trim(), email.trim(), phoneDigits, hash]
     );
