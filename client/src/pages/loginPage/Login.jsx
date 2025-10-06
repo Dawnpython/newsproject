@@ -17,7 +17,7 @@ export default function Login() {
   // если уже авторизованы — сразу уводим на главную (WelcomeAuth сам проверит токен)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) navigate("/profile", { replace: true });
+    if (token) navigate("/", { replace: true });
   }, [navigate]);
 
   // --- стейт полей регистрации ---
@@ -112,7 +112,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/profile", { replace: true }); // WelcomeAuth сам подтянет профиль
+      navigate("/", { replace: true }); // WelcomeAuth сам подтянет профиль
     } catch (e) {
       console.error("Register error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -152,7 +152,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/profile", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
+      navigate("/", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
     } catch (e) {
       console.error("Login error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
