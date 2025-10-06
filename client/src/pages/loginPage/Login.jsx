@@ -17,7 +17,7 @@ export default function Login() {
   // если уже авторизованы — сразу уводим на главную (WelcomeAuth сам проверит токен)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) navigate("/", { replace: true });
+    if (token) navigate("/profile", { replace: true });
   }, [navigate]);
 
   // --- стейт полей регистрации ---
