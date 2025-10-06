@@ -52,7 +52,7 @@
   font-weight: 500;
 }
 .login-container .login-content .no-acc {
-  position: absolute;
+  position: fixed;
   bottom: 50px;
   color: black;
 }
