@@ -1,5 +1,6 @@
 import "/src/pages/welcomeAuth/welcomeAuth.css";
-import { useNavigate, useEffect, useState } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import Navbar from "/src/components/navbar/Navbar.jsx";
 import Userprofile from "/src/pages/userprofile/Userprofile.jsx";
@@ -7,6 +8,7 @@ import Userprofile from "/src/pages/userprofile/Userprofile.jsx";
 import firstStep from "/src/assets/auth/1.png";
 import secondStep from "/src/assets/auth/2.png";
 import thirdStep from "/src/assets/auth/3.png";
+
 
 export default function WelcomeAuth() {
   const navigate = useNavigate();
