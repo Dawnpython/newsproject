@@ -7,6 +7,8 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const API_BASE = "https://newsproject-tnkc.onrender.com";
+
   const queryParams = new URLSearchParams(location.search);
   const modeFromUrl = queryParams.get("mode");
 
@@ -30,6 +32,7 @@ export default function Login() {
   const [agree, setAgree] = useState(false);
   const [agreeTouched, setAgreeTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false); // ← добавили
 
   // --- стейт полей логина ---
   const [loginEmail, setLoginEmail] = useState("");
@@ -69,15 +72,72 @@ export default function Login() {
   const markAllTouched = () =>
     setTouched({ name: true, email: true, phone: true, password: true, password2: true });
 
-  const handleRegisterClick = () => {
+  // === РЕГИСТРАЦИЯ ===
+  const handleRegisterClick = async () => {
     setSubmitted(true);
     markAllTouched();
     setAgreeTouched(true);
-    if (!isValid) return;
+    if (!isValid || loading) return;
 
-    // TODO: отправка данных регистрации
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,      // тут уже только цифры
+          password,
+          password2,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // мягкое отображение ошибок — подсветим соответствующие поля
+        switch (data?.error) {
+          case "EMAIL_INVALID":
+            setTouched((p) => ({ ...p, email: true }));
+            alert("Некорректная почта");
+            break;
+          case "PASSWORDS_NOT_MATCH":
+            setTouched((p) => ({ ...p, password2: true }));
+            alert("Пароли не совпадают");
+            break;
+          case "USER_EXISTS":
+            setTouched((p) => ({ ...p, email: true }));
+            alert("Пользователь с такой почтой/телефоном уже существует");
+            break;
+          case "NAME_REQUIRED":
+          case "PASSWORD_REQUIRED":
+          case "PHONE_INVALID":
+            alert("Проверьте корректность введённых данных");
+            break;
+          default:
+            alert("Ошибка регистрации. Попробуйте ещё раз");
+        }
+        return;
+      }
+
+      // успех
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
+      // можно сохранить пользователя, если нужно:
+      // localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/"); // редирект куда тебе нужно
+    } catch (e) {
+      console.error("Register error:", e);
+      alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // === ЛОГИН (оставим TODO, сделаем после регистрации) ===
   const handleLoginClick = () => {
     setLoginSubmitted(true);
     setLoginTouched({ email: true, password: true });
@@ -133,7 +193,7 @@ export default function Login() {
               pattern="[0-9]*"
               value={phone}
               onChange={(e) => {
-                const onlyNums = e.target.value.replace(/\D/g, ""); // ← только цифры
+                const onlyNums = e.target.value.replace(/\D/g, "");
                 setPhone(onlyNums);
               }}
               onBlur={blur("phone")}
@@ -176,8 +236,8 @@ export default function Login() {
               </span>
             </label>
 
-            <button onClick={handleRegisterClick} disabled={!isValid}>
-              Зарегистрироваться
+            <button onClick={handleRegisterClick} disabled={!isValid || loading}>
+              {loading ? "Загрузка..." : "Зарегистрироваться"}
             </button>
 
             <div className="politics"></div>
