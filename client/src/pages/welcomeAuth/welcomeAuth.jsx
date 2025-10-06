@@ -41,8 +41,13 @@ export default function WelcomeAuth() {
         </div>
       </div>
       <p>Все просто, без суеты и поисков!</p>
-      <button className="authbut" onClick={() => navigate("/login")}>Зарегистрироваться</button>
-      <button className="logbut">Войти</button>
+      <button className="authbut" onClick={() => navigate("/login?mode=register")}>
+  Зарегистрироваться
+</button>
+
+<button className="logbut" onClick={() => navigate("/login?mode=login")}>
+  Войти
+</button>
       <Navbar />
     </div>
   );
