@@ -5,6 +5,7 @@ import Navbar from "/src/components/navbar/Navbar.jsx";
 
 import firstStep from '/src/assets/auth/1.png'
 import secondStep from '/src/assets/auth/2.png'
+import thirdStep from '/src/assets/auth/3.png'
 
 export default function WelcomeAuth() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function WelcomeAuth() {
             <p>Выбираете лучшее<br/>
 предложение<br/>
 и связываетесь напрямую</p>
+<img width={149} height={106} src={thirdStep} ></img>
         </div>
       </div>
       <p>Все просто, без суеты и поисков!</p>
