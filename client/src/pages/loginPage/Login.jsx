@@ -112,7 +112,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); // WelcomeAuth сам подтянет профиль
+      navigate("/profile", { replace: true }); // WelcomeAuth сам подтянет профиль
     } catch (e) {
       console.error("Register error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
