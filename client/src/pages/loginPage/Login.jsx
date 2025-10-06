@@ -2,6 +2,7 @@ import "/src/pages/loginPage/Login.css";
 import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
+import AccountTest from "/src/pages/userprofile/Userprofile.jsx"; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,6 +14,10 @@ export default function Login() {
   const modeFromUrl = queryParams.get("mode");
 
   const [isRegister, setIsRegister] = useState(false);
+
+  // auth state
+  const [user, setUser] = useState(null);
+  const [checkedAuth, setCheckedAuth] = useState(false);
 
   // --- стейт полей регистрации ---
   const [name, setName] = useState("");
@@ -45,6 +50,33 @@ export default function Login() {
     if (modeFromUrl === "register") setIsRegister(true);
     if (modeFromUrl === "login") setIsRegister(false);
   }, [modeFromUrl]);
+
+  // ==== проверка токена при загрузке страницы ====
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setCheckedAuth(true);
+      return;
+    }
+    fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        if (data?.user) setUser(data.user);
+        else localStorage.removeItem("token");
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+      })
+      .finally(() => setCheckedAuth(true));
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    // при желании: navigate("/login?mode=login");
+  };
 
   // --- валидация регистрации ---
   const errors = useMemo(() => {
@@ -88,7 +120,7 @@ export default function Login() {
         body: JSON.stringify({
           name,
           email,
-          phone,      // тут уже только цифры
+          phone,
           password,
           password2,
         }),
@@ -110,23 +142,18 @@ export default function Login() {
             setTouched((p) => ({ ...p, email: true }));
             alert("Пользователь с такой почтой/телефоном уже существует");
             break;
-          case "NAME_REQUIRED":
-          case "PASSWORD_REQUIRED":
-          case "PHONE_INVALID":
-            alert("Проверь корректность введённых данных");
-            break;
           default:
-            alert("Ошибка регистрации. Попробуй ещё раз");
+            alert("Ошибка регистрации. Попробуйте ещё раз");
         }
         return;
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      // localStorage.setItem("user", JSON.stringify(data.user)); // если нужно
-      navigate("/");
+      if (data?.user) setUser(data.user); // <<< сразу считаем пользователя авторизованным
+      // navigate("/"); // если нужно сразу увести на главную
     } catch (e) {
       console.error("Register error:", e);
-      alert("Сеть/сервер недоступен. Попробуй ещё раз.");
+      alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
     } finally {
       setLoading(false);
     }
@@ -166,31 +193,33 @@ export default function Login() {
             alert("Неверная почта или пароль");
             break;
           default:
-            alert("Ошибка входа. Попробуй ещё раз");
+            alert("Ошибка входа. Попробуйте ещё раз");
         }
         return;
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      // localStorage.setItem("user", JSON.stringify(data.user)); // если нужно
-      navigate("/");
+      if (data?.user) setUser(data.user); // <<< авторизовали
+      // navigate("/");
     } catch (e) {
       console.error("Login error:", e);
-      alert("Сеть/сервер недоступен. Попробуй ещё раз.");
+      alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
     } finally {
       setLoginLoading(false);
     }
   };
 
-  // onBlur-хелперы
-  const blur = (field) => () => setTouched((p) => ({ ...p, [field]: true }));
-  const loginBlur = (field) => () => setLoginTouched((p) => ({ ...p, [field]: true }));
+  // ======= РЕНДЕР =======
+  if (!checkedAuth) {
+    // можно сделать красивый лоадер
+    return null;
+  }
 
-  // класс ошибки
-  const showErr = (field) => (touched[field] || submitted) && errors[field] ? "error" : "";
-  const showLoginErr = (field) =>
-    (loginTouched[field] || loginSubmitted) && loginErrors[field] ? "error" : "";
+  if (user) {
+    return <AccountTest user={user} onLogout={logout} />;
+  }
 
+  // ниже — твоя форма как была
   return (
     <div className="login-container">
       <div className="title" onClick={() => navigate("/")}>
@@ -207,8 +236,8 @@ export default function Login() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onBlur={blur("name")}
-              className={showErr("name")}
+              onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+              className={(touched.name || submitted) && errors.name ? "error" : ""}
             />
 
             <label>Почта</label>
@@ -217,8 +246,8 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onBlur={blur("email")}
-              className={showErr("email")}
+              onBlur={() => setTouched((p) => ({ ...p, email: true }))}
+              className={(touched.email || submitted) && errors.email ? "error" : ""}
             />
 
             <label>Телефон</label>
@@ -228,12 +257,9 @@ export default function Login() {
               inputMode="numeric"
               pattern="[0-9]*"
               value={phone}
-              onChange={(e) => {
-                const onlyNums = e.target.value.replace(/\D/g, "");
-                setPhone(onlyNums);
-              }}
-              onBlur={blur("phone")}
-              className={showErr("phone")}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              onBlur={() => setTouched((p) => ({ ...p, phone: true }))}
+              className={(touched.phone || submitted) && errors.phone ? "error" : ""}
             />
 
             <label>Придумайте пароль</label>
@@ -242,8 +268,8 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onBlur={blur("password")}
-              className={showErr("password")}
+              onBlur={() => setTouched((p) => ({ ...p, password: true }))}
+              className={(touched.password || submitted) && errors.password ? "error" : ""}
             />
 
             <label>Повторите пароль</label>
@@ -252,8 +278,8 @@ export default function Login() {
               type="password"
               value={password2}
               onChange={(e) => setPassword2(e.target.value)}
-              onBlur={blur("password2")}
-              className={showErr("password2")}
+              onBlur={() => setTouched((p) => ({ ...p, password2: true }))}
+              className={(touched.password2 || submitted) && errors.password2 ? "error" : ""}
             />
 
             <label className="agree-row">
@@ -290,8 +316,8 @@ export default function Login() {
               placeholder="example@mail.ru"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              onBlur={loginBlur("email")}
-              className={showLoginErr("email")}
+              onBlur={() => setLoginTouched((p) => ({ ...p, email: true }))}
+              className={(loginTouched.email || loginSubmitted) && loginErrors.email ? "error" : ""}
             />
 
             <label>Пароль</label>
@@ -300,8 +326,8 @@ export default function Login() {
               placeholder="*********"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
-              onBlur={loginBlur("password")}
-              className={showLoginErr("password")}
+              onBlur={() => setLoginTouched((p) => ({ ...p, password: true }))}
+              className={(loginTouched.password || loginSubmitted) && loginErrors.password ? "error" : ""}
             />
 
             <button onClick={handleLoginClick} disabled={!isLoginValid || loginLoading}>
