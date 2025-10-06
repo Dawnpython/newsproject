@@ -37,7 +37,7 @@ export default function WelcomeAuth() {
             <p>Выбираете лучшее<br/>
 предложение<br/>
 и связываетесь напрямую</p>
-<img width={149} height={106} src={thirdStep} ></img>
+<img width={149} height={106} style={{right:'20px',position:'absolute', bottom:'0'}} src={thirdStep} ></img>
         </div>
       </div>
       <p>Все просто, без суеты и поисков!</p>
