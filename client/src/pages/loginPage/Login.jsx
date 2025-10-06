@@ -32,13 +32,14 @@ export default function Login() {
   const [agree, setAgree] = useState(false);
   const [agreeTouched, setAgreeTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false); // ← добавили
+  const [loading, setLoading] = useState(false); // регистрация
 
   // --- стейт полей логина ---
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginTouched, setLoginTouched] = useState({ email: false, password: false });
   const [loginSubmitted, setLoginSubmitted] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false); // логин
 
   useEffect(() => {
     if (modeFromUrl === "register") setIsRegister(true);
@@ -96,7 +97,6 @@ export default function Login() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // мягкое отображение ошибок — подсветим соответствующие поля
         switch (data?.error) {
           case "EMAIL_INVALID":
             setTouched((p) => ({ ...p, email: true }));
@@ -113,37 +113,73 @@ export default function Login() {
           case "NAME_REQUIRED":
           case "PASSWORD_REQUIRED":
           case "PHONE_INVALID":
-            alert("Проверьте корректность введённых данных");
+            alert("Проверь корректность введённых данных");
             break;
           default:
-            alert("Ошибка регистрации. Попробуйте ещё раз");
+            alert("Ошибка регистрации. Попробуй ещё раз");
         }
         return;
       }
 
-      // успех
-      if (data?.token) {
-        localStorage.setItem("token", data.token);
-      }
-      // можно сохранить пользователя, если нужно:
-      // localStorage.setItem("user", JSON.stringify(data.user));
-
-      navigate("/"); // редирект куда тебе нужно
+      if (data?.token) localStorage.setItem("token", data.token);
+      // localStorage.setItem("user", JSON.stringify(data.user)); // если нужно
+      navigate("/");
     } catch (e) {
       console.error("Register error:", e);
-      alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
+      alert("Сеть/сервер недоступен. Попробуй ещё раз.");
     } finally {
       setLoading(false);
     }
   };
 
-  // === ЛОГИН (оставим TODO, сделаем после регистрации) ===
-  const handleLoginClick = () => {
+  // === ЛОГИН ===
+  const handleLoginClick = async () => {
     setLoginSubmitted(true);
     setLoginTouched({ email: true, password: true });
-    if (!isLoginValid) return;
+    if (!isLoginValid || loginLoading) return;
 
-    // TODO: отправка данных логина
+    try {
+      setLoginLoading(true);
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        switch (data?.error) {
+          case "EMAIL_INVALID":
+            setLoginTouched((p) => ({ ...p, email: true }));
+            alert("Некорректная почта");
+            break;
+          case "PASSWORD_REQUIRED":
+            setLoginTouched((p) => ({ ...p, password: true }));
+            alert("Введите пароль");
+            break;
+          case "INVALID_CREDENTIALS":
+            setLoginTouched({ email: true, password: true });
+            alert("Неверная почта или пароль");
+            break;
+          default:
+            alert("Ошибка входа. Попробуй ещё раз");
+        }
+        return;
+      }
+
+      if (data?.token) localStorage.setItem("token", data.token);
+      // localStorage.setItem("user", JSON.stringify(data.user)); // если нужно
+      navigate("/");
+    } catch (e) {
+      console.error("Login error:", e);
+      alert("Сеть/сервер недоступен. Попробуй ещё раз.");
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   // onBlur-хелперы
@@ -268,7 +304,9 @@ export default function Login() {
               className={showLoginErr("password")}
             />
 
-            <button onClick={handleLoginClick} disabled={!isLoginValid}>Войти</button>
+            <button onClick={handleLoginClick} disabled={!isLoginValid || loginLoading}>
+              {loginLoading ? "Входим..." : "Войти"}
+            </button>
             <a>Забыли пароль?</a>
             <a className="no-acc">
               Нет аккаунта?
