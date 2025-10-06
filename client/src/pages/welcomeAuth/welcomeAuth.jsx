@@ -1,12 +1,15 @@
-import "/src/pages/authpage/Auth.css";
+import "/src/pages/welcomeAuth/welcomeAuth.css";
+import { useNavigate } from "react-router-dom";
+
 import Navbar from "/src/components/navbar/Navbar.jsx";
 
 import firstStep from '/src/assets/auth/1.png'
 import secondStep from '/src/assets/auth/2.png'
 
-export default function Auth() {
+export default function WelcomeAuth() {
+  const navigate = useNavigate();
   return (
-    <div className="auth-page">
+    <div className="welcome-auth">
       <h1>
         Войдите или зарегистрируйтесь,
         <br /> чтобы отправлять свои запросы
@@ -36,7 +39,7 @@ export default function Auth() {
         </div>
       </div>
       <p>Все просто, без суеты и поисков!</p>
-      <button className="authbut">Зарегистрироваться</button>
+      <button className="authbut" onClick={() => navigate("/login")}>Зарегистрироваться</button>
       <button className="logbut">Войти</button>
       <Navbar />
     </div>

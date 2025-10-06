@@ -1,4 +1,4 @@
-.auth-page {
+.welcome-auth {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,7 +10,7 @@
   width: 100%;
   overflow-x: hidden;
 }
-.auth-page h1 {
+.welcome-auth h1 {
   color: rgb(255, 255, 255);
   font-size: 18px;
   font-weight: 600;
@@ -18,12 +18,12 @@
   margin-top: 20px;
   margin-bottom: 40px;
 }
-.auth-page p {
+.welcome-auth p {
   font-size: 16px;
   color: white;
   font-weight: 600;
 }
-.auth-page .steps {
+.welcome-auth .steps {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -31,7 +31,7 @@
   gap: 16px;
   margin-bottom: 24px;
 }
-.auth-page .steps .step {
+.welcome-auth .steps .step {
   position: relative;
   display: flex;
   align-items: center;
@@ -42,15 +42,15 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 24px;
 }
-.auth-page .steps .step img {
+.welcome-auth .steps .step img {
   border-radius: 13px;
 }
-.auth-page .steps .step p {
+.welcome-auth .steps .step p {
   font-size: 13px;
   font-weight: 600;
   color: white;
 }
-.auth-page .steps .step .step-num {
+.welcome-auth .steps .step .step-num {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -65,12 +65,12 @@
   font-weight: 700;
   border-radius: 10px;
 }
-.auth-page button {
+.welcome-auth button {
   width: calc(100% - 20px);
   height: 52px;
   border-radius: 100px;
 }
-.auth-page .authbut {
+.welcome-auth .authbut {
   background-color: white;
   margin-bottom: 15px;
   color: rgb(0, 195, 255);
@@ -79,11 +79,11 @@
   border: none;
   margin-top: 60px;
 }
-.auth-page .logbut {
+.welcome-auth .logbut {
   background-color: transparent;
   border: 1px solid white;
   margin-bottom: 15px;
   color: white;
   font-size: 16px;
   font-weight: 600;
-}/*# sourceMappingURL=Auth.css.map */
+}/*# sourceMappingURL=welcomeAuth.css.map */
