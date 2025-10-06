@@ -2,7 +2,6 @@ import "/src/pages/loginPage/Login.css";
 import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import AccountTest from "/src/pages/userprofile/Userprofile.jsx"; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,9 +14,11 @@ export default function Login() {
 
   const [isRegister, setIsRegister] = useState(false);
 
-  // auth state
-  const [user, setUser] = useState(null);
-  const [checkedAuth, setCheckedAuth] = useState(false);
+  // если уже авторизованы — сразу уводим на главную (WelcomeAuth сам проверит токен)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) navigate("/", { replace: true });
+  }, [navigate]);
 
   // --- стейт полей регистрации ---
   const [name, setName] = useState("");
@@ -37,46 +38,20 @@ export default function Login() {
   const [agree, setAgree] = useState(false);
   const [agreeTouched, setAgreeTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false); // регистрация
+  const [loading, setLoading] = useState(false);
 
   // --- стейт полей логина ---
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginTouched, setLoginTouched] = useState({ email: false, password: false });
   const [loginSubmitted, setLoginSubmitted] = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false); // логин
+  const [loginLoading, setLoginLoading] = useState(false);
 
+  // режим из URL
   useEffect(() => {
     if (modeFromUrl === "register") setIsRegister(true);
     if (modeFromUrl === "login") setIsRegister(false);
   }, [modeFromUrl]);
-
-  // ==== проверка токена при загрузке страницы ====
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setCheckedAuth(true);
-      return;
-    }
-    fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.ok ? r.json() : Promise.reject())
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-        else localStorage.removeItem("token");
-      })
-      .catch(() => {
-        localStorage.removeItem("token");
-      })
-      .finally(() => setCheckedAuth(true));
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    // при желании: navigate("/login?mode=login");
-  };
 
   // --- валидация регистрации ---
   const errors = useMemo(() => {
@@ -117,13 +92,7 @@ export default function Login() {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          password,
-          password2,
-        }),
+        body: JSON.stringify({ name, email, phone, password, password2 }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -131,17 +100,11 @@ export default function Login() {
       if (!res.ok) {
         switch (data?.error) {
           case "EMAIL_INVALID":
-            setTouched((p) => ({ ...p, email: true }));
-            alert("Некорректная почта");
-            break;
+            setTouched((p) => ({ ...p, email: true })); alert("Некорректная почта"); break;
           case "PASSWORDS_NOT_MATCH":
-            setTouched((p) => ({ ...p, password2: true }));
-            alert("Пароли не совпадают");
-            break;
+            setTouched((p) => ({ ...p, password2: true })); alert("Пароли не совпадают"); break;
           case "USER_EXISTS":
-            setTouched((p) => ({ ...p, email: true }));
-            alert("Пользователь с такой почтой/телефоном уже существует");
-            break;
+            setTouched((p) => ({ ...p, email: true })); alert("Пользователь уже существует"); break;
           default:
             alert("Ошибка регистрации. Попробуйте ещё раз");
         }
@@ -149,8 +112,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      if (data?.user) setUser(data.user); // <<< сразу считаем пользователя авторизованным
-      // navigate("/"); // если нужно сразу увести на главную
+      navigate("/", { replace: true }); // WelcomeAuth сам подтянет профиль
     } catch (e) {
       console.error("Register error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -170,10 +132,7 @@ export default function Login() {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword,
-        }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -181,17 +140,11 @@ export default function Login() {
       if (!res.ok) {
         switch (data?.error) {
           case "EMAIL_INVALID":
-            setLoginTouched((p) => ({ ...p, email: true }));
-            alert("Некорректная почта");
-            break;
+            setLoginTouched((p) => ({ ...p, email: true })); alert("Некорректная почта"); break;
           case "PASSWORD_REQUIRED":
-            setLoginTouched((p) => ({ ...p, password: true }));
-            alert("Введите пароль");
-            break;
+            setLoginTouched((p) => ({ ...p, password: true })); alert("Введите пароль"); break;
           case "INVALID_CREDENTIALS":
-            setLoginTouched({ email: true, password: true });
-            alert("Неверная почта или пароль");
-            break;
+            setLoginTouched({ email: true, password: true }); alert("Неверная почта или пароль"); break;
           default:
             alert("Ошибка входа. Попробуйте ещё раз");
         }
@@ -199,8 +152,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      if (data?.user) setUser(data.user); // <<< авторизовали
-      // navigate("/");
+      navigate("/", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
     } catch (e) {
       console.error("Login error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -210,16 +162,6 @@ export default function Login() {
   };
 
   // ======= РЕНДЕР =======
-  if (!checkedAuth) {
-    // можно сделать красивый лоадер
-    return null;
-  }
-
-  if (user) {
-    return <AccountTest user={user} onLogout={logout} />;
-  }
-
-  // ниже — твоя форма как была
   return (
     <div className="login-container">
       <div className="title" onClick={() => navigate("/")}>
