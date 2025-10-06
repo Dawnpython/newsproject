@@ -152,7 +152,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
+      navigate("/profile", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
     } catch (e) {
       console.error("Login error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
