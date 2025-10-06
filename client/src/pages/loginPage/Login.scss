@@ -4,142 +4,162 @@
   position: relative;
   width: 100%;
   height: 100vh;
-  .title {
-    display: flex;
-    position: relative;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 120px;
-    background-image: url("/src/assets/auth/img-auth-header-bg.png");
-    background-repeat: no-repeat;
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
-    svg{position: absolute;
-    left: 10px;}
-  }
-  .login-content {
-    display: flex;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: calc(100% - 100px);
-    flex-direction: column;
-    align-items: center;
-    background-color: white;
-    border-radius: 24px;
+}
 
-button{
-        width: calc(100% - 20px);
-        border: none;
-        background-color: rgba(0, 195, 255, 1);
-        margin-top: 20px;
-        margin-bottom: 20px;
-        height: 52px;
-        border-radius: 100px;
-        color: white;
-        font-size: 16px;
-        font-weight: 600;
-    }
+.login-container .title {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 120px;
+  background-image: url("/src/assets/auth/img-auth-header-bg.png");
+  background-repeat: no-repeat;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+.login-container .title svg {
+  position: absolute;
+  left: 10px;
+}
 
-a{
+.login-container .login-content {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: calc(100% - 100px);
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+  border-radius: 24px;
+}
+
+/* кнопка */
+.login-container .login-content button{
+  width: calc(100% - 20px);
+  border: none;
+  background-color: rgba(0, 195, 255, 1);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  height: 52px;
+  border-radius: 100px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ссылки */
+.login-container .login-content a{
   color: rgba(0, 195, 255, 1);
   font-size: 16px;
   font-weight: 500;
 }
 
-.no-acc{
+/* "Нет аккаунта?" фикс внизу */
+.login-container .login-content .no-acc{
   position: fixed;
   bottom: 50px;
   color: black;
-  span{
-    color: rgba(0, 195, 255, 1);
-  }
+}
+.login-container .login-content .no-acc span{
+  color: rgba(0, 195, 255, 1);
 }
 
-    label {
-      display: flex;
-      justify-content: left;
-      width: calc(100% - 20px);
-    padding-left: 10px;
-    margin-top: 20px;
-    margin-bottom: 6px;
-    font-weight: 600;
-    }
-    input {
-      display: flex;
-      align-items: center;
-      width: calc(100% - 20px);
-      padding: 10px;
-      box-sizing: border-box;
-      font-size: 16px;
-      height: 52px;
-      border-radius: 12px;
-      border: none;
-      background-color: rgba(243, 244, 246, 1);
-      &:focus {
-        border: 2px solid rgba(0, 195, 255, 1) !important;
-        outline: none;
-      }
-    }
-
-    .title {
-      width: 100%;
-      text-align: center;
-    }
-  }
+/* метки */
+.login-container .login-content label {
+  display: flex;
+  justify-content: left;
+  width: calc(100% - 20px);
+  padding-left: 10px;
+  margin-top: 20px;
+  margin-bottom: 6px;
+  font-weight: 600;
 }
 
+/* ИНПУТЫ: без прыжков
+   — сразу даём border: 2px transparent;
+   — на фокус/ошибку меняем ТОЛЬКО цвет. */
+.login-container .login-content input {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 20px);
+  padding: 10px;
+  box-sizing: border-box;
+  font-size: 16px;
+  height: 52px;
+  border-radius: 12px;
+  border: 2px solid transparent;           /* ← было none */
+  background-color: rgba(243, 244, 246, 1);
+  outline: none;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+/* фокус — только цвет бордера */
+.login-container .login-content input:focus {
+  border-color: rgba(0, 195, 255, 1) !important;
+  background-color: #fff;
+}
+
+
+
+/* (если вдруг у тебя есть вложенный .title в .login-content) */
+.login-container .login-content .title {
+  width: 100%;
+  text-align: center;
+}
+
+/* --- чекбокс + текст --- */
 .agree-row {
   display: flex;
   align-items: flex-start;
+      align-items: center;
   gap: 12px;
   line-height: 1.35;
   color: #111827;
   font-size: 12px;
 }
 
-/* кастомный чекбокс ровно 20x20 */
+/* кастомный чекбокс: фиксируем размеры без прыжков */
 .checkbox-20 {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px !important;
-  height: 20px !important;
-  border: 1.5px solid #cbd5e1;   /* slate-300 */
+  width: 40px !important;                   /* как у тебя сейчас */
+  height: 40px !important;
+  box-sizing: border-box;                   /* ← учитываем бордер в размере */
+  border: 2px solid #cbd5e1;                /* одинаковая толщина всегда */
   border-radius: 2px !important;
-  background: rgba(0, 195, 255, 1) !important;
   display: grid;
   place-content: center;
   cursor: pointer;
-  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+  transition: border-color .2s, background-color .2s, box-shadow .2s;
 }
 
 .checkbox-20:focus-visible {
-  outline: 2px solid #93c5fd;     /* focus ring */
+  outline: 2px solid #93c5fd;
   outline-offset: 2px;
 }
 
-/* галочка */
+/* галочка — чуть компактнее, чтобы не упираться в края */
 .checkbox-20::after {
   content: "";
-  width: 10px;
-  height: 6px;
+  width: 12px !important;                   /* было 10 — можно оставить 10, если нравилось */
+  height: 7px;
   border: 2px solid transparent;
-  border-left-color: #fff;
-  border-bottom-color: #fff;
+  border-left-color: rgba(0, 195, 255, 1);
+  border-bottom-color: rgba(0, 195, 255, 1);
   transform: translateY(-1px) rotate(-45deg);
   opacity: 0;
 }
 
 .checkbox-20:checked {
-  background: #3b82f6;            /* blue-500 */
+  background: #3b82f6;                      /* blue-500 */
   border-color: #3b82f6;
 }
 .checkbox-20:checked::after { opacity: 1; }
 
-/* красная подсветка, если не отмечен и есть ошибка */
-.checkbox-20.error { border-color: #e63946 !important; }
+
 
 .agree-row a {
   color: #2563eb;
@@ -147,3 +167,22 @@ a{
   text-decoration: none;
 }
 .agree-row a:hover { text-decoration: underline; }
+
+
+/* подсветка ошибок — только цвет бордера, без «прыжков» */
+.login-container .login-content input.error {
+  border-color: #e53935 !important;
+  background-color: #fff;
+}
+
+/* чекбокс с ошибкой */
+.checkbox-20.error {
+  border-color: #e53935 !important;
+  box-shadow: 0 0 0 1px #e53935 inset;
+}
+
+/* отключённая кнопка — визуально понятная */
+.login-container .login-content button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
