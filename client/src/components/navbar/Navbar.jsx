@@ -15,7 +15,7 @@ export default function Navbar() {
         <span>Помощь</span>
       </NavLink>
 
-      <NavLink to="/locals" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+      <NavLink to="/application" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
         <FaComments size={20} />
         <span>Местные</span>
       </NavLink>

@@ -28,7 +28,7 @@ export default function App() {
           <Route path="/account" element={<WelcomeAuth />} />
              <Route path="/login" element={<Login />} />
              <Route path="/profile" element={<Userprofile/>} />
-             <Route path="/aplication" element={<Application/>} />
+             <Route path="/application" element={<Application/>} />
         </Routes>
       ) : (
         <Preloader />
