@@ -12,6 +12,9 @@ import {
   FaUsers,
 } from "react-icons/fa6";
 
+import People from "/src/assets/People.png";
+import emptyBox from "/src/assets/icons/application/empty.png";
+
 /** список категорий с иконками */
 const CATEGORY_OPTIONS = [
   { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
@@ -48,7 +51,9 @@ function MultiSelect({ value, onChange }) {
   );
 
   const toggle = (id) => {
-    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+    onChange(
+      value.includes(id) ? value.filter((x) => x !== id) : [...value, id]
+    );
   };
 
   const clear = () => onChange([]);
@@ -108,8 +113,12 @@ function MultiSelect({ value, onChange }) {
                   aria-selected={checked}
                 >
                   <span className="ms-left">
-                    <Icon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
-                    <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
+                    <Icon
+                      className={`ms-row-ico ${checked ? "is-active" : ""}`}
+                    />
+                    <span
+                      className={`ms-row-title ${checked ? "is-active" : ""}`}
+                    >
                       {label}
                     </span>
                   </span>
@@ -150,16 +159,20 @@ export default function Application() {
       <div className="application-top">
         <form className="app-card" onSubmit={submit}>
           <h1 className="app-title">
-            МЕСТНЫЕ<br />ПОМОГУТ
+            МЕСТНЫЕ
+            <br />
+            ПОМОГУТ
           </h1>
 
           <MultiSelect value={categories} onChange={setCategories} />
 
-          <label className="app-label">Опишите свой запрос в свободной форме</label>
+          <label className="app-label">
+            Опишите свой запрос в свободной форме
+          </label>
           <div className="app-textarea-wrap">
             <textarea
               className="app-textarea"
-              placeholder='Например, «Приехали на 3 дня, семьей 5 человек, предложите пожалуйста дом с тремя комнатами, поближе к воде»'
+              placeholder="Например, «Приехали на 3 дня, семьей 5 человек, предложите пожалуйста дом с тремя комнатами, поближе к воде»"
               maxLength={MAX}
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -176,19 +189,25 @@ export default function Application() {
 
           <div className="app-footer">
             <div className="app-avatars">
-              <span className="ava" />
-              <span className="ava" />
-              <span className="ava" />
+              <img src={People} />
             </div>
             <p className="app-note">
-              В нашем сервисе — более 300 местных жителей и предпринимателей, готовых
-              прямо сейчас откликнуться на ваш запрос
+              В нашем сервисе — более 300 местных жителей и предпринимателей,
+              готовых прямо сейчас откликнуться на ваш запрос
             </p>
           </div>
         </form>
       </div>
 
-      <div className="application-bottom" />
+      <div className="application-bottom">
+        <div className="empty-apps">
+          <img width={100} height={100} src={emptyBox}></img>
+          <h1>Вы еще не сделали<br/>
+ни одного запроса</h1>
+<p>Оставьте заявку и получайте<br/>
+предложения  — местные помогут!</p>
+        </div>
+      </div>
       <Navbar />
     </div>
   );
