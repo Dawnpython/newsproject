@@ -15,6 +15,9 @@ import {
 import People from "/src/assets/People.png";
 import emptyBox from "/src/assets/icons/application/empty.png";
 
+/** адрес API */
+const API_BASE = "https://newsproject-tnkc.onrender.com";
+
 /** список категорий с иконками */
 const CATEGORY_OPTIONS = [
   { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
@@ -51,16 +54,12 @@ function MultiSelect({ value, onChange }) {
   );
 
   const toggle = (id) => {
-    onChange(
-      value.includes(id) ? value.filter((x) => x !== id) : [...value, id]
-    );
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
   };
-
   const clear = () => onChange([]);
 
   return (
     <div className="ms" ref={boxRef}>
-      {/* Триггер */}
       <button
         type="button"
         className={`ms-trigger ${open ? "is-open" : ""}`}
@@ -98,7 +97,6 @@ function MultiSelect({ value, onChange }) {
         )}
       </button>
 
-      {/* Дропдаун */}
       {open && (
         <div className="ms-card" role="listbox" tabIndex={-1}>
           <ul className="ms-list">
@@ -113,12 +111,8 @@ function MultiSelect({ value, onChange }) {
                   aria-selected={checked}
                 >
                   <span className="ms-left">
-                    <Icon
-                      className={`ms-row-ico ${checked ? "is-active" : ""}`}
-                    />
-                    <span
-                      className={`ms-row-title ${checked ? "is-active" : ""}`}
-                    >
+                    <Icon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
+                    <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
                       {label}
                     </span>
                   </span>
@@ -135,6 +129,43 @@ function MultiSelect({ value, onChange }) {
   );
 }
 
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function RequestCard({ req, onCancel }) {
+  const firstCat = req.categories?.[0];
+  const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
+  const Icon = catMeta?.Icon || FaUsers;
+
+  return (
+    <div className="rq-card">
+      <div className="rq-head">
+        <div className="rq-num">#{String(req.short_code).padStart(5, "0")}</div>
+        <div className="rq-date">{formatDate(req.created_at)}</div>
+      </div>
+
+      <div className="rq-badge">
+        <Icon />
+        <span>{catMeta?.label || "Запрос"}</span>
+      </div>
+
+      <div className="rq-text">{req.text}</div>
+
+      <button className="rq-cancel" onClick={() => onCancel(req.id)}>
+        Отменить
+      </button>
+    </div>
+  );
+}
+
 export default function Application() {
   const navigate = useNavigate();
 
@@ -145,14 +176,78 @@ export default function Application() {
 
   const [categories, setCategories] = useState([]);
   const [text, setText] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const MAX = 150;
 
-  const submit = (e) => {
+  // загрузка моих заявок
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    (async () => {
+      try {
+        setLoading(true);
+        const r = await fetch(`${API_BASE}/api/requests`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await r.json();
+        setRequests(data.requests || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const submit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) return navigate("/account", { replace: true });
+
     const payload = { categories, text: text.trim() };
-    console.log("FORM:", payload);
-    // здесь можно сделать fetch/axios
+    if (payload.categories.length === 0 || payload.text === "") return;
+
+    try {
+      setSubmitting(true);
+      const r = await fetch(`${API_BASE}/api/requests`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error("create_failed");
+      const { request } = await r.json();
+      setRequests((prev) => [request, ...prev]);
+      setCategories([]);
+      setText("");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const cancelRequest = async (id) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const r = await fetch(`${API_BASE}/api/requests/${id}/cancel`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("cancel_failed");
+      setRequests((prev) => prev.filter((x) => x.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const disabled = categories.length === 0 || text.trim() === "";
 
   return (
     <div className="application">
@@ -166,9 +261,7 @@ export default function Application() {
 
           <MultiSelect value={categories} onChange={setCategories} />
 
-          <label className="app-label">
-            Опишите свой запрос в свободной форме
-          </label>
+          <label className="app-label">Опишите свой запрос в свободной форме</label>
           <div className="app-textarea-wrap">
             <textarea
               className="app-textarea"
@@ -183,8 +276,12 @@ export default function Application() {
             </span>
           </div>
 
-          <button className="app-submit" type="submit">
-            Отправить
+          <button
+            className={`app-submit ${disabled ? "disabled" : ""}`}
+            type="submit"
+            disabled={disabled || submitting}
+          >
+            {submitting ? "Отправляем…" : "Отправить"}
           </button>
 
           <div className="app-footer">
@@ -200,14 +297,31 @@ export default function Application() {
       </div>
 
       <div className="application-bottom">
-        <div className="empty-apps">
-          <img width={100} height={100} src={emptyBox}></img>
-          <h1>Вы еще не сделали<br/>
-ни одного запроса</h1>
-<p>Оставьте заявку и получайте<br/>
-предложения  — местные помогут!</p>
-        </div>
+        {loading ? (
+          <div className="empty-apps">Загрузка…</div>
+        ) : requests.length === 0 ? (
+          <div className="empty-apps">
+            <img width={100} height={100} src={emptyBox} />
+            <h1>
+              Вы еще не сделали
+              <br />
+              ни одного запроса
+            </h1>
+            <p>
+              Оставьте заявку и получайте
+              <br />
+              предложения — местные помогут!
+            </p>
+          </div>
+        ) : (
+          <div className="rq-list">
+            {requests.map((r) => (
+              <RequestCard key={r.id} req={r} onCancel={cancelRequest} />
+            ))}
+          </div>
+        )}
       </div>
+
       <Navbar />
     </div>
   );

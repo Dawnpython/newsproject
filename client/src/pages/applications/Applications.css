@@ -274,4 +274,13 @@
   font-size: 14px;
   color: rgb(107, 114, 128);
   text-align: center;
+}
+
+.app-submit:disabled,
+.app-submit.disabled {
+  opacity: 0.9;
+  cursor: not-allowed;
+  filter: grayscale(0.1);
+  box-shadow: none;
+  transition: 0.2s ease;
 }/*# sourceMappingURL=Applications.css.map */

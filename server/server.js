@@ -183,3 +183,53 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
     process.exit(1);
   }
 })();
+
+
+const ALLOWED_CATEGORIES = ["boats","taxi","guides","hotels","rent","locals"];
+
+// список моих активных заявок
+app.get("/api/requests", authMiddleware, async (req, res) => {
+  const { uid } = req.user;
+  const r = await dbQuery(
+    `SELECT id, short_code, text, categories, status, created_at
+       FROM requests
+      WHERE user_id=$1 AND status='active'
+      ORDER BY created_at DESC`,
+    [uid]
+  );
+  res.json({ requests: r.rows });
+});
+
+// создать заявку
+app.post("/api/requests", authMiddleware, async (req, res) => {
+  const { uid } = req.user;
+  let { text, categories } = req.body || {};
+  text = (text || "").trim();
+  if (!text) return res.status(400).json({ error: "TEXT_REQUIRED" });
+  if (!Array.isArray(categories) || categories.length === 0)
+    return res.status(400).json({ error: "CATEGORIES_REQUIRED" });
+
+  categories = categories.filter(c => ALLOWED_CATEGORIES.includes(String(c)));
+  if (categories.length === 0) return res.status(400).json({ error: "CATEGORY_INVALID" });
+
+  const r = await dbQuery(
+    `INSERT INTO requests (user_id, text, categories)
+     VALUES ($1, $2, $3)
+     RETURNING id, short_code, text, categories, status, created_at`,
+    [uid, text, categories]
+  );
+  res.status(201).json({ request: r.rows[0] });
+});
+
+// отменить мою заявку
+app.patch("/api/requests/:id/cancel", authMiddleware, async (req, res) => {
+  const { uid } = req.user;
+  const { id } = req.params;
+  const r = await dbQuery(
+    `UPDATE requests SET status='canceled', canceled_at=now(), updated_at=now()
+      WHERE id=$1 AND user_id=$2 AND status='active' RETURNING id`,
+    [id, uid]
+  );
+  if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND_OR_ALREADY_CANCELED" });
+  res.json({ ok: true });
+});
