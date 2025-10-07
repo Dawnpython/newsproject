@@ -337,3 +337,84 @@
   border-color: #9fb4c5;
 }
 
+
+/* ===== Bottom Sheet ===== */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 80;
+}
+.sheet-backdrop.is-open { opacity: 1; pointer-events: auto;  }
+
+/* сам шит */
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  transform: translateY(100%);
+  background: #fff;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 18px 16px 22px;
+  box-shadow: 0 -12px 28px rgba(0,0,0,.18);
+  transition: transform .25s cubic-bezier(.22,.8,.2,1);
+  z-index: 90;
+}
+.sheet.is-open { transform: translateY(0%);z-index: 99999; }
+
+/* «хэндл» вверху */
+.sheet .sheet-handle {
+  width: 72px;
+  height: 6px;
+  background: #cfd7df;
+  border-radius: 999px;
+  margin: 6px auto 12px;
+}
+
+.sheet .sheet-title {
+  text-align: center;
+  font-weight: 800;
+  font-size: 22px;
+  color: #20364a;
+  margin: 6px 0 8px;
+  line-height: 1.2;
+}
+.sheet .sheet-sub {
+  text-align: center;
+  color: #7a8ea0;
+  margin: 0 8px 16px;
+  line-height: 1.35;
+}
+.sheet .sheet-sub b { color: #20364a; }
+
+.sheet-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* кнопки */
+.btn {
+  height: 50px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+.btn-primary {
+  border: none;
+  background: #40b9ff;
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(64,185,255,.35);
+}
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-outline {
+  background: #fff;
+  color: #9aaab8;
+  border: 2px solid #c7d2de;
+}
+.btn-outline:active { transform: translateY(1px); }

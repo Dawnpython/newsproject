@@ -140,14 +140,13 @@ function formatDate(iso) {
   });
 }
 
-function RequestCard({ req, onCancel }) {
+function RequestCard({ req, onAskCancel }) {
   const firstCat = req.categories?.[0];
   const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
   const Icon = catMeta?.Icon || FaUsers;
 
   return (
     <div className="rq-card">
-      {/* конверт с количеством ответов */}
       <div className="rq-mail">
         <span className="rq-mail-icon">✉️</span>
         {!!req.messages_cnt && <span className="rq-mail-count">{req.messages_cnt}</span>}
@@ -163,17 +162,59 @@ function RequestCard({ req, onCancel }) {
         <span>{catMeta?.label || "Запрос"}</span>
       </div>
 
-      <div className="rq-text">
-        {req.text}
-      </div>
+      <div className="rq-text">{req.text}</div>
 
-      <button className="rq-cancel" onClick={() => onCancel(req.id)}>
+      <button className="rq-cancel" onClick={() => onAskCancel(req)}>
         Отменить
       </button>
     </div>
   );
 }
 
+/* ---------- Bottom Sheet ---------- */
+function CancelSheet({ open, request, onClose, onConfirm }) {
+  // блокируем скролл фона, пока открыт шит
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  const count = request?.messages_cnt || 0;
+
+  return (
+    <>
+      <div
+        className={`sheet-backdrop ${open ? "is-open" : ""}`}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`sheet ${open ? "is-open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sheet-title"
+      >
+        <div className="sheet-handle" />
+        <h3 id="sheet-title" className="sheet-title">Вы точно хотите<br/>отменить заявку?</h3>
+        <p className="sheet-sub">
+          На вашу заявку уже откликнулось <b>{count} человек</b>.<br/>
+          Возможно там есть то, что вас заинтересует!
+        </p>
+
+        <div className="sheet-actions">
+          <button className="btn btn-outline" onClick={onConfirm}>
+            Да, отменить
+          </button>
+          <button className="btn btn-primary" onClick={onClose}>
+            Нет, оставить
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
 
 export default function Application() {
   const navigate = useNavigate();
@@ -188,6 +229,11 @@ export default function Application() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // состояние для bottom-sheet
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetReq, setSheetReq] = useState(null);
+
   const MAX = 150;
 
   // загрузка моих заявок
@@ -241,32 +287,39 @@ export default function Application() {
     }
   };
 
-  const cancelRequest = async (id) => {
+  const disabled = categories.length === 0 || text.trim() === "";
+
+  // открыть подтверждение
+  const askCancel = (req) => {
+    setSheetReq(req);
+    setSheetOpen(true);
+  };
+
+  // подтвердить отмену
+  const confirmCancel = async () => {
+    if (!sheetReq) return;
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const r = await fetch(`${API_BASE}/api/requests/${id}/cancel`, {
+      const r = await fetch(`${API_BASE}/api/requests/${sheetReq.id}/cancel`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("cancel_failed");
-      setRequests((prev) => prev.filter((x) => x.id !== id));
+      setRequests((prev) => prev.filter((x) => x.id !== sheetReq.id));
     } catch (e) {
       console.error(e);
+    } finally {
+      setSheetOpen(false);
+      setSheetReq(null);
     }
   };
-
-  const disabled = categories.length === 0 || text.trim() === "";
 
   return (
     <div className="application">
       <div className="application-top">
         <form className="app-card" onSubmit={submit}>
-          <h1 className="app-title">
-            МЕСТНЫЕ
-            <br />
-            ПОМОГУТ
-          </h1>
+          <h1 className="app-title">МЕСТНЫЕ<br/>ПОМОГУТ</h1>
 
           <MultiSelect value={categories} onChange={setCategories} />
 
@@ -280,9 +333,7 @@ export default function Application() {
               onChange={(e) => setText(e.target.value)}
               rows={4}
             />
-            <span className="app-counter">
-              {text.length}/{MAX}
-            </span>
+            <span className="app-counter">{text.length}/{MAX}</span>
           </div>
 
           <button
@@ -294,9 +345,7 @@ export default function Application() {
           </button>
 
           <div className="app-footer">
-            <div className="app-avatars">
-              <img src={People} />
-            </div>
+            <div className="app-avatars"><img src={People} /></div>
             <p className="app-note">
               В нашем сервисе — более 300 местных жителей и предпринимателей,
               готовых прямо сейчас откликнуться на ваш запрос
@@ -311,25 +360,25 @@ export default function Application() {
         ) : requests.length === 0 ? (
           <div className="empty-apps">
             <img width={100} height={100} src={emptyBox} />
-            <h1>
-              Вы еще не сделали
-              <br />
-              ни одного запроса
-            </h1>
-            <p>
-              Оставьте заявку и получайте
-              <br />
-              предложения — местные помогут!
-            </p>
+            <h1>Вы еще не сделали<br/>ни одного запроса</h1>
+            <p>Оставьте заявку и получайте<br/>предложения — местные помогут!</p>
           </div>
         ) : (
           <div className="rq-list">
             {requests.map((r) => (
-              <RequestCard key={r.id} req={r} onCancel={cancelRequest} />
+              <RequestCard key={r.id} req={r} onAskCancel={askCancel} />
             ))}
           </div>
         )}
       </div>
+
+      {/* Bottom Sheet подтверждения */}
+      <CancelSheet
+        open={sheetOpen}
+        request={sheetReq}
+        onClose={() => { setSheetOpen(false); setSheetReq(null); }}
+        onConfirm={confirmCancel}
+      />
 
       <Navbar />
     </div>
