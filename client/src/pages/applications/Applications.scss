@@ -242,3 +242,126 @@ img{
   transition: 0.2s ease;
 }
 
+/* ---------- Секция списка заявок ---------- */
+.application .rq-list {
+  max-width: 720px;
+  margin: 16px auto 120px;
+  padding: 0 16px;
+  display: grid;
+  gap: 16px;
+}
+
+/* ---------- Карточка ---------- */
+.application .rq-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 18px 16px 16px;
+  box-shadow: 0 12px 28px rgba(38, 55, 76, 0.08);
+  overflow: hidden;
+}
+
+/* «конверт» с количеством */
+.application .rq-mail {
+  position: absolute;
+  top: -8px;
+  right: 14px;
+  background: #ff8c3a;
+  color: #fff;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 6px 16px rgba(255, 140, 58, .35);
+}
+.application .rq-mail-icon { font-size: 16px; line-height: 1; }
+.application .rq-mail-count { font-weight: 800; }
+
+/* шапка: номер и дата */
+.application .rq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 10px;
+}
+.application .rq-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f2a3d;
+}
+.application .rq-date {
+  color: #a8b8c6;
+  font-weight: 700;
+}
+
+/* ---------- Бейдж категории ---------- */
+.application .rq-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  margin: 4px 0 12px;
+  /* базовые цвета (переопределяются ниже по cat-*) */
+  background: #ffe6b2;
+  color: #a97105;
+}
+.application .rq-badge-ico { font-size: 18px; }
+
+/* Цвета по категориям (подбери под свой вкус) */
+.application .rq-badge.cat-taxi     { background:#ffe6b2; color:#a97105; } /* такси */
+.application .rq-badge.cat-boats    { background:#d7efff; color:#1b68a8; }
+.application .rq-badge.cat-guides   { background:#def7c8; color:#2d7f1d; }
+.application .rq-badge.cat-hotels   { background:#ffd7d7; color:#9f1d1d; }
+.application .rq-badge.cat-rent     { background:#e8e1ff; color:#5b3db5; }
+.application .rq-badge.cat-locals   { background:#ffe0f1; color:#a03e83; }
+.application .rq-badge.cat-default  { background:#eef4f8; color:#4a6a84; }
+
+/* ---------- Текст «пузырём» ---------- */
+.application .rq-text {
+  background: #eef2f6;
+  color: #44596b;
+  font-size: 20px;
+  line-height: 1.25;
+  padding: 16px 16px;
+  border-radius: 16px;
+  margin-bottom: 14px;
+  /* если хочешь усечение как на макете: */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* показать 2 строки */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- Кнопка «Отменить» ---------- */
+.application .rq-cancel {
+  border: 2px solid #b5c5d3;
+  background: #fff;
+  color: #94a6b6;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.application .rq-cancel:hover {
+  background: #f7fbff;
+  color: #6c8193;
+  border-color: #9fb4c5;
+}
+
+/* мелкие косметические штуки */
+.application .rq-card::after{
+  /* лёгкая светлая «скругляшка» внизу, как на скрине */
+  content:'';
+  position:absolute;
+  bottom:-26px; left:-26px; right:-26px;
+  height:52px;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: 0 -8px 16px rgba(15,42,61,0.02);
+}

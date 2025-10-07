@@ -147,17 +147,25 @@ function RequestCard({ req, onCancel }) {
 
   return (
     <div className="rq-card">
+      {/* конверт с количеством ответов */}
+      <div className="rq-mail">
+        <span className="rq-mail-icon">✉️</span>
+        {!!req.messages_cnt && <span className="rq-mail-count">{req.messages_cnt}</span>}
+      </div>
+
       <div className="rq-head">
         <div className="rq-num">#{String(req.short_code).padStart(5, "0")}</div>
         <div className="rq-date">{formatDate(req.created_at)}</div>
       </div>
 
-      <div className="rq-badge">
-        <Icon />
+      <div className={`rq-badge cat-${firstCat || "default"}`}>
+        <Icon className="rq-badge-ico" />
         <span>{catMeta?.label || "Запрос"}</span>
       </div>
 
-      <div className="rq-text">{req.text}</div>
+      <div className="rq-text">
+        {req.text}
+      </div>
 
       <button className="rq-cancel" onClick={() => onCancel(req.id)}>
         Отменить
@@ -165,6 +173,7 @@ function RequestCard({ req, onCancel }) {
     </div>
   );
 }
+
 
 export default function Application() {
   const navigate = useNavigate();
