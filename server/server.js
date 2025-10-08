@@ -313,3 +313,16 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
     res.status(500).json({ error: "SERVER_ERROR" });
   }
 });
+
+
+app.post("/api/admin/guides", authMiddleware, adminOnly, async (req, res) => {
+  const { name, phone, telegram_username, telegram_id, is_active = true, categories = [], subscription_until = null } = req.body || {};
+  if (!name?.trim()) return res.status(400).json({ error: "NAME_REQUIRED" });
+  const r = await dbQuery(
+    `INSERT INTO guides (name, phone, telegram_username, telegram_id, is_active, categories, subscription_until)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at`,
+    [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until]
+  );
+  res.status(201).json({ guide: r.rows[0] });
+});
