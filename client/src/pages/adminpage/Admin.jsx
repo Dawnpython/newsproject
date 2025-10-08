@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { FaSailboat, FaTaxi, FaUserTie, FaHotel, FaKey, FaUsers } from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
 
+import Navbar from "../../components/navbar/Navbar";
+
 const CATEGORY_OPTIONS = [
   { id: "boats",  label: "Лодки и экскурсии на воде", Icon: FaSailboat },
   { id: "taxi",   label: "Заказать такси",            Icon: FaTaxi },
@@ -477,6 +479,7 @@ export default function Adminpage(){
           </div>
         </section>
       )}
+      <Navbar/>
     </div>
   );
 }
