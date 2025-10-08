@@ -27,7 +27,7 @@ function AdminCategoryPicker({ value = [], onChange }) {
   };
   return (
     <div className="admin-cat-grid">
-      {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
+      {CATEGORY_OPTIONS.map(({ id, label }) => {
         const active = value.includes(id);
         return (
           <button
