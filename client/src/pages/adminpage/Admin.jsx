@@ -364,7 +364,7 @@ export default function Adminpage(){
                         </button>
                       )}
                     </div>
-                    <div className="admin-hint">Если дата пустая — подписка без ограничения по дате.</div>
+                    
                   </div>
 
                   <div className="admin-form-row">
@@ -373,7 +373,7 @@ export default function Adminpage(){
                       value={editing.categories || []}
                       onChange={(v) => setEditingField("categories", v)}
                     />
-                    <div className="admin-hint">Выберите, по каким категориям гид будет получать заявки.</div>
+                   
                   </div>
 
                   
