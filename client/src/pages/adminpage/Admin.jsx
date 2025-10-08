@@ -1,16 +1,23 @@
 // Adminpage.jsx
 import { useEffect, useState } from "react";
-import { FaSailboat, FaTaxi, FaUserTie, FaHotel, FaKey, FaUsers } from "react-icons/fa6";
+import {
+  FaSailboat,
+  FaTaxi,
+  FaUserTie,
+  FaHotel,
+  FaKey,
+  FaUsers,
+} from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
 import Navbar from "../../components/navbar/Navbar";
 
 const CATEGORY_OPTIONS = [
-  { id: "boats",  label: "Лодки и экскурсии на воде", Icon: FaSailboat },
-  { id: "taxi",   label: "Заказать такси",            Icon: FaTaxi },
-  { id: "guides", label: "Частные гиды",              Icon: FaUserTie },
-  { id: "hotels", label: "Отели и турбазы",           Icon: FaHotel },
-  { id: "rent",   label: "Аренда жилья",              Icon: FaKey },
-  { id: "locals", label: "Местные жители",            Icon: FaUsers },
+  { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
+  { id: "taxi", label: "Заказать такси", Icon: FaTaxi },
+  { id: "guides", label: "Частные гиды", Icon: FaUserTie },
+  { id: "hotels", label: "Отели и турбазы", Icon: FaHotel },
+  { id: "rent", label: "Аренда жилья", Icon: FaKey },
+  { id: "locals", label: "Местные жители", Icon: FaUsers },
 ];
 
 function AdminCategoryPicker({ value = [], onChange }) {
@@ -26,7 +33,9 @@ function AdminCategoryPicker({ value = [], onChange }) {
           <button
             key={id}
             type="button"
-            className={`admin-cat-chip ${active ? "admin-cat-chip--active" : ""}`}
+            className={`admin-cat-chip ${
+              active ? "admin-cat-chip--active" : ""
+            }`}
             onClick={() => toggle(id)}
           >
             <Icon className="admin-cat-ico" />
@@ -38,9 +47,10 @@ function AdminCategoryPicker({ value = [], onChange }) {
   );
 }
 
-export default function Adminpage(){
+export default function Adminpage() {
   const API_BASE = "https://newsproject-tnkc.onrender.com";
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const [tab, setTab] = useState("guides");
   const [guides, setGuides] = useState([]);
@@ -96,7 +106,8 @@ export default function Adminpage(){
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!sigRes.ok) throw new Error("Signature failed");
-    const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
+    const { timestamp, signature, folder, api_key, cloud_name } =
+      await sigRes.json();
 
     // 2) отправляем файл в Cloudinary
     const form = new FormData();
@@ -106,10 +117,13 @@ export default function Adminpage(){
     form.append("signature", signature);
     form.append("folder", folder);
 
-    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`, {
-      method: "POST",
-      body: form,
-    });
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
+      {
+        method: "POST",
+        body: form,
+      }
+    );
     if (!uploadRes.ok) throw new Error("Upload failed");
     const data = await uploadRes.json();
     return { url: data.secure_url, public_id: data.public_id };
@@ -137,7 +151,9 @@ export default function Adminpage(){
       }
     }
     load();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [tab]);
 
   // === Edit modal handlers ===
@@ -184,7 +200,9 @@ export default function Adminpage(){
       });
       if (!r.ok) throw new Error("Save failed");
       const data = await r.json();
-      setGuides((prev) => prev.map((g) => (g.id === editing.id ? data.guide : g)));
+      setGuides((prev) =>
+        prev.map((g) => (g.id === editing.id ? data.guide : g))
+      );
       closeModal();
     } catch (e) {
       setError("Не удалось сохранить изменения");
@@ -260,7 +278,9 @@ export default function Adminpage(){
         <h1 className="admin-title">Админка</h1>
         <div className="admin-tabs">
           <button
-            className={`admin-tab ${tab === "guides" ? "admin-tab--active" : ""}`}
+            className={`admin-tab ${
+              tab === "guides" ? "admin-tab--active" : ""
+            }`}
             onClick={() => setTab("guides")}
           >
             Гиды
@@ -277,12 +297,19 @@ export default function Adminpage(){
       {tab === "guides" && (
         <section className="admin-section">
           <div className="admin-bar">
-            <button className="admin-btn admin-btn--primary" onClick={openCreate}>+ Добавить гида</button>
+            <button
+              className="admin-btn admin-btn--primary"
+              onClick={openCreate}
+            >
+              + Добавить гида
+            </button>
           </div>
 
           {loading && <p className="admin-muted">Загрузка…</p>}
           {error && <p className="admin-error">{error}</p>}
-          {!loading && guides.length === 0 && <p className="admin-muted">Гидов пока нет.</p>}
+          {!loading && guides.length === 0 && (
+            <p className="admin-muted">Гидов пока нет.</p>
+          )}
 
           <div className="admin-cards">
             {guides.map((g) => {
@@ -290,23 +317,28 @@ export default function Adminpage(){
               return (
                 <div
                   key={g.id}
-                  className={`admin-card ${active ? "admin-card--ok" : "admin-card--off"}`}
+                  className={`admin-card ${
+                    active ? "admin-card--ok" : "admin-card--off"
+                  }`}
                   onClick={() => openModal(g)}
                 >
                   <div className="admin-card-top">
                     <div className="admin-card-name">{g.name}</div>
-                    <span className={`admin-pill ${active ? "admin-pill--ok" : "admin-pill--off"}`}>
+                    <span
+                      className={`admin-pill ${
+                        active ? "admin-pill--ok" : "admin-pill--off"
+                      }`}
+                    >
                       {active ? "Активна" : "Не активна"}
                     </span>
                   </div>
 
                   
-                  {g.avatar_url && (
-                    <div className="admin-card-avatar">
-                      <img src={g.avatar_url} alt={`${g.name} avatar`} />
-                    </div>
-                  )}
 
+                  <div className="admin-card-row">
+                    <span className="admin-label">Изображение</span>
+                    <span className="admin-value">{g.avatar_url}</span>
+                  </div>
                   <div className="admin-card-row">
                     <span className="admin-label">Описание</span>
                     <span className="admin-value">{g.description || "—"}</span>
@@ -317,7 +349,9 @@ export default function Adminpage(){
                   </div>
                   <div className="admin-card-row">
                     <span className="admin-label">Telegram</span>
-                    <span className="admin-value">{g.telegram_username || "—"}</span>
+                    <span className="admin-value">
+                      {g.telegram_username || "—"}
+                    </span>
                   </div>
                   <div className="admin-card-row">
                     <span className="admin-label">TG ID</span>
@@ -326,7 +360,9 @@ export default function Adminpage(){
                   <div className="admin-card-row">
                     <span className="admin-label">До</span>
                     <span className="admin-value">
-                      {g.subscription_until ? toDateInputValue(g.subscription_until) : "без даты"}
+                      {g.subscription_until
+                        ? toDateInputValue(g.subscription_until)
+                        : "без даты"}
                     </span>
                   </div>
                   {!!g.categories?.length && (
@@ -355,7 +391,13 @@ export default function Adminpage(){
               <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="admin-modal-header">
                   <h3 className="admin-modal-title">Редактирование гида</h3>
-                  <button className="admin-icon-btn" onClick={closeModal} aria-label="Close">✕</button>
+                  <button
+                    className="admin-icon-btn"
+                    onClick={closeModal}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="admin-modal-body">
@@ -373,7 +415,9 @@ export default function Adminpage(){
                     <label>Описание</label>
                     <textarea
                       value={editing.description || ""}
-                      onChange={(e) => setEditingField("description", e.target.value)}
+                      onChange={(e) =>
+                        setEditingField("description", e.target.value)
+                      }
                       placeholder="Коротко о гиде: опыт, локации, услуги…"
                       rows={4}
                     />
@@ -385,7 +429,9 @@ export default function Adminpage(){
                       <input
                         type="checkbox"
                         checked={!!editing.is_active}
-                        onChange={(e) => setEditingField("is_active", e.target.checked)}
+                        onChange={(e) =>
+                          setEditingField("is_active", e.target.checked)
+                        }
                       />
                       <span className="admin-slider" />
                     </label>
@@ -398,13 +444,18 @@ export default function Adminpage(){
                         type="date"
                         value={editing.subscription_until_date || ""}
                         onChange={(e) =>
-                          setEditingField("subscription_until_date", e.target.value)
+                          setEditingField(
+                            "subscription_until_date",
+                            e.target.value
+                          )
                         }
                       />
                       {editing.subscription_until_date && (
                         <button
                           className="admin-btn admin-btn--secondary"
-                          onClick={() => setEditingField("subscription_until_date", "")}
+                          onClick={() =>
+                            setEditingField("subscription_until_date", "")
+                          }
                         >
                           Очистить
                         </button>
@@ -431,7 +482,9 @@ export default function Adminpage(){
                           const file = e.target.files?.[0];
                           if (!file) return;
                           try {
-                            const { url, public_id } = await uploadToCloudinary(file);
+                            const { url, public_id } = await uploadToCloudinary(
+                              file
+                            );
                             setEditingField("avatar_url", url);
                             setEditingField("avatar_public_id", public_id);
                           } catch {
@@ -459,8 +512,17 @@ export default function Adminpage(){
                 </div>
 
                 <div className="admin-modal-actions">
-                  <button className="admin-btn admin-btn--ghost" onClick={closeModal}>Отмена</button>
-                  <button className="admin-btn admin-btn--primary" onClick={saveEditing} disabled={saving}>
+                  <button
+                    className="admin-btn admin-btn--ghost"
+                    onClick={closeModal}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    className="admin-btn admin-btn--primary"
+                    onClick={saveEditing}
+                    disabled={saving}
+                  >
                     {saving ? "Сохранение…" : "Сохранить"}
                   </button>
                 </div>
@@ -474,7 +536,13 @@ export default function Adminpage(){
               <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="admin-modal-header">
                   <h3 className="admin-modal-title">Добавить гида</h3>
-                  <button className="admin-icon-btn" onClick={closeCreate} aria-label="Close">✕</button>
+                  <button
+                    className="admin-icon-btn"
+                    onClick={closeCreate}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="admin-modal-body">
@@ -493,7 +561,9 @@ export default function Adminpage(){
                       <label>Описание</label>
                       <textarea
                         value={newGuide.description}
-                        onChange={(e) => setNewField("description", e.target.value)}
+                        onChange={(e) =>
+                          setNewField("description", e.target.value)
+                        }
                         placeholder="Коротко о гиде: опыт, локации, услуги…"
                         rows={4}
                       />
@@ -513,7 +583,9 @@ export default function Adminpage(){
                       <input
                         type="text"
                         value={newGuide.telegram_username}
-                        onChange={(e) => setNewField("telegram_username", e.target.value)}
+                        onChange={(e) =>
+                          setNewField("telegram_username", e.target.value)
+                        }
                         placeholder="@username"
                       />
                     </div>
@@ -522,7 +594,9 @@ export default function Adminpage(){
                       <input
                         type="text"
                         value={newGuide.telegram_id}
-                        onChange={(e) => setNewField("telegram_id", e.target.value)}
+                        onChange={(e) =>
+                          setNewField("telegram_id", e.target.value)
+                        }
                         placeholder="123456789"
                       />
                     </div>
@@ -534,7 +608,9 @@ export default function Adminpage(){
                       <input
                         type="checkbox"
                         checked={!!newGuide.is_active}
-                        onChange={(e) => setNewField("is_active", e.target.checked)}
+                        onChange={(e) =>
+                          setNewField("is_active", e.target.checked)
+                        }
                       />
                       <span className="admin-slider" />
                     </label>
@@ -546,12 +622,16 @@ export default function Adminpage(){
                       <input
                         type="date"
                         value={newGuide.subscription_until_date}
-                        onChange={(e) => setNewField("subscription_until_date", e.target.value)}
+                        onChange={(e) =>
+                          setNewField("subscription_until_date", e.target.value)
+                        }
                       />
                       {newGuide.subscription_until_date && (
                         <button
                           className="admin-btn admin-btn--secondary"
-                          onClick={() => setNewField("subscription_until_date", "")}
+                          onClick={() =>
+                            setNewField("subscription_until_date", "")
+                          }
                         >
                           Очистить
                         </button>
@@ -578,7 +658,9 @@ export default function Adminpage(){
                           const file = e.target.files?.[0];
                           if (!file) return;
                           try {
-                            const { url, public_id } = await uploadToCloudinary(file);
+                            const { url, public_id } = await uploadToCloudinary(
+                              file
+                            );
                             setNewField("avatar_url", url);
                             setNewField("avatar_public_id", public_id);
                           } catch {
@@ -602,13 +684,24 @@ export default function Adminpage(){
                         </div>
                       )}
                     </div>
-                    <div className="admin-hint">Рекомендуем до 2–3 МБ, формат JPG/PNG/WebP.</div>
+                    <div className="admin-hint">
+                      Рекомендуем до 2–3 МБ, формат JPG/PNG/WebP.
+                    </div>
                   </div>
                 </div>
 
                 <div className="admin-modal-actions">
-                  <button className="admin-btn admin-btn--ghost" onClick={closeCreate}>Отмена</button>
-                  <button className="admin-btn admin-btn--primary" onClick={createGuide} disabled={creating || !newGuide.name.trim()}>
+                  <button
+                    className="admin-btn admin-btn--ghost"
+                    onClick={closeCreate}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    className="admin-btn admin-btn--primary"
+                    onClick={createGuide}
+                    disabled={creating || !newGuide.name.trim()}
+                  >
                     {creating ? "Создание…" : "Создать"}
                   </button>
                 </div>
@@ -626,7 +719,7 @@ export default function Adminpage(){
           </div>
         </section>
       )}
-      <Navbar/>
+      <Navbar />
     </div>
   );
 }
