@@ -22,24 +22,19 @@ async function findGuideByTelegramId(telegramId) {
 }
 
 /**
- * Заявки по категориям с пагинацией
- * Схема поддерживает r.category (text) И/ИЛИ r.categories (text[])
- * Фильтрация по открытому статусу, если есть поле status.
+ * Заявки по категориям гида (строго по массиву categories), только активные
+ * Пагинация: limit/offset
  */
 async function fetchRequestsForCategories(guideCategories = [], limit = 5, offset = 0) {
-  if (!guideCategories || guideCategories.length === 0) {
-    return { items: [], total: 0 };
-  }
+  if (!guideCategories?.length) return { items: [], total: 0 };
+
   const r = await pool.query(
     `
     WITH filtered AS (
-      SELECT r.*
+      SELECT r.id, r.short_code, r.text, r.categories, r.created_at
         FROM requests r
-       WHERE (
-              (r.category   IS NOT NULL AND r.category   = ANY($1))
-           OR (r.categories IS NOT NULL AND r.categories && $1::text[])
-       )
-       AND (r.status IS NULL OR r.status = 'open')
+       WHERE r.status = 'active'
+         AND r.categories && $1::text[]   -- пересечение массивов
     )
     SELECT
       (SELECT COUNT(*) FROM filtered) AS total,
@@ -47,13 +42,10 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
         JSONB_AGG(
           JSONB_BUILD_OBJECT(
             'id', f.id,
-            'text', f.text,
-            'category', f.category,
-            'categories', f.categories,
-            'created_at', f.created_at,
-            'user_id', f.user_id,
             'short_code', f.short_code,
-            'messages_cnt', f.messages_cnt
+            'text', f.text,
+            'categories', f.categories,
+            'created_at', f.created_at
           ) ORDER BY f.created_at DESC
         ), '[]'::jsonb
       ) AS data
@@ -66,42 +58,17 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
     `,
     [guideCategories, limit, offset]
   );
+
   const row = r.rows[0] || {};
   const total = Number(row.total || 0);
   const items = (row.data || []).map((x) => ({
     id: x.id,
+    short_code: x.short_code,
     text: x.text,
-    category: x.category,
     categories: x.categories,
     created_at: x.created_at,
-    user_id: x.user_id,
-    short_code: x.short_code,
-    messages_cnt: x.messages_cnt
   }));
   return { items, total };
-}
-
-/**
- * Новые заявки с момента "since" (ISO строка/Date) по категориям
- */
-async function fetchNewRequestsSince(guideCategories = [], sinceISO) {
-  if (!guideCategories?.length || !sinceISO) return [];
-  const r = await pool.query(
-    `
-    SELECT r.id, r.text, r.category, r.categories, r.created_at, r.short_code
-      FROM requests r
-     WHERE (
-            (r.category   IS NOT NULL AND r.category   = ANY($1))
-         OR (r.categories IS NOT NULL AND r.categories && $1::text[])
-     )
-       AND (r.status IS NULL OR r.status = 'open')
-       AND r.created_at > $2::timestamptz
-     ORDER BY r.created_at DESC
-     LIMIT 20
-    `,
-    [guideCategories, sinceISO]
-  );
-  return r.rows || [];
 }
 
 /* ======================= BOT INSTANCE ======================= */
@@ -117,7 +84,7 @@ export const bot = new TelegramBot(token, { polling: false });
       if (!baseUrl) throw new Error("BASE_URL is required when USE_WEBHOOK=true");
       const path = `/bot${token}`;
       const url = `${baseUrl}${path}`;
-      // В Express-сервере:
+      // В Express:
       // app.post(path, (req,res)=>{ bot.processUpdate(req.body); res.sendStatus(200); });
       await bot.setWebHook(url, { drop_pending_updates: true });
       console.log("[bot] Webhook set:", url);
@@ -132,13 +99,6 @@ export const bot = new TelegramBot(token, { polling: false });
 })();
 
 /* ======================= UTILS ======================= */
-function formatDateRu(d) {
-  try {
-    return new Date(d).toLocaleDateString("ru-RU", {
-      year: "numeric", month: "long", day: "numeric",
-    });
-  } catch { return String(d); }
-}
 function formatDateTimeRu(d) {
   try {
     return new Date(d).toLocaleString("ru-RU", {
@@ -154,7 +114,6 @@ function hasActiveSubscription(guide) {
   const dateOk = !until || until >= today;
   return flag && dateOk;
 }
-
 const CATEGORY_LABELS = {
   boats: "Лодки",
   taxi: "Такси",
@@ -163,20 +122,18 @@ const CATEGORY_LABELS = {
   rent: "Аренда жилья",
   locals: "Местные жители",
 };
-
 function labelFromRow(row) {
-  const arr = row.categories || (row.category ? [row.category] : []);
-  if (!arr?.length) return "—";
+  const arr = row.categories || [];
+  if (!arr.length) return "—";
   return arr.map((c) => CATEGORY_LABELS[c] || c).join(", ");
 }
-
 function formatRequestLine(r) {
-  return [
-    `🆔 #${String(r.short_code || r.id).padStart(5, "0")}`,
-    `📂 ${labelFromRow(r)}`,
-    `🗓 ${formatDateTimeRu(r.created_at)}`,
-    r.text ? `✍️ ${r.text}` : null,
-  ].filter(Boolean).join("\n");
+  // короткий и читаемый формат: номер, категории, дата, текст
+  const num = String(r.short_code || r.id).padStart(5, "0");
+  const cat = labelFromRow(r);
+  const dt = formatDateTimeRu(r.created_at);
+  const body = (r.text || "").trim();
+  return `🆔 #${num}\n📂 ${cat}\n🗓 ${dt}\n✍️ ${body}`;
 }
 
 /* ----- Дедуп кликов по инлайн-кнопкам ----- */
@@ -198,6 +155,7 @@ function isDuplicateCallback(key, windowMs = 3000) {
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
+
   await bot.sendMessage(chatId, `Привет, я бот гидов.`);
 
   try {
@@ -219,6 +177,7 @@ bot.onText(/^\/start$/, async (msg) => {
 bot.onText(/^\/requests$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
+
   const guide = await findGuideByTelegramId(userId);
   if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
   if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
@@ -230,6 +189,7 @@ bot.onText(/^\/requests$/, async (msg) => {
 bot.on("callback_query", async (query) => {
   try {
     if (!query?.data) return;
+
     const chatId = query.message?.chat?.id;
     const userId = query.from?.id;
     const msgId = query.message?.message_id;
@@ -247,7 +207,9 @@ bot.on("callback_query", async (query) => {
       if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
 
       if (hasActiveSubscription(guide)) {
-        const until = guide.subscription_until ? formatDateRu(guide.subscription_until) : "без даты окончания";
+        const until = guide.subscription_until
+          ? new Date(guide.subscription_until).toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" })
+          : "без даты окончания";
         await bot.sendMessage(chatId, `✅ Твоя подписка активна до: ${until}`, {
           reply_markup: { inline_keyboard: [[{ text: "📥 Просмотреть заявки", callback_data: "view_requests:0" }]] },
         });
@@ -263,6 +225,7 @@ bot.on("callback_query", async (query) => {
       if (parts.length > 1) offset = parseInt(parts[1] || "0", 10) || 0;
 
       try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: msgId }); } catch {}
+
       const guide = await findGuideByTelegramId(userId);
       if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
       if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
@@ -277,7 +240,7 @@ bot.on("callback_query", async (query) => {
   }
 });
 
-/* ====== Рендер страницы заявок с пагинацией ====== */
+/* ====== Рендер страницы заявок с пагинацией (чисто текстом) ====== */
 async function sendRequestsPage(chatId, guide, offset) {
   const categories = Array.isArray(guide.categories) ? guide.categories : [];
   const pageSize = 5;
@@ -303,65 +266,8 @@ async function sendRequestsPage(chatId, guide, offset) {
     const nextOffset = offset + pageSize;
     keyboardRow.push({ text: "▶️ Далее", callback_data: `view_requests:${nextOffset}` });
   }
-  await bot.sendMessage(chatId, text, { reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] } });
-}
 
-/* ======================= (Опционально) Уведомления о новых заявках ======================= */
-/**
- * Включить: NOTIFY_REQUESTS=true
- * Простая реализация пуллингом БД раз в N секунд. Для продакшна лучше LISTEN/NOTIFY.
- */
-const NOTIFY = process.env.NOTIFY_REQUESTS === "true";
-const POLL_MS = Number(process.env.NOTIFY_POLL_MS || 45000);
-
-// в оперативке храним, с какого времени показываем новые
-const lastSeenMap = new Map(); // key: guide.id -> ISO string
-
-if (NOTIFY) {
-  setInterval(async () => {
-    try {
-      // Найти активных гидов с категориями
-      const gq = await pool.query(
-        `SELECT id, telegram_id, name, categories, subscription_until, is_active
-           FROM guides
-          WHERE (is_active = true)
-            AND (categories IS NOT NULL AND array_length(categories, 1) > 0)`
-      );
-
-      const guides = gq.rows || [];
-      const nowISO = new Date().toISOString();
-
-      for (const g of guides) {
-        // Проверка подписки на всякий случай
-        if (!hasActiveSubscription(g)) continue;
-
-        const key = String(g.id);
-        const since = lastSeenMap.get(key) || new Date(Date.now() - 5 * 60 * 1000).toISOString(); // по умолчанию — последние 5 минут
-        const categories = Array.isArray(g.categories) ? g.categories : [];
-        if (!categories.length || !g.telegram_id) continue;
-
-        const news = await fetchNewRequestsSince(categories, since);
-        if (news.length) {
-          const text = [
-            `🆕 Новые заявки по вашим категориям:`,
-            "",
-            news.slice(0, 5).map(formatRequestLine).join("\n\n"),
-            news.length > 5 ? `\n…и ещё ${news.length - 5}` : "",
-            `\nЧтобы посмотреть список: /requests`,
-          ].join("\n");
-          try {
-            await bot.sendMessage(g.telegram_id, text);
-          } catch (e) {
-            // если пользователь блокнул бота — молча пропустим
-            console.warn(`[notify] send to ${g.telegram_id} failed:`, e?.message);
-          }
-        }
-
-        // обновляем lastSeen
-        lastSeenMap.set(key, nowISO);
-      }
-    } catch (e) {
-      console.error("[notify] interval error:", e);
-    }
-  }, POLL_MS);
+  await bot.sendMessage(chatId, text, {
+    reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
+  });
 }
