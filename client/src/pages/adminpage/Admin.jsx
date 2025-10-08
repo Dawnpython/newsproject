@@ -337,7 +337,7 @@ export default function Adminpage() {
 
                   <div className="admin-card-row">
                     <span className="admin-label">Изображение</span>
-                    <span className="admin-value"><img src={g.avatar_url} alt={`${g.name} avatar`} /></span>
+                    <span className="admin-value"><img width={50} height={50} src={g.avatar_url} alt={`${g.name} avatar`} /></span>
                   </div>
                   <div className="admin-card-row">
                     <span className="admin-label">Описание</span>
