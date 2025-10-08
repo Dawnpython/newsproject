@@ -16,11 +16,8 @@ if (!process.env.DATABASE_URL) {
 }
 
 const app = express();
-
-// CORS: разрешаем фронт с домена из env, иначе * (можно оставить как есть)
 const allowedOrigin = process.env.FRONTEND_ORIGIN || "*";
 app.use(cors({ origin: allowedOrigin }));
-
 app.use(express.json());
 
 // ==== DB ====
@@ -35,9 +32,7 @@ async function dbQuery(text, params) {
 }
 
 async function initDb() {
-  // расширение для gen_random_uuid()
   await dbQuery(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
-  // таблица пользователей
   await dbQuery(`
     CREATE TABLE IF NOT EXISTS users (
       id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,19 +43,24 @@ async function initDb() {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
-  // полезные индексы
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users ((lower(email)));`);
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_phone ON users (phone);`);
-
-  // ⬅️ добавлено: колонка роли (булевый флаг админа)
   await dbQuery(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;`);
+
+  // добавим колонку description в guides, если таблица уже существует
+  await dbQuery(`DO $$
+  BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='guides') THEN
+      ALTER TABLE guides ADD COLUMN IF NOT EXISTS description TEXT;
+    END IF;
+  END $$;`);
 }
 
 // ==== utils ====
 function isEmailValid(email) {
   if (!email) return false;
   if (/\s/.test(email)) return false;
-  return email.includes("@"); // как просили: главное, чтобы была @ и не было пробелов
+  return email.includes("@");
 }
 function onlyDigits(s) {
   return String(s || "").replace(/\D/g, "");
@@ -83,25 +83,21 @@ function authMiddleware(req, res, next) {
 }
 
 // ==== routes ====
-
-// root — чтобы не видеть "Cannot GET /"
+// root
 app.get("/", (req, res) => {
   res.type("text").send("Auth API is running. Try /api/health");
 });
-
-// health
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 
 // регистрация
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, phone, password, password2 } = req.body || {};
-
     if (!name?.trim()) return res.status(400).json({ error: "NAME_REQUIRED" });
     if (!email?.trim() || !isEmailValid(email))
       return res.status(400).json({ error: "EMAIL_INVALID" });
 
-    const phoneDigits = phone ? onlyDigits(phone) : null; // телефон храним цифрами
+    const phoneDigits = phone ? onlyDigits(phone) : null;
     if (phone && phoneDigits.length === 0)
       return res.status(400).json({ error: "PHONE_INVALID" });
 
@@ -109,12 +105,10 @@ app.post("/api/auth/register", async (req, res) => {
     if (password !== password2)
       return res.status(400).json({ error: "PASSWORDS_NOT_MATCH" });
 
-    // проверка уникальности (фикс 42P08 — кастим ко text)
     const exists = await dbQuery(
-      `SELECT 1
-         FROM users
-        WHERE lower(email)=lower($1)
-           OR ($2::text IS NOT NULL AND phone = $2::text)`,
+      `SELECT 1 FROM users
+       WHERE lower(email)=lower($1)
+          OR ($2::text IS NOT NULL AND phone = $2::text)`,
       [email, phoneDigits]
     );
     if (exists.rowCount > 0) return res.status(409).json({ error: "USER_EXISTS" });
@@ -123,7 +117,7 @@ app.post("/api/auth/register", async (req, res) => {
     const insert = await dbQuery(
       `INSERT INTO users (name, email, phone, password_hash)
        VALUES ($1, lower($2), $3::text, $4)
-       RETURNING id, name, email, phone, created_at, is_admin`, // ⬅️ добавлено is_admin в возврат
+       RETURNING id, name, email, phone, created_at, is_admin`,
       [name.trim(), email.trim(), phoneDigits, hash]
     );
 
@@ -145,7 +139,7 @@ app.post("/api/auth/login", async (req, res) => {
     if (!password) return res.status(400).json({ error: "PASSWORD_REQUIRED" });
 
     const r = await dbQuery(
-      `SELECT id, name, email, phone, password_hash, is_admin   -- ⬅️ добавлено is_admin
+      `SELECT id, name, email, phone, password_hash, is_admin
        FROM users
        WHERE lower(email)=lower($1)`,
       [email.trim()]
@@ -165,12 +159,12 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// получить текущего пользователя по токену
+// текущий пользователь
 app.get("/api/auth/me", authMiddleware, async (req, res) => {
   try {
     const { uid } = req.user;
     const r = await dbQuery(
-      `SELECT id, name, email, phone, created_at, is_admin   -- ⬅️ добавлено is_admin
+      `SELECT id, name, email, phone, created_at, is_admin
        FROM users
        WHERE id=$1`,
       [uid]
@@ -183,22 +177,9 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
   }
 });
 
-// ==== start ====
-(async () => {
-  try {
-    await initDb();
-    const port = process.env.PORT || 4000;
-    app.listen(port, () => console.log(`API listening on :${port}`));
-  } catch (e) {
-    console.error("Failed to init:", e);
-    process.exit(1);
-  }
-})();
-
-
 const ALLOWED_CATEGORIES = ["boats","taxi","guides","hotels","rent","locals"];
 
-// список моих активных заявок
+// мои активные заявки
 app.get("/api/requests", authMiddleware, async (req, res) => {
   const { uid } = req.user;
   const r = await dbQuery(
@@ -232,7 +213,7 @@ app.post("/api/requests", authMiddleware, async (req, res) => {
   res.status(201).json({ request: r.rows[0] });
 });
 
-// отменить мою заявку
+// отменить заявку
 app.patch("/api/requests/:id/cancel", authMiddleware, async (req, res) => {
   const { uid } = req.user;
   const { id } = req.params;
@@ -245,8 +226,7 @@ app.patch("/api/requests/:id/cancel", authMiddleware, async (req, res) => {
   res.json({ ok: true });
 });
 
-
-// ===== adminOnly middleware =====
+// ===== adminOnly =====
 async function adminOnly(req, res, next) {
   try {
     if (!req.user?.uid) return res.status(401).json({ error: "NO_TOKEN" });
@@ -263,7 +243,7 @@ async function adminOnly(req, res, next) {
 // ===== Admin: guides list =====
 app.get("/api/admin/guides", authMiddleware, adminOnly, async (_req, res) => {
   const r = await dbQuery(
-    `SELECT id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at
+    `SELECT id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at
      FROM guides
      ORDER BY created_at DESC`
   );
@@ -274,9 +254,8 @@ app.get("/api/admin/guides", authMiddleware, adminOnly, async (_req, res) => {
 app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { is_active, subscription_until, categories } = req.body || {};
+    const { is_active, subscription_until, categories, description } = req.body || {};
 
-    // аккуратный апдейт только тех полей, что пришли
     const fields = [];
     const values = [];
     let i = 1;
@@ -286,13 +265,16 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
       values.push(is_active);
     }
     if (typeof subscription_until !== "undefined") {
-      // передаём NULL или дату
       fields.push(`subscription_until = $${i++}`);
       values.push(subscription_until ?? null);
     }
     if (Array.isArray(categories)) {
       fields.push(`categories = $${i++}::text[]`);
       values.push(categories);
+    }
+    if (typeof description !== "undefined") {
+      fields.push(`description = $${i++}`);
+      values.push(description ?? null);
     }
 
     fields.push(`updated_at = now()`);
@@ -303,7 +285,8 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
 
     values.push(id);
     const r = await dbQuery(
-      `UPDATE guides SET ${fields.join(", ")} WHERE id = $${i} RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at`,
+      `UPDATE guides SET ${fields.join(", ")} WHERE id = $${i}
+       RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at`,
       values
     );
     if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
@@ -314,15 +297,36 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
   }
 });
 
-
+// ===== Admin: create guide =====
 app.post("/api/admin/guides", authMiddleware, adminOnly, async (req, res) => {
-  const { name, phone, telegram_username, telegram_id, is_active = true, categories = [], subscription_until = null } = req.body || {};
+  const {
+    name,
+    phone,
+    telegram_username,
+    telegram_id,
+    is_active = true,
+    categories = [],
+    subscription_until = null,
+    description = null,
+  } = req.body || {};
   if (!name?.trim()) return res.status(400).json({ error: "NAME_REQUIRED" });
   const r = await dbQuery(
-    `INSERT INTO guides (name, phone, telegram_username, telegram_id, is_active, categories, subscription_until)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at`,
-    [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until]
+    `INSERT INTO guides (name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at`,
+    [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until, description]
   );
   res.status(201).json({ guide: r.rows[0] });
 });
+
+// ==== start ====
+(async () => {
+  try {
+    await initDb();
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => console.log(`API listening on :${port}`));
+  } catch (e) {
+    console.error("Failed to init:", e);
+    process.exit(1);
+  }
+})();

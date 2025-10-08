@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { FaSailboat, FaTaxi, FaUserTie, FaHotel, FaKey, FaUsers } from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
-
 import Navbar from "../../components/navbar/Navbar";
 
 const CATEGORY_OPTIONS = [
@@ -43,7 +42,7 @@ export default function Adminpage(){
   const API_BASE = "https://newsproject-tnkc.onrender.com";
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  const [tab, setTab] = useState("guides"); // 'guides' | 'news'
+  const [tab, setTab] = useState("guides");
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +63,7 @@ export default function Adminpage(){
     is_active: true,
     subscription_until_date: "",
     categories: [],
+    description: "",
   });
 
   // === Helpers ===
@@ -117,6 +117,7 @@ export default function Adminpage(){
       ...guide,
       subscription_until_date: toDateInputValue(guide.subscription_until),
       categories: guide.categories || [],
+      description: guide.description || "",
     });
     setModalOpen(true);
   }
@@ -138,6 +139,7 @@ export default function Adminpage(){
         is_active: Boolean(editing.is_active),
         subscription_until: iso,
         categories: editing.categories || [],
+        description: (editing.description || "").trim() || null,
       };
       const r = await fetch(`${API_BASE}/api/admin/guides/${editing.id}`, {
         method: "PATCH",
@@ -168,6 +170,7 @@ export default function Adminpage(){
       is_active: true,
       subscription_until_date: "",
       categories: [],
+      description: "",
     });
     setCreateOpen(true);
   }
@@ -192,6 +195,7 @@ export default function Adminpage(){
         is_active: Boolean(newGuide.is_active),
         categories: newGuide.categories || [],
         subscription_until: iso,
+        description: (newGuide.description || "").trim() || null,
       };
 
       const r = await fetch(`${API_BASE}/api/admin/guides`, {
@@ -291,6 +295,11 @@ export default function Adminpage(){
                       })}
                     </div>
                   )}
+                  {g.description && (
+                    <div className="admin-card-desc">
+                      {g.description}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -357,6 +366,16 @@ export default function Adminpage(){
                       onChange={(v) => setEditingField("categories", v)}
                     />
                     <div className="admin-hint">Выберите, по каким категориям гид будет получать заявки.</div>
+                  </div>
+
+                  <div className="admin-form-row">
+                    <label>Описание</label>
+                    <textarea
+                      value={editing.description || ""}
+                      onChange={(e) => setEditingField("description", e.target.value)}
+                      placeholder="Коротко о гиде: опыт, локации, услуги…"
+                      rows={4}
+                    />
                   </div>
                 </div>
 
@@ -456,6 +475,17 @@ export default function Adminpage(){
                       value={newGuide.categories}
                       onChange={(v) => setNewField("categories", v)}
                     />
+                  </div>
+
+                  <div className="admin-form-row">
+                    <label>Описание</label>
+                    <textarea
+                      value={newGuide.description}
+                      onChange={(e) => setNewField("description", e.target.value)}
+                      placeholder="Коротко о гиде: опыт, локации, услуги…"
+                      rows={4}
+                    />
+                    <div className="admin-hint">Необязательное поле, можно оставить пустым.</div>
                   </div>
                 </div>
 
