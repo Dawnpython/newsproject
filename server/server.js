@@ -8,6 +8,8 @@ import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pg from "pg";
+import crypto from "crypto";
+
 const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
@@ -47,11 +49,13 @@ async function initDb() {
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_phone ON users (phone);`);
   await dbQuery(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;`);
 
-  // добавим колонку description в guides, если таблица уже существует
+  // guides: добавляем отсутствующие поля безопасно
   await dbQuery(`DO $$
   BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='guides') THEN
       ALTER TABLE guides ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE guides ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE guides ADD COLUMN IF NOT EXISTS avatar_public_id TEXT;
     END IF;
   END $$;`);
 }
@@ -240,10 +244,36 @@ async function adminOnly(req, res, next) {
   }
 }
 
+// ===== Cloudinary: подписанная загрузка =====
+app.post("/api/uploads/signature", authMiddleware, adminOnly, async (_req, res) => {
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || "guides/avatars";
+
+    // Параметры для подписи: сортировка и точная строка важны
+    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+    const signature = crypto
+      .createHash("sha1")
+      .update(paramsToSign + process.env.CLOUDINARY_API_SECRET)
+      .digest("hex");
+
+    res.json({
+      timestamp,
+      signature,
+      folder,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    });
+  } catch (e) {
+    console.error("signature error:", e);
+    res.status(500).json({ error: "SIGNATURE_FAILED" });
+  }
+});
+
 // ===== Admin: guides list =====
 app.get("/api/admin/guides", authMiddleware, adminOnly, async (_req, res) => {
   const r = await dbQuery(
-    `SELECT id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at
+    `SELECT id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, avatar_url, avatar_public_id, created_at, updated_at
      FROM guides
      ORDER BY created_at DESC`
   );
@@ -254,7 +284,7 @@ app.get("/api/admin/guides", authMiddleware, adminOnly, async (_req, res) => {
 app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { is_active, subscription_until, categories, description } = req.body || {};
+    const { is_active, subscription_until, categories, description, avatar_url, avatar_public_id } = req.body || {};
 
     const fields = [];
     const values = [];
@@ -276,6 +306,14 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
       fields.push(`description = $${i++}`);
       values.push(description ?? null);
     }
+    if (typeof avatar_url !== "undefined") {
+      fields.push(`avatar_url = $${i++}`);
+      values.push(avatar_url ?? null);
+    }
+    if (typeof avatar_public_id !== "undefined") {
+      fields.push(`avatar_public_id = $${i++}`);
+      values.push(avatar_public_id ?? null);
+    }
 
     fields.push(`updated_at = now()`);
 
@@ -286,7 +324,7 @@ app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) =
     values.push(id);
     const r = await dbQuery(
       `UPDATE guides SET ${fields.join(", ")} WHERE id = $${i}
-       RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at`,
+       RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, avatar_url, avatar_public_id, created_at, updated_at`,
       values
     );
     if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
@@ -308,13 +346,15 @@ app.post("/api/admin/guides", authMiddleware, adminOnly, async (req, res) => {
     categories = [],
     subscription_until = null,
     description = null,
+    avatar_url = null,
+    avatar_public_id = null,
   } = req.body || {};
   if (!name?.trim()) return res.status(400).json({ error: "NAME_REQUIRED" });
   const r = await dbQuery(
-    `INSERT INTO guides (name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, created_at, updated_at`,
-    [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until, description]
+    `INSERT INTO guides (name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, avatar_url, avatar_public_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, description, avatar_url, avatar_public_id, created_at, updated_at`,
+    [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until, description, avatar_url, avatar_public_id]
   );
   res.status(201).json({ guide: r.rows[0] });
 });

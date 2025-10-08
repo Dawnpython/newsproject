@@ -457,4 +457,29 @@ textarea {
   outline: none;
   padding: 10px 12px;
   border-radius: 10px;
+}
+
+.admin-card-avatar img {
+  width: 56px;
+  height: 56px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 8px 0;
+}
+
+.admin-avatar-preview img {
+  width: 96px;
+  height: 96px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.admin-file-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }/*# sourceMappingURL=Admin.css.map */

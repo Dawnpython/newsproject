@@ -64,6 +64,8 @@ export default function Adminpage(){
     subscription_until_date: "",
     categories: [],
     description: "",
+    avatar_url: "",
+    avatar_public_id: "",
   });
 
   // === Helpers ===
@@ -84,6 +86,33 @@ export default function Adminpage(){
     if (!g?.is_active) return false;
     if (!g?.subscription_until) return true;
     return new Date(g.subscription_until) >= new Date();
+  }
+
+  // === Cloudinary upload ===
+  async function uploadToCloudinary(file) {
+    // 1) подпись с нашего API
+    const sigRes = await fetch(`${API_BASE}/api/uploads/signature`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!sigRes.ok) throw new Error("Signature failed");
+    const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
+
+    // 2) отправляем файл в Cloudinary
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", api_key);
+    form.append("timestamp", timestamp);
+    form.append("signature", signature);
+    form.append("folder", folder);
+
+    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`, {
+      method: "POST",
+      body: form,
+    });
+    if (!uploadRes.ok) throw new Error("Upload failed");
+    const data = await uploadRes.json();
+    return { url: data.secure_url, public_id: data.public_id };
   }
 
   // === Load guides ===
@@ -118,6 +147,8 @@ export default function Adminpage(){
       subscription_until_date: toDateInputValue(guide.subscription_until),
       categories: guide.categories || [],
       description: guide.description || "",
+      avatar_url: guide.avatar_url || "",
+      avatar_public_id: guide.avatar_public_id || "",
     });
     setModalOpen(true);
   }
@@ -140,6 +171,8 @@ export default function Adminpage(){
         subscription_until: iso,
         categories: editing.categories || [],
         description: (editing.description || "").trim() || null,
+        avatar_url: editing.avatar_url || null,
+        avatar_public_id: editing.avatar_public_id || null,
       };
       const r = await fetch(`${API_BASE}/api/admin/guides/${editing.id}`, {
         method: "PATCH",
@@ -171,6 +204,8 @@ export default function Adminpage(){
       subscription_until_date: "",
       categories: [],
       description: "",
+      avatar_url: "",
+      avatar_public_id: "",
     });
     setCreateOpen(true);
   }
@@ -196,6 +231,8 @@ export default function Adminpage(){
         categories: newGuide.categories || [],
         subscription_until: iso,
         description: (newGuide.description || "").trim() || null,
+        avatar_url: newGuide.avatar_url || null,
+        avatar_public_id: newGuide.avatar_public_id || null,
       };
 
       const r = await fetch(`${API_BASE}/api/admin/guides`, {
@@ -262,9 +299,17 @@ export default function Adminpage(){
                       {active ? "Активна" : "Не активна"}
                     </span>
                   </div>
+
+                  {/* аватар */}
+                  {g.avatar_url && (
+                    <div className="admin-card-avatar">
+                      <img src={g.avatar_url} alt={`${g.name} avatar`} />
+                    </div>
+                  )}
+
                   <div className="admin-card-row">
                     <span className="admin-label">Описание</span>
-                    <span className="admin-value">{g.description}</span>
+                    <span className="admin-value">{g.description || "—"}</span>
                   </div>
                   <div className="admin-card-row">
                     <span className="admin-label">Телефон</span>
@@ -323,6 +368,7 @@ export default function Adminpage(){
                       disabled
                     />
                   </div>
+
                   <div className="admin-form-row">
                     <label>Описание</label>
                     <textarea
@@ -364,7 +410,6 @@ export default function Adminpage(){
                         </button>
                       )}
                     </div>
-                    
                   </div>
 
                   <div className="admin-form-row">
@@ -373,10 +418,44 @@ export default function Adminpage(){
                       value={editing.categories || []}
                       onChange={(v) => setEditingField("categories", v)}
                     />
-                   
                   </div>
 
-                  
+                  {/* аватар */}
+                  <div className="admin-form-row">
+                    <label>Фото (аватар)</label>
+                    <div className="admin-file-row">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const { url, public_id } = await uploadToCloudinary(file);
+                            setEditingField("avatar_url", url);
+                            setEditingField("avatar_public_id", public_id);
+                          } catch {
+                            setError("Не удалось загрузить фото");
+                          }
+                        }}
+                      />
+                      {editing.avatar_url && (
+                        <div className="admin-avatar-preview">
+                          <img src={editing.avatar_url} alt="avatar preview" />
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn--secondary"
+                            onClick={() => {
+                              setEditingField("avatar_url", "");
+                              setEditingField("avatar_public_id", "");
+                            }}
+                          >
+                            Удалить
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="admin-modal-actions">
@@ -409,16 +488,17 @@ export default function Adminpage(){
                         placeholder="Иван Петров"
                       />
                     </div>
+
                     <div className="admin-form-row">
-                    <label>Описание</label>
-                    <textarea
-                      value={newGuide.description}
-                      onChange={(e) => setNewField("description", e.target.value)}
-                      placeholder="Коротко о гиде: опыт, локации, услуги…"
-                      rows={4}
-                    />
-                    
-                  </div>
+                      <label>Описание</label>
+                      <textarea
+                        value={newGuide.description}
+                        onChange={(e) => setNewField("description", e.target.value)}
+                        placeholder="Коротко о гиде: опыт, локации, услуги…"
+                        rows={4}
+                      />
+                    </div>
+
                     <div className="admin-form-row">
                       <label>Телефон</label>
                       <input
@@ -487,7 +567,43 @@ export default function Adminpage(){
                     />
                   </div>
 
-                
+                  {/* аватар */}
+                  <div className="admin-form-row">
+                    <label>Фото (аватар)</label>
+                    <div className="admin-file-row">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const { url, public_id } = await uploadToCloudinary(file);
+                            setNewField("avatar_url", url);
+                            setNewField("avatar_public_id", public_id);
+                          } catch {
+                            setError("Не удалось загрузить фото");
+                          }
+                        }}
+                      />
+                      {newGuide.avatar_url && (
+                        <div className="admin-avatar-preview">
+                          <img src={newGuide.avatar_url} alt="avatar preview" />
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn--secondary"
+                            onClick={() => {
+                              setNewField("avatar_url", "");
+                              setNewField("avatar_public_id", "");
+                            }}
+                          >
+                            Удалить
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="admin-hint">Рекомендуем до 2–3 МБ, формат JPG/PNG/WebP.</div>
+                  </div>
                 </div>
 
                 <div className="admin-modal-actions">
