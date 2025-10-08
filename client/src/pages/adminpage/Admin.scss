@@ -72,7 +72,7 @@
 
 .admin-bar{
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   margin: 10px 0 16px;
 }
 
@@ -186,8 +186,9 @@
 .admin-btn--primary{
   background: var(--admin-primary);
   border-color: var(--admin-primary);
-  color: #003344;
+  color: white;
   font-weight: 700;
+  width: 100%;
 }
 .admin-btn--primary:hover{ background: var(--admin-primary-600); }
 
@@ -324,7 +325,6 @@
 }
 
 .admin-modal{
-  width: 70vw;               /* ширина 70% экрана */
   max-width: 900px;          /* и ограничение сверху */
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
