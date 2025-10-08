@@ -1,5 +1,6 @@
 // Adminpage.jsx
 import { useEffect, useMemo, useState } from "react";
+import "client/src/pages/adminpage/Admin.css";
 
 export default function Adminpage(){
   const API_BASE = "https://newsproject-tnkc.onrender.com";
@@ -8,10 +9,33 @@ export default function Adminpage(){
   const [tab, setTab] = useState("guides"); // 'guides' | 'news'
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState(null); // id гида, который сейчас сохраняется
   const [error, setError] = useState("");
 
-  // Загрузка списка гидов
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null); // объект текущего гида
+  const [saving, setSaving] = useState(false);
+
+  // === Helpers ===
+  function toDateInputValue(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  function toIsoEndOfDay(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + "T23:59:59");
+    return d.toISOString();
+  }
+  function isActiveComputed(g) {
+    if (!g?.is_active) return false;
+    if (!g?.subscription_until) return true;
+    return new Date(g.subscription_until) >= new Date();
+  }
+
+  // === Load guides ===
   useEffect(() => {
     if (tab !== "guides") return;
     let aborted = false;
@@ -36,40 +60,41 @@ export default function Adminpage(){
     return () => { aborted = true; };
   }, [tab]);
 
-  // Помощник: преобразовать TIMESTAMPTZ в YYYY-MM-DD для <input type="date">
-  function toDateInputValue(ts) {
-    if (!ts) return "";
-    const d = new Date(ts);
-    // формат YYYY-MM-DD в локальном времени
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth()+1).padStart(2,"0");
-    const dd = String(d.getDate()).padStart(2,"0");
-    return `${yyyy}-${mm}-${dd}`;
+  // === UI Handlers ===
+  function openModal(guide) {
+    setEditing({
+      ...guide,
+      // для удобства редактирования — локальное поле с датой формата YYYY-MM-DD
+      subscription_until_date: toDateInputValue(guide.subscription_until),
+    });
+    setModalOpen(true);
+  }
+  function closeModal() {
+    setModalOpen(false);
+    setEditing(null);
   }
 
-  // Обратное: из YYYY-MM-DD сделать ISO-конец-дня (чтобы считалось «до включительно»)
-  function toIsoEndOfDay(dateStr) {
-    if (!dateStr) return null; // для удаления даты подписки
-    const d = new Date(dateStr + "T23:59:59");
-    return d.toISOString();
+  function setEditingField(field, value) {
+    setEditing((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Локальное обновление строки гида
-  function updateGuideLocal(id, patch) {
-    setGuides((prev) => prev.map(g => g.id === id ? { ...g, ...patch } : g));
-  }
-
-  // Сохранение строки гида
-  async function saveGuideRow(guide) {
+  async function saveEditing() {
+    if (!editing) return;
     try {
-      setSavingId(guide.id);
-      setError("");
+      setSaving(true);
+
+      // нормализуем дату
+      const iso = editing.subscription_until_date
+        ? toIsoEndOfDay(editing.subscription_until_date)
+        : null;
+
       const body = {
-        is_active: Boolean(guide.is_active),
-        subscription_until: guide.subscription_until ? guide.subscription_until : null,
-        // categories тут можно тоже отправлять, если будешь редактировать
+        is_active: Boolean(editing.is_active),
+        subscription_until: iso,
+        // если позже захочешь редактировать категории — добавим здесь
       };
-      const r = await fetch(`${API_BASE}/api/admin/guides/${guide.id}`, {
+
+      const r = await fetch(`${API_BASE}/api/admin/guides/${editing.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -79,134 +104,178 @@ export default function Adminpage(){
       });
       if (!r.ok) throw new Error("Save failed");
       const data = await r.json();
-      // Обновим строку ответом сервера
-      updateGuideLocal(guide.id, data.guide);
+
+      // обновим в списке
+      setGuides((prev) => prev.map((g) => (g.id === editing.id ? data.guide : g)));
+
+      closeModal();
     } catch (e) {
       setError("Не удалось сохранить изменения");
     } finally {
-      setSavingId(null);
+      setSaving(false);
     }
   }
 
-  // Рендер одной строки
-  function GuideRow({ g }) {
-    const activeComputed = useMemo(() => {
-      const flag = !!g.is_active;
-      if (!flag) return false;
-      if (!g.subscription_until) return true;
-      return new Date(g.subscription_until) >= new Date();
-    }, [g.is_active, g.subscription_until]);
-
-    return (
-      <tr key={g.id}>
-        <td>{g.name}</td>
-        <td>{g.phone || "-"}</td>
-        <td>{g.telegram_username || "-"}</td>
-        <td>{g.telegram_id || "-"}</td>
-        <td style={{ minWidth: 140 }}>
-          <label style={{ display:"inline-flex", alignItems:"center", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={!!g.is_active}
-              onChange={(e) => updateGuideLocal(g.id, { is_active: e.target.checked })}
-            />
-            {g.is_active ? "вкл." : "выкл."}
-          </label>
-        </td>
-        <td style={{ minWidth: 200 }}>
-          <input
-            type="date"
-            value={toDateInputValue(g.subscription_until)}
-            onChange={(e) => {
-              const iso = toIsoEndOfDay(e.target.value);
-              updateGuideLocal(g.id, { subscription_until: iso });
-            }}
-          />
-          <div style={{ fontSize: 12, opacity: 0.7 }}>
-            {activeComputed ? "Активна" : "Не активна"}{" "}
-            {g.subscription_until ? `(до ${toDateInputValue(g.subscription_until)})` : "(без даты)"}
-          </div>
-        </td>
-        <td>
-          <button
-            disabled={savingId === g.id}
-            onClick={() => saveGuideRow(g)}
-            style={{ padding: "6px 10px", cursor: "pointer" }}
-          >
-            {savingId === g.id ? "Сохранение…" : "Сохранить"}
-          </button>
-        </td>
-      </tr>
-    );
-  }
-
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Админка</h1>
-
-      <div style={{ display: "flex", gap: 8, margin: "16px 0" }}>
-        <button
-          onClick={() => setTab("guides")}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            background: tab === "guides" ? "#eee" : "white",
-            cursor: "pointer",
-          }}
-        >
-          Гиды
-        </button>
-        <button
-          onClick={() => setTab("news")}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            background: tab === "news" ? "#eee" : "white",
-            cursor: "pointer",
-          }}
-        >
-          Новости
-        </button>
+    <div className="admin-wrap">
+      <div className="admin-header">
+        <h1>Админка</h1>
+        <div className="tabs">
+          <button
+            className={`tab ${tab === "guides" ? "active" : ""}`}
+            onClick={() => setTab("guides")}
+          >
+            Гиды
+          </button>
+          <button
+            className={`tab ${tab === "news" ? "active" : ""}`}
+            onClick={() => setTab("news")}
+          >
+            Новости
+          </button>
+        </div>
       </div>
 
       {tab === "guides" && (
-        <div>
-          {loading && <p>Загрузка…</p>}
-          {error && <p style={{ color: "crimson" }}>{error}</p>}
+        <section>
+          {loading && <p className="muted">Загрузка…</p>}
+          {error && <p className="error">{error}</p>}
+          {!loading && guides.length === 0 && <p className="muted">Гидов пока нет.</p>}
 
-          {!loading && guides.length === 0 && <p>Гидов пока нет.</p>}
+          <div className="cards">
+            {guides.map((g) => {
+              const active = isActiveComputed(g);
+              return (
+                <div
+                  key={g.id}
+                  className={`card ${active ? "ok" : "off"}`}
+                  onClick={() => openModal(g)}
+                >
+                  <div className="card-top">
+                    <div className="card-name">{g.name}</div>
+                    <span className={`pill ${active ? "pill-ok" : "pill-off"}`}>
+                      {active ? "Активна" : "Не активна"}
+                    </span>
+                  </div>
+                  <div className="card-row">
+                    <span className="label">Телефон</span>
+                    <span className="value">{g.phone || "—"}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="label">Telegram</span>
+                    <span className="value">{g.telegram_username || "—"}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="label">TG ID</span>
+                    <span className="value">{g.telegram_id || "—"}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="label">До</span>
+                    <span className="value">
+                      {g.subscription_until ? toDateInputValue(g.subscription_until) : "без даты"}
+                    </span>
+                  </div>
+                  {!!g.categories?.length && (
+                    <div className="card-tags">
+                      {g.categories.map((c) => (
+                        <span className="tag" key={c}>{c}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-          {guides.length > 0 && (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ textAlign: "left" }}>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Имя</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Телефон</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Telegram</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>TG ID</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Подписка</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}>Активна до</th>
-                    <th style={{ padding: 8, borderBottom: "1px solid #eee" }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guides.map((g) => (
-                    <GuideRow key={g.id} g={g} />
-                  ))}
-                </tbody>
-              </table>
+          {/* MODAL */}
+          {modalOpen && editing && (
+            <div className="modal-backdrop" onClick={closeModal}>
+              <div className="modal" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>Редактирование гида</h3>
+                  <button className="icon-btn" onClick={closeModal} aria-label="Close">✕</button>
+                </div>
+
+                <div className="modal-body">
+                  <div className="form-row">
+                    <label>Имя</label>
+                    <input
+                      type="text"
+                      value={editing.name || ""}
+                      onChange={(e) => setEditingField("name", e.target.value)}
+                      disabled
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label>Телеграм</label>
+                    <input
+                      type="text"
+                      value={editing.telegram_username || ""}
+                      onChange={(e) => setEditingField("telegram_username", e.target.value)}
+                      disabled
+                    />
+                  </div>
+
+                  <div className="form-row switch-row">
+                    <label>Подписка включена</label>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={!!editing.is_active}
+                        onChange={(e) => setEditingField("is_active", e.target.checked)}
+                      />
+                      <span className="slider" />
+                    </label>
+                  </div>
+
+                  <div className="form-row">
+                    <label>Активна до</label>
+                    <div className="date-row">
+                      <input
+                        type="date"
+                        value={editing.subscription_until_date || ""}
+                        onChange={(e) =>
+                          setEditingField("subscription_until_date", e.target.value)
+                        }
+                      />
+                      {editing.subscription_until_date && (
+                        <button
+                          className="btn secondary"
+                          onClick={() => setEditingField("subscription_until_date", "")}
+                        >
+                          Очистить
+                        </button>
+                      )}
+                    </div>
+                    <div className="hint">
+                      Если дата пустая — подписка без ограничения по дате.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn ghost" onClick={closeModal}>Отмена</button>
+                  <button
+                    className="btn primary"
+                    onClick={saveEditing}
+                    disabled={saving}
+                  >
+                    {saving ? "Сохранение…" : "Сохранить"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {tab === "news" && (
-        <div style={{ opacity: 0.7 }}>
-          <p>Здесь позже будет управление новостями.</p>
-        </div>
+        <section>
+          <div className="empty-block">
+            <h3>Новости</h3>
+            <p className="muted">Раздел пока пустой.</p>
+          </div>
+        </section>
       )}
     </div>
   );
