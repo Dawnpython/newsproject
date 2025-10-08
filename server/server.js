@@ -2,6 +2,7 @@
 
 import "./telegram.js";
 
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -357,6 +358,22 @@ app.post("/api/admin/guides", authMiddleware, adminOnly, async (req, res) => {
     [name.trim(), phone || null, telegram_username || null, telegram_id || null, is_active, categories, subscription_until, description, avatar_url, avatar_public_id]
   );
   res.status(201).json({ guide: r.rows[0] });
+});
+
+
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs";
+const BOT_PATH  = `/bot${BOT_TOKEN}`;
+
+// Telegram шлёт JSON — express.json() уже подключён выше, всё норм
+app.post(BOT_PATH, (req, res) => {
+  try {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+  } catch (e) {
+    console.error("[webhook] processUpdate error:", e);
+    res.sendStatus(500);
+  }
 });
 
 // ==== start ====
