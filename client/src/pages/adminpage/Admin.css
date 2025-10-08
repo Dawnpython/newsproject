@@ -448,4 +448,13 @@
   padding: 12px 16px 16px;
   border-top: 1px solid var(--admin-border);
   background: #fff;
+}
+
+textarea {
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  outline: none;
+  padding: 10px 12px;
+  border-radius: 10px;
 }/*# sourceMappingURL=Admin.css.map */
