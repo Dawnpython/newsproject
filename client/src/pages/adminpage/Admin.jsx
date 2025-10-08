@@ -300,7 +300,7 @@ export default function Adminpage(){
                     </span>
                   </div>
 
-                  {/* аватар */}
+                  
                   {g.avatar_url && (
                     <div className="admin-card-avatar">
                       <img src={g.avatar_url} alt={`${g.name} avatar`} />
