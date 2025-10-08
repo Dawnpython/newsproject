@@ -22,8 +22,7 @@ async function findGuideByTelegramId(telegramId) {
 }
 
 /**
- * Заявки по категориям гида (строго по массиву categories), только активные
- * Пагинация: limit/offset
+ * Выборка активных заявок по категориям гида (requests.categories text[])
  */
 async function fetchRequestsForCategories(guideCategories = [], limit = 5, offset = 0) {
   if (!guideCategories?.length) return { items: [], total: 0 };
@@ -71,6 +70,65 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
   return { items, total };
 }
 
+/* ===== Ответы/сообщения ===== */
+
+// Создаём оффер гида + первое сообщение
+async function createGuideResponse({ requestId, guideId, text }) {
+  // Проверка: заявка активна?
+  const rq = await pool.query(
+    `SELECT id, status, categories FROM requests WHERE id=$1`,
+    [requestId]
+  );
+  if (rq.rowCount === 0) throw new Error("REQUEST_NOT_FOUND");
+  if (rq.rows[0].status !== 'active') throw new Error("REQUEST_NOT_ACTIVE");
+
+  // Создаём/обновляем единственный оффер от гида
+  const upsert = await pool.query(
+    `
+    INSERT INTO request_responses (request_id, guide_id, status, text)
+    VALUES ($1, $2, 'sent', $3)
+    ON CONFLICT (request_id, guide_id)
+    DO UPDATE SET status='sent', text=EXCLUDED.text, updated_at=now()
+    RETURNING id
+    `,
+    [requestId, guideId, text]
+  );
+  const responseId = upsert.rows[0].id;
+
+  // Сообщение в тред
+  await pool.query(
+    `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
+     VALUES ($1, 'guide', $2, $3)`,
+    [responseId, guideId, text]
+  );
+
+  return responseId;
+}
+
+// Отказать по заявке
+async function rejectGuideResponse({ requestId, guideId, reason = null }) {
+  const upsert = await pool.query(
+    `
+    INSERT INTO request_responses (request_id, guide_id, status, text)
+    VALUES ($1, $2, 'rejected', $3)
+    ON CONFLICT (request_id, guide_id)
+    DO UPDATE SET status='rejected', text=COALESCE(request_responses.text, EXCLUDED.text), updated_at=now()
+    RETURNING id
+    `,
+    [requestId, guideId, reason]
+  );
+  const responseId = upsert.rows[0].id;
+
+  if (reason) {
+    await pool.query(
+      `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
+       VALUES ($1, 'guide', $2, $3)`,
+      [responseId, guideId, `(отклонено) ${reason}`]
+    );
+  }
+  return responseId;
+}
+
 /* ======================= BOT INSTANCE ======================= */
 const token = process.env.TELEGRAM_BOT_TOKEN || "8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs";
 export const bot = new TelegramBot(token, { polling: false });
@@ -84,7 +142,6 @@ export const bot = new TelegramBot(token, { polling: false });
       if (!baseUrl) throw new Error("BASE_URL is required when USE_WEBHOOK=true");
       const path = `/bot${token}`;
       const url = `${baseUrl}${path}`;
-      // В Express:
       // app.post(path, (req,res)=>{ bot.processUpdate(req.body); res.sendStatus(200); });
       await bot.setWebHook(url, { drop_pending_updates: true });
       console.log("[bot] Webhook set:", url);
@@ -128,7 +185,6 @@ function labelFromRow(row) {
   return arr.map((c) => CATEGORY_LABELS[c] || c).join(", ");
 }
 function formatRequestLine(r) {
-  // короткий и читаемый формат: номер, категории, дата, текст
   const num = String(r.short_code || r.id).padStart(5, "0");
   const cat = labelFromRow(r);
   const dt = formatDateTimeRu(r.created_at);
@@ -150,8 +206,10 @@ function isDuplicateCallback(key, windowMs = 3000) {
   return false;
 }
 
+/* ===== Состояние ожидания текста ответа ===== */
+const pendingReplyByUser = new Map(); // telegram userId -> { requestId, guideId }
+
 /* ======================= SCENARIO ======================= */
-// /start — приветствие -> проверяем, гид ли пользователь
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
@@ -173,7 +231,6 @@ bot.onText(/^\/start$/, async (msg) => {
   }
 });
 
-/* Быстрый вход командой */
 bot.onText(/^\/requests$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
@@ -185,15 +242,14 @@ bot.onText(/^\/requests$/, async (msg) => {
   await sendRequestsPage(chatId, guide, 0);
 });
 
-/* ----- Обработка инлайн-кнопок ----- */
 bot.on("callback_query", async (query) => {
   try {
     if (!query?.data) return;
 
     const chatId = query.message?.chat?.id;
     const userId = query.from?.id;
-    const msgId = query.message?.message_id;
-    const data = query.data;
+    const msgId  = query.message?.message_id;
+    const data   = query.data;
 
     const dedupKey = `${msgId}:${userId}:${data}`;
     if (isDuplicateCallback(dedupKey)) {
@@ -233,6 +289,28 @@ bot.on("callback_query", async (query) => {
       await sendRequestsPage(chatId, guide, offset);
       return;
     }
+
+    if (data.startsWith("reply:")) {
+      const requestId = data.split(":")[1];
+      const guide = await findGuideByTelegramId(userId);
+      if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
+      if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
+
+      pendingReplyByUser.set(userId, { requestId, guideId: guide.id });
+      await bot.sendMessage(chatId, "Напишите текст вашего ответа на эту заявку одним сообщением:");
+      return;
+    }
+
+    if (data.startsWith("reject:")) {
+      const requestId = data.split(":")[1];
+      const guide = await findGuideByTelegramId(userId);
+      if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
+      if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
+
+      await rejectGuideResponse({ requestId, guideId: guide.id });
+      await bot.sendMessage(chatId, "Заявка отмечена как отклонённая для вас.");
+      return;
+    }
   } catch (e) {
     console.error("[callback_query] error:", e);
     const chatId = query?.message?.chat?.id;
@@ -240,7 +318,35 @@ bot.on("callback_query", async (query) => {
   }
 });
 
-/* ====== Рендер страницы заявок с пагинацией (чисто текстом) ====== */
+/* Принятие текстового ответа от гида */
+bot.on("message", async (msg) => {
+  // игнор команд
+  if (!msg.text || msg.text.startsWith("/")) return;
+
+  const userId = msg.from?.id;
+  const chatId = msg.chat?.id;
+
+  const pending = pendingReplyByUser.get(userId);
+  if (!pending) return;
+
+  const { requestId, guideId } = pending;
+  try {
+    const text = msg.text.trim();
+    if (!text) {
+      await bot.sendMessage(chatId, "Пустой ответ не отправлен. Напишите текст и попробуйте снова.");
+      return;
+    }
+    await createGuideResponse({ requestId, guideId, text });
+    await bot.sendMessage(chatId, "Спасибо! Ваш ответ отправлен пользователю.");
+  } catch (e) {
+    console.error("[reply] create error:", e);
+    await bot.sendMessage(chatId, "Не удалось сохранить ответ. Попробуйте позже.");
+  } finally {
+    pendingReplyByUser.delete(userId);
+  }
+});
+
+/* ===== Рендер страниц заявок ===== */
 async function sendRequestsPage(chatId, guide, offset) {
   const categories = Array.isArray(guide.categories) ? guide.categories : [];
   const pageSize = 5;
@@ -270,4 +376,21 @@ async function sendRequestsPage(chatId, guide, offset) {
   await bot.sendMessage(chatId, text, {
     reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
   });
+
+  // Для каждого итема — отдельные кнопки "Ответить/Отклонить"
+  for (const it of items) {
+    const num = String(it.short_code || it.id).padStart(5, "0");
+    await bot.sendMessage(
+      chatId,
+      `Заявка #${num}:`,
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "✍️ Ответить",  callback_data: `reply:${it.id}` },
+            { text: "🚫 Отклонить", callback_data: `reject:${it.id}` },
+          ]]
+        }
+      }
+    );
+  }
 }
