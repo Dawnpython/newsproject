@@ -4,7 +4,7 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-// --- DB
+/* ======================= DB ======================= */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_SSL ? { rejectUnauthorized: false } : false,
@@ -21,20 +21,26 @@ async function findGuideByTelegramId(telegramId) {
   return r.rows[0] || null;
 }
 
-const token = process.env.TELEGRAM_BOT_TOKEN || '8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs';
+/* ======================= BOT INSTANCE ======================= */
+const token =
+  process.env.TELEGRAM_BOT_TOKEN ||
+  "8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs";
 export const bot = new TelegramBot(token, { polling: false });
 
-// --- запуск: webhook в проде, polling в деве
+/* ======================= STARTUP (webhook prod / polling dev) ======================= */
 (async () => {
   try {
     const useWebhook = process.env.USE_WEBHOOK === "true";
     if (useWebhook) {
       const baseUrl = process.env.BASE_URL;
       if (!baseUrl) throw new Error("BASE_URL is required when USE_WEBHOOK=true");
-      const path = `/bot${token}`;
+
+      const path = `/bot${token}`; // уникальный путь (желательно спрятать токен в реале)
       const url = `${baseUrl}${path}`;
+
       // В твоём Express-сервере должен быть:
       // app.post(path, (req, res) => { bot.processUpdate(req.body); res.sendStatus(200); });
+
       await bot.setWebHook(url, { drop_pending_updates: true });
       console.log("[bot] Webhook set:", url);
     } else {
@@ -47,13 +53,17 @@ export const bot = new TelegramBot(token, { polling: false });
   }
 })();
 
-// --- утилиты
+/* ======================= UTILS ======================= */
 function formatDateRu(d) {
   try {
     return new Date(d).toLocaleDateString("ru-RU", {
-      year: "numeric", month: "long", day: "numeric",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
-  } catch { return String(d); }
+  } catch {
+    return String(d);
+  }
 }
 
 function hasActiveSubscription(guide) {
@@ -64,7 +74,23 @@ function hasActiveSubscription(guide) {
   return flag && dateOk;
 }
 
-// --- сценарий
+/* ----- Дедуп кликов по инлайн-кнопкам ----- */
+const recentCallbacks = new Map(); // key -> timestamp
+function isDuplicateCallback(key, windowMs = 3000) {
+  const now = Date.now();
+  const last = recentCallbacks.get(key) || 0;
+  if (now - last < windowMs) return true;
+  recentCallbacks.set(key, now);
+  // простая очистка кэша
+  if (recentCallbacks.size > 500) {
+    const cutoff = now - windowMs;
+    for (const [k, t] of recentCallbacks) if (t < cutoff) recentCallbacks.delete(k);
+  }
+  return false;
+}
+
+/* ======================= SCENARIO ======================= */
+// /start — приветствие -> проверяем, гид ли пользователь
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
@@ -72,7 +98,7 @@ bot.onText(/^\/start$/, async (msg) => {
   // 1) Приветствие
   await bot.sendMessage(chatId, `Привет, я бот гидов.`);
 
-  // 2) Проверяем, является ли пользователь гидом
+  // 2) Проверка, является ли пользователь гидом
   try {
     const guide = await findGuideByTelegramId(userId);
 
@@ -95,15 +121,27 @@ bot.onText(/^\/start$/, async (msg) => {
   }
 });
 
-// Кнопки
+/* ----- Обработка инлайн-кнопок ----- */
 bot.on("callback_query", async (query) => {
   try {
     if (!query?.data) return;
+
     const chatId = query.message?.chat?.id;
     const userId = query.from?.id;
+    const msgId = query.message?.message_id;
+    const data = query.data;
+
+    // Дедуп по сообщению + действию + пользователю
+    const dedupKey = `${msgId}:${userId}:${data}`;
+    if (isDuplicateCallback(dedupKey)) {
+      await bot.answerCallbackQuery(query.id);
+      return;
+    }
+
+    // Всегда отвечаем, чтобы убрать "часики"
     await bot.answerCallbackQuery(query.id);
 
-    if (query.data === "check_sub") {
+    if (data === "check_sub") {
       const guide = await findGuideByTelegramId(userId);
 
       if (!guide) {
@@ -136,7 +174,17 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    if (query.data === "view_requests") {
+    if (data === "view_requests") {
+      // Сразу убираем клавиатуру, чтобы исключить повторные клики
+      try {
+        await bot.editMessageReplyMarkup(
+          { inline_keyboard: [] },
+          { chat_id: chatId, message_id: msgId }
+        );
+      } catch {
+        /* уже отредактировано — ок */
+      }
+
       const base = process.env.APP_BASE_URL || "https://newsproject-tnkc.onrender.com";
       const url = `${base}/guides/requests`;
       await bot.sendMessage(chatId, `Открыть заявки: ${url}`);
