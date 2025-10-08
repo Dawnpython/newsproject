@@ -244,3 +244,72 @@ app.patch("/api/requests/:id/cancel", authMiddleware, async (req, res) => {
   if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND_OR_ALREADY_CANCELED" });
   res.json({ ok: true });
 });
+
+
+// ===== adminOnly middleware =====
+async function adminOnly(req, res, next) {
+  try {
+    if (!req.user?.uid) return res.status(401).json({ error: "NO_TOKEN" });
+    const r = await dbQuery(`SELECT is_admin FROM users WHERE id=$1`, [req.user.uid]);
+    if (r.rowCount === 0) return res.status(401).json({ error: "UNKNOWN_USER" });
+    if (!r.rows[0].is_admin) return res.status(403).json({ error: "FORBIDDEN" });
+    next();
+  } catch (e) {
+    console.error("adminOnly error:", e);
+    res.status(500).json({ error: "SERVER_ERROR" });
+  }
+}
+
+// ===== Admin: guides list =====
+app.get("/api/admin/guides", authMiddleware, adminOnly, async (_req, res) => {
+  const r = await dbQuery(
+    `SELECT id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at
+     FROM guides
+     ORDER BY created_at DESC`
+  );
+  res.json({ guides: r.rows });
+});
+
+// ===== Admin: update guide =====
+app.patch("/api/admin/guides/:id", authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_active, subscription_until, categories } = req.body || {};
+
+    // аккуратный апдейт только тех полей, что пришли
+    const fields = [];
+    const values = [];
+    let i = 1;
+
+    if (typeof is_active === "boolean") {
+      fields.push(`is_active = $${i++}`);
+      values.push(is_active);
+    }
+    if (typeof subscription_until !== "undefined") {
+      // передаём NULL или дату
+      fields.push(`subscription_until = $${i++}`);
+      values.push(subscription_until ?? null);
+    }
+    if (Array.isArray(categories)) {
+      fields.push(`categories = $${i++}::text[]`);
+      values.push(categories);
+    }
+
+    fields.push(`updated_at = now()`);
+
+    if (fields.length === 1) {
+      return res.status(400).json({ error: "NOTHING_TO_UPDATE" });
+    }
+
+    values.push(id);
+    const r = await dbQuery(
+      `UPDATE guides SET ${fields.join(", ")} WHERE id = $${i} RETURNING id, name, phone, telegram_username, telegram_id, is_active, categories, subscription_until, created_at, updated_at`,
+      values
+    );
+    if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
+    res.json({ guide: r.rows[0] });
+  } catch (e) {
+    console.error("PATCH /api/admin/guides/:id error:", e);
+    res.status(500).json({ error: "SERVER_ERROR" });
+  }
+});
