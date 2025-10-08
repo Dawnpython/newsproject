@@ -7,7 +7,7 @@ import {
   FaHotel,
   FaKey,
   FaUsers,
-} from "react-icons/fa";
+} from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
 import Navbar from "../../components/navbar/Navbar";
 
