@@ -7,7 +7,7 @@ import {
   FaHotel,
   FaKey,
   FaUsers,
-} from "react-icons/fa6";
+} from "react-icons/fa";
 import "/src/pages/adminpage/Admin.css";
 import Navbar from "../../components/navbar/Navbar";
 
@@ -27,7 +27,7 @@ function AdminCategoryPicker({ value = [], onChange }) {
   };
   return (
     <div className="admin-cat-grid">
-      {CATEGORY_OPTIONS.map(({ id, label }) => {
+      {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
         const active = value.includes(id);
         return (
           <button
