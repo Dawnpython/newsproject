@@ -389,6 +389,7 @@
 }
 
 .admin-modal {
+  width: 100%;
   max-width: 900px; /* и ограничение сверху */
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
