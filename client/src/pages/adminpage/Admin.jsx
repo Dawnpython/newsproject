@@ -410,6 +410,16 @@ export default function Adminpage(){
                       />
                     </div>
                     <div className="admin-form-row">
+                    <label>Описание</label>
+                    <textarea
+                      value={newGuide.description}
+                      onChange={(e) => setNewField("description", e.target.value)}
+                      placeholder="Коротко о гиде: опыт, локации, услуги…"
+                      rows={4}
+                    />
+                    
+                  </div>
+                    <div className="admin-form-row">
                       <label>Телефон</label>
                       <input
                         type="text"
@@ -477,16 +487,7 @@ export default function Adminpage(){
                     />
                   </div>
 
-                  <div className="admin-form-row">
-                    <label>Описание</label>
-                    <textarea
-                      value={newGuide.description}
-                      onChange={(e) => setNewField("description", e.target.value)}
-                      placeholder="Коротко о гиде: опыт, локации, услуги…"
-                      rows={4}
-                    />
-                    <div className="admin-hint">Необязательное поле, можно оставить пустым.</div>
-                  </div>
+                
                 </div>
 
                 <div className="admin-modal-actions">
