@@ -1,482 +1,386 @@
-// Adminpage.jsx
-import { useEffect, useMemo, useState } from "react";
-import { FaSailboat, FaTaxi, FaUserTie, FaHotel, FaKey, FaUsers } from "react-icons/fa6";
-import "./admin.css";
+import "/src/pages/applications/Applications.css";
+import Navbar from "/src/components/navbar/Navbar.jsx";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FiSearch, FiX, FiCheck } from "react-icons/fi";
+import {
+  FaSailboat,
+  FaTaxi,
+  FaUserTie,
+  FaHotel,
+  FaKey,
+  FaUsers,
+} from "react-icons/fa6";
 
+import People from "/src/assets/People.png";
+import emptyBox from "/src/assets/icons/application/empty.png";
+
+/** адрес API */
+const API_BASE = "https://newsproject-tnkc.onrender.com";
+
+/** список категорий с иконками */
 const CATEGORY_OPTIONS = [
-  { id: "boats",  label: "Лодки и экскурсии на воде", Icon: FaSailboat },
-  { id: "taxi",   label: "Заказать такси",            Icon: FaTaxi },
-  { id: "guides", label: "Частные гиды",              Icon: FaUserTie },
-  { id: "hotels", label: "Отели и турбазы",           Icon: FaHotel },
-  { id: "rent",   label: "Аренда жилья",              Icon: FaKey },
-  { id: "locals", label: "Местные жители",            Icon: FaUsers },
+  { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
+  { id: "taxi", label: "Заказать такси", Icon: FaTaxi },
+  { id: "guides", label: "Частные гиды", Icon: FaUserTie },
+  { id: "hotels", label: "Отели и турбазы", Icon: FaHotel },
+  { id: "rent", label: "Аренда жилья", Icon: FaKey },
+  { id: "locals", label: "Местные жители", Icon: FaUsers },
 ];
 
-function CategoryPicker({ value = [], onChange }) {
+function useClickOutside(ref, handler) {
+  useEffect(() => {
+    const onClick = (e) => {
+      if (!ref.current || ref.current.contains(e.target)) return;
+      handler();
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("touchstart", onClick);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("touchstart", onClick);
+    };
+  }, [ref, handler]);
+}
+
+function MultiSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef(null);
+  useClickOutside(boxRef, () => setOpen(false));
+
+  const selected = useMemo(
+    () => CATEGORY_OPTIONS.filter((c) => value.includes(c.id)),
+    [value]
+  );
+
   const toggle = (id) => {
-    if (value.includes(id)) onChange(value.filter((v) => v !== id));
-    else onChange([...value, id]);
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
   };
+  const clear = () => onChange([]);
+
   return (
-    <div className="cat-grid">
-      {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
-        const active = value.includes(id);
-        return (
-          <button
-            key={id}
-            type="button"
-            className={`cat-chip ${active ? "active" : ""}`}
-            onClick={() => toggle(id)}
+    <div className="ms" ref={boxRef}>
+      <button
+        type="button"
+        className={`ms-trigger ${open ? "is-open" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <FiSearch className="ms-search" aria-hidden />
+        <div className="ms-chips">
+          {selected.length === 0 ? (
+            <span className="ms-placeholder">Выберите категории</span>
+          ) : (
+            selected.map((c, i) => (
+              <span key={c.id} className={`ms-chip ${i % 2 ? "alt" : ""}`}>
+                <c.Icon className="ms-chip-ico" />
+                {c.label}
+              </span>
+            ))
+          )}
+        </div>
+        {selected.length > 0 ? (
+          <span
+            className="ms-clear"
+            onClick={(e) => {
+              e.stopPropagation();
+              clear();
+            }}
+            role="button"
+            aria-label="Очистить"
           >
-            <Icon className="cat-ico" />
-            <span className="cat-text">{label}</span>
-          </button>
-        );
-      })}
+            <FiX />
+          </span>
+        ) : (
+          <span className="ms-clear-placeholder" />
+        )}
+      </button>
+
+      {open && (
+        <div className="ms-card" role="listbox" tabIndex={-1}>
+          <ul className="ms-list">
+            {CATEGORY_OPTIONS.map(({ id, label }) => {
+              const checked = value.includes(id);
+              return (
+                <li
+                  key={id}
+                  className="ms-row"
+                  onClick={() => toggle(id)}
+                  role="option"
+                  aria-selected={checked}
+                >
+                  <span className="ms-left">
+                    <Icon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
+                    <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
+                      {label}
+                    </span>
+                  </span>
+                  <span className={`ms-check ${checked ? "is-on" : ""}`}>
+                    <FiCheck />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function Adminpage(){
-  const API_BASE = "https://newsproject-tnkc.onrender.com";
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  const [tab, setTab] = useState("guides"); // 'guides' | 'news'
-  const [guides, setGuides] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // edit modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [saving, setSaving] = useState(false);
-
-  // create modal
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [newGuide, setNewGuide] = useState({
-    name: "",
-    phone: "",
-    telegram_username: "",
-    telegram_id: "",
-    is_active: true,
-    subscription_until_date: "",
-    categories: [],
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
+}
 
-  // === Helpers ===
-  function toDateInputValue(ts) {
-    if (!ts) return "";
-    const d = new Date(ts);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  function toIsoEndOfDay(dateStr) {
-    if (!dateStr) return null;
-    const d = new Date(dateStr + "T23:59:59");
-    return d.toISOString();
-  }
-  function isActiveComputed(g) {
-    if (!g?.is_active) return false;
-    if (!g?.subscription_until) return true;
-    return new Date(g.subscription_until) >= new Date();
-  }
+function RequestCard({ req, onAskCancel }) {
+  const firstCat = req.categories?.[0];
+  const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
+  const Icon = catMeta?.Icon || FaUsers;
 
-  // === Load guides ===
+  return (
+    <div className="rq-card">
+      <div className="rq-mail">
+        <span className="rq-mail-icon">✉️</span>
+        {!!req.messages_cnt && <span className="rq-mail-count">{req.messages_cnt}</span>}
+      </div>
+
+      <div className="rq-head">
+        <div className="rq-num">#{String(req.short_code).padStart(5, "0")}</div>
+        <div className="rq-date">{formatDate(req.created_at)}</div>
+      </div>
+
+      <div className={`rq-badge cat-${firstCat || "default"}`}>
+        <Icon className="rq-badge-ico" />
+        <span>{catMeta?.label || "Запрос"}</span>
+      </div>
+
+      <div className="rq-text">{req.text}</div>
+
+      <button className="rq-cancel" onClick={() => onAskCancel(req)}>
+        Отменить
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Bottom Sheet ---------- */
+function CancelSheet({ open, request, onClose, onConfirm }) {
+  // блокируем скролл фона, пока открыт шит
   useEffect(() => {
-    if (tab !== "guides") return;
-    let aborted = false;
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
-    async function load() {
+  const count = request?.messages_cnt || 0;
+
+  return (
+    <>
+      <div
+        className={`sheet-backdrop ${open ? "is-open" : ""}`}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`sheet ${open ? "is-open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sheet-title"
+      >
+        <div className="sheet-handle" />
+        <h3 id="sheet-title" className="sheet-title">Вы точно хотите<br/>отменить заявку?</h3>
+        <p className="sheet-sub">
+          На вашу заявку уже откликнулось <b>{count} человек</b>.<br/>
+          Возможно там есть то, что вас заинтересует!
+        </p>
+
+        <div className="sheet-actions">
+          <button className="btn btn-outline" onClick={onConfirm}>
+            Да, отменить
+          </button>
+          <button className="btn btn-primary" onClick={onClose}>
+            Нет, оставить
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+export default function Application() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) navigate("/account", { replace: true });
+  }, [navigate]);
+
+  const [categories, setCategories] = useState([]);
+  const [text, setText] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // состояние для bottom-sheet
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetReq, setSheetReq] = useState(null);
+
+  const MAX = 150;
+
+  // загрузка моих заявок
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    (async () => {
       try {
         setLoading(true);
-        setError("");
-        const r = await fetch(`${API_BASE}/api/admin/guides`, {
+        const r = await fetch(`${API_BASE}/api/requests`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!r.ok) throw new Error("Failed to load guides");
         const data = await r.json();
-        if (!aborted) setGuides(data.guides || []);
+        setRequests(data.requests || []);
       } catch (e) {
-        if (!aborted) setError("Не удалось загрузить гидов");
+        console.error(e);
       } finally {
-        if (!aborted) setLoading(false);
+        setLoading(false);
       }
-    }
-    load();
-    return () => { aborted = true; };
-  }, [tab]);
+    })();
+  }, []);
 
-  // === Edit modal handlers ===
-  function openModal(guide) {
-    setEditing({
-      ...guide,
-      subscription_until_date: toDateInputValue(guide.subscription_until),
-      categories: guide.categories || [],
-    });
-    setModalOpen(true);
-  }
-  function closeModal() {
-    setModalOpen(false);
-    setEditing(null);
-  }
-  function setEditingField(field, value) {
-    setEditing((prev) => ({ ...prev, [field]: value }));
-  }
-  async function saveEditing() {
-    if (!editing) return;
+  const submit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) return navigate("/account", { replace: true });
+
+    const payload = { categories, text: text.trim() };
+    if (payload.categories.length === 0 || payload.text === "") return;
+
     try {
-      setSaving(true);
-      const iso = editing.subscription_until_date
-        ? toIsoEndOfDay(editing.subscription_until_date)
-        : null;
-      const body = {
-        is_active: Boolean(editing.is_active),
-        subscription_until: iso,
-        categories: editing.categories || [],
-      };
-      const r = await fetch(`${API_BASE}/api/admin/guides/${editing.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      if (!r.ok) throw new Error("Save failed");
-      const data = await r.json();
-      setGuides((prev) => prev.map((g) => (g.id === editing.id ? data.guide : g)));
-      closeModal();
-    } catch (e) {
-      setError("Не удалось сохранить изменения");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  // === Create modal handlers ===
-  function openCreate() {
-    setNewGuide({
-      name: "",
-      phone: "",
-      telegram_username: "",
-      telegram_id: "",
-      is_active: true,
-      subscription_until_date: "",
-      categories: [],
-    });
-    setCreateOpen(true);
-  }
-  function closeCreate() {
-    setCreateOpen(false);
-  }
-  function setNewField(field, value) {
-    setNewGuide((prev) => ({ ...prev, [field]: value }));
-  }
-  async function createGuide() {
-    try {
-      setCreating(true);
-      const iso = newGuide.subscription_until_date
-        ? toIsoEndOfDay(newGuide.subscription_until_date)
-        : null;
-
-      // backend ожидается: name, phone, telegram_username, telegram_id, is_active, categories, subscription_until
-      const body = {
-        name: (newGuide.name || "").trim(),
-        phone: (newGuide.phone || "").trim() || null,
-        telegram_username: (newGuide.telegram_username || "").trim() || null,
-        telegram_id: newGuide.telegram_id ? Number(newGuide.telegram_id) : null,
-        is_active: Boolean(newGuide.is_active),
-        categories: newGuide.categories || [],
-        subscription_until: iso,
-      };
-
-      const r = await fetch(`${API_BASE}/api/admin/guides`, {
+      setSubmitting(true);
+      const r = await fetch(`${API_BASE}/api/requests`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
       });
-      if (!r.ok) throw new Error("Create failed");
-      const data = await r.json();
-      setGuides((prev) => [data.guide, ...prev]);
-      closeCreate();
+      if (!r.ok) throw new Error("create_failed");
+      const { request } = await r.json();
+      setRequests((prev) => [request, ...prev]);
+      setCategories([]);
+      setText("");
     } catch (e) {
-      setError("Не удалось создать гида");
+      console.error(e);
     } finally {
-      setCreating(false);
+      setSubmitting(false);
     }
-  }
+  };
+
+  const disabled = categories.length === 0 || text.trim() === "";
+
+  // открыть подтверждение
+  const askCancel = (req) => {
+    setSheetReq(req);
+    setSheetOpen(true);
+  };
+
+  // подтвердить отмену
+  const confirmCancel = async () => {
+    if (!sheetReq) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const r = await fetch(`${API_BASE}/api/requests/${sheetReq.id}/cancel`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("cancel_failed");
+      setRequests((prev) => prev.filter((x) => x.id !== sheetReq.id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSheetOpen(false);
+      setSheetReq(null);
+    }
+  };
 
   return (
-    <div className="admin-wrap">
-      <div className="admin-header">
-        <h1>Админка</h1>
-        <div className="tabs">
+    <div className="application">
+      <div className="application-top">
+        <form className="app-card" onSubmit={submit}>
+          <h1 className="app-title">МЕСТНЫЕ<br/>ПОМОГУТ</h1>
+
+          <MultiSelect value={categories} onChange={setCategories} />
+
+          <label className="app-label">Опишите свой запрос в свободной форме</label>
+          <div className="app-textarea-wrap">
+            <textarea
+              className="app-textarea"
+              placeholder="Например, «Приехали на 3 дня, семьей 5 человек, предложите пожалуйста дом с тремя комнатами, поближе к воде»"
+              maxLength={MAX}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={4}
+            />
+            <span className="app-counter">{text.length}/{MAX}</span>
+          </div>
+
           <button
-            className={`tab ${tab === "guides" ? "active" : ""}`}
-            onClick={() => setTab("guides")}
+            className={`app-submit ${disabled ? "disabled" : ""}`}
+            type="submit"
+            disabled={disabled || submitting}
           >
-            Гиды
+            {submitting ? "Отправляем…" : "Отправить"}
           </button>
-          <button
-            className={`tab ${tab === "news" ? "active" : ""}`}
-            onClick={() => setTab("news")}
-          >
-            Новости
-          </button>
-        </div>
+
+          <div className="app-footer">
+            <div className="app-avatars"><img src={People} /></div>
+            <p className="app-note">
+              В нашем сервисе — более 300 местных жителей и предпринимателей,
+              готовых прямо сейчас откликнуться на ваш запрос
+            </p>
+          </div>
+        </form>
       </div>
 
-      {tab === "guides" && (
-        <section>
-          <div className="bar">
-            <button className="btn primary" onClick={openCreate}>+ Добавить гида</button>
+      <div className="application-bottom">
+        {loading ? (
+          <div className="empty-apps">Загрузка…</div>
+        ) : requests.length === 0 ? (
+          <div className="empty-apps">
+            <img width={100} height={100} src={emptyBox} />
+            <h1>Вы еще не сделали<br/>ни одного запроса</h1>
+            <p>Оставьте заявку и получайте<br/>предложения — местные помогут!</p>
           </div>
-
-          {loading && <p className="muted">Загрузка…</p>}
-          {error && <p className="error">{error}</p>}
-          {!loading && guides.length === 0 && <p className="muted">Гидов пока нет.</p>}
-
-          <div className="cards">
-            {guides.map((g) => {
-              const active = isActiveComputed(g);
-              return (
-                <div
-                  key={g.id}
-                  className={`card ${active ? "ok" : "off"}`}
-                  onClick={() => openModal(g)}
-                >
-                  <div className="card-top">
-                    <div className="card-name">{g.name}</div>
-                    <span className={`pill ${active ? "pill-ok" : "pill-off"}`}>
-                      {active ? "Активна" : "Не активна"}
-                    </span>
-                  </div>
-                  <div className="card-row">
-                    <span className="label">Телефон</span>
-                    <span className="value">{g.phone || "—"}</span>
-                  </div>
-                  <div className="card-row">
-                    <span className="label">Telegram</span>
-                    <span className="value">{g.telegram_username || "—"}</span>
-                  </div>
-                  <div className="card-row">
-                    <span className="label">TG ID</span>
-                    <span className="value">{g.telegram_id || "—"}</span>
-                  </div>
-                  <div className="card-row">
-                    <span className="label">До</span>
-                    <span className="value">
-                      {g.subscription_until ? toDateInputValue(g.subscription_until) : "без даты"}
-                    </span>
-                  </div>
-                  {!!g.categories?.length && (
-                    <div className="card-tags">
-                      {g.categories.map((c) => {
-                        const meta = CATEGORY_OPTIONS.find((o) => o.id === c);
-                        const Label = meta?.label || c;
-                        const Icon = meta?.Icon || FaUsers;
-                        return (
-                          <span className="tag" key={c}>
-                            <Icon className="tag-ico" />
-                            {Label}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        ) : (
+          <div className="rq-list">
+            {requests.map((r) => (
+              <RequestCard key={r.id} req={r} onAskCancel={askCancel} />
+            ))}
           </div>
+        )}
+      </div>
 
-          {/* EDIT MODAL */}
-          {modalOpen && editing && (
-            <div className="modal-backdrop" onClick={closeModal}>
-              <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                  <h3>Редактирование гида</h3>
-                  <button className="icon-btn" onClick={closeModal} aria-label="Close">✕</button>
-                </div>
+      {/* Bottom Sheet подтверждения */}
+      <CancelSheet
+        open={sheetOpen}
+        request={sheetReq}
+        onClose={() => { setSheetOpen(false); setSheetReq(null); }}
+        onConfirm={confirmCancel}
+      />
 
-                <div className="modal-body">
-                  <div className="form-row">
-                    <label>Имя</label>
-                    <input
-                      type="text"
-                      value={editing.name || ""}
-                      onChange={(e) => setEditingField("name", e.target.value)}
-                      disabled
-                    />
-                  </div>
-
-                  <div className="form-row switch-row">
-                    <label>Подписка включена</label>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={!!editing.is_active}
-                        onChange={(e) => setEditingField("is_active", e.target.checked)}
-                      />
-                      <span className="slider" />
-                    </label>
-                  </div>
-
-                  <div className="form-row">
-                    <label>Активна до</label>
-                    <div className="date-row">
-                      <input
-                        type="date"
-                        value={editing.subscription_until_date || ""}
-                        onChange={(e) =>
-                          setEditingField("subscription_until_date", e.target.value)
-                        }
-                      />
-                      {editing.subscription_until_date && (
-                        <button
-                          className="btn secondary"
-                          onClick={() => setEditingField("subscription_until_date", "")}
-                        >
-                          Очистить
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <label>Категории</label>
-                    <CategoryPicker
-                      value={editing.categories || []}
-                      onChange={(v) => setEditingField("categories", v)}
-                    />
-                    <div className="hint">Выберите, по каким категориям гид будет получать заявки.</div>
-                  </div>
-                </div>
-
-                <div className="modal-actions">
-                  <button className="btn ghost" onClick={closeModal}>Отмена</button>
-                  <button className="btn primary" onClick={saveEditing} disabled={saving}>
-                    {saving ? "Сохранение…" : "Сохранить"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* CREATE MODAL */}
-          {createOpen && (
-            <div className="modal-backdrop" onClick={closeCreate}>
-              <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                  <h3>Добавить гида</h3>
-                  <button className="icon-btn" onClick={closeCreate} aria-label="Close">✕</button>
-                </div>
-
-                <div className="modal-body">
-                  <div className="grid-2">
-                    <div className="form-row">
-                      <label>Имя *</label>
-                      <input
-                        type="text"
-                        value={newGuide.name}
-                        onChange={(e) => setNewField("name", e.target.value)}
-                        placeholder="Иван Петров"
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label>Телефон</label>
-                      <input
-                        type="text"
-                        value={newGuide.phone}
-                        onChange={(e) => setNewField("phone", e.target.value)}
-                        placeholder="+79990001122"
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label>Telegram username</label>
-                      <input
-                        type="text"
-                        value={newGuide.telegram_username}
-                        onChange={(e) => setNewField("telegram_username", e.target.value)}
-                        placeholder="@username"
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label>Telegram ID</label>
-                      <input
-                        type="text"
-                        value={newGuide.telegram_id}
-                        onChange={(e) => setNewField("telegram_id", e.target.value)}
-                        placeholder="123456789"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row switch-row">
-                    <label>Подписка включена</label>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={!!newGuide.is_active}
-                        onChange={(e) => setNewField("is_active", e.target.checked)}
-                      />
-                      <span className="slider" />
-                    </label>
-                  </div>
-
-                  <div className="form-row">
-                    <label>Активна до</label>
-                    <div className="date-row">
-                      <input
-                        type="date"
-                        value={newGuide.subscription_until_date}
-                        onChange={(e) => setNewField("subscription_until_date", e.target.value)}
-                      />
-                      {newGuide.subscription_until_date && (
-                        <button
-                          className="btn secondary"
-                          onClick={() => setNewField("subscription_until_date", "")}
-                        >
-                          Очистить
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <label>Категории</label>
-                    <CategoryPicker
-                      value={newGuide.categories}
-                      onChange={(v) => setNewField("categories", v)}
-                    />
-                  </div>
-                </div>
-
-                <div className="modal-actions">
-                  <button className="btn ghost" onClick={closeCreate}>Отмена</button>
-                  <button className="btn primary" onClick={createGuide} disabled={creating || !newGuide.name.trim()}>
-                    {creating ? "Создание…" : "Создать"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {tab === "news" && (
-        <section>
-          <div className="empty-block">
-            <h3>Новости</h3>
-            <p className="muted">Раздел пока пустой.</p>
-          </div>
-        </section>
-      )}
+      <Navbar />
     </div>
   );
 }
