@@ -2,12 +2,13 @@
 
 import "./telegram.js";
 
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { Pool } = require("pg");
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import pg from "pg";
+const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ Missing DATABASE_URL env var. Set it in Render → Environment.");
