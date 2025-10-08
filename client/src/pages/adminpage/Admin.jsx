@@ -1,5 +1,5 @@
 // Adminpage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaSailboat, FaTaxi, FaUserTie, FaHotel, FaKey, FaUsers } from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
 
@@ -12,24 +12,24 @@ const CATEGORY_OPTIONS = [
   { id: "locals", label: "Местные жители",            Icon: FaUsers },
 ];
 
-function CategoryPicker({ value = [], onChange }) {
+function AdminCategoryPicker({ value = [], onChange }) {
   const toggle = (id) => {
     if (value.includes(id)) onChange(value.filter((v) => v !== id));
     else onChange([...value, id]);
   };
   return (
-    <div className="cat-grid">
+    <div className="admin-cat-grid">
       {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
         const active = value.includes(id);
         return (
           <button
             key={id}
             type="button"
-            className={`cat-chip ${active ? "active" : ""}`}
+            className={`admin-cat-chip ${active ? "admin-cat-chip--active" : ""}`}
             onClick={() => toggle(id)}
           >
-            <Icon className="cat-ico" />
-            <span className="cat-text">{label}</span>
+            <Icon className="admin-cat-ico" />
+            <span className="admin-cat-text">{label}</span>
           </button>
         );
       })}
@@ -182,7 +182,6 @@ export default function Adminpage(){
         ? toIsoEndOfDay(newGuide.subscription_until_date)
         : null;
 
-      // backend ожидается: name, phone, telegram_username, telegram_id, is_active, categories, subscription_until
       const body = {
         name: (newGuide.name || "").trim(),
         phone: (newGuide.phone || "").trim() || null,
@@ -215,16 +214,16 @@ export default function Adminpage(){
   return (
     <div className="admin-wrap">
       <div className="admin-header">
-        <h1>Админка</h1>
-        <div className="tabs">
+        <h1 className="admin-title">Админка</h1>
+        <div className="admin-tabs">
           <button
-            className={`tab ${tab === "guides" ? "active" : ""}`}
+            className={`admin-tab ${tab === "guides" ? "admin-tab--active" : ""}`}
             onClick={() => setTab("guides")}
           >
             Гиды
           </button>
           <button
-            className={`tab ${tab === "news" ? "active" : ""}`}
+            className={`admin-tab ${tab === "news" ? "admin-tab--active" : ""}`}
             onClick={() => setTab("news")}
           >
             Новости
@@ -233,57 +232,57 @@ export default function Adminpage(){
       </div>
 
       {tab === "guides" && (
-        <section>
-          <div className="bar">
-            <button className="btn primary" onClick={openCreate}>+ Добавить гида</button>
+        <section className="admin-section">
+          <div className="admin-bar">
+            <button className="admin-btn admin-btn--primary" onClick={openCreate}>+ Добавить гида</button>
           </div>
 
-          {loading && <p className="muted">Загрузка…</p>}
-          {error && <p className="error">{error}</p>}
-          {!loading && guides.length === 0 && <p className="muted">Гидов пока нет.</p>}
+          {loading && <p className="admin-muted">Загрузка…</p>}
+          {error && <p className="admin-error">{error}</p>}
+          {!loading && guides.length === 0 && <p className="admin-muted">Гидов пока нет.</p>}
 
-          <div className="cards">
+          <div className="admin-cards">
             {guides.map((g) => {
               const active = isActiveComputed(g);
               return (
                 <div
                   key={g.id}
-                  className={`card ${active ? "ok" : "off"}`}
+                  className={`admin-card ${active ? "admin-card--ok" : "admin-card--off"}`}
                   onClick={() => openModal(g)}
                 >
-                  <div className="card-top">
-                    <div className="card-name">{g.name}</div>
-                    <span className={`pill ${active ? "pill-ok" : "pill-off"}`}>
+                  <div className="admin-card-top">
+                    <div className="admin-card-name">{g.name}</div>
+                    <span className={`admin-pill ${active ? "admin-pill--ok" : "admin-pill--off"}`}>
                       {active ? "Активна" : "Не активна"}
                     </span>
                   </div>
-                  <div className="card-row">
-                    <span className="label">Телефон</span>
-                    <span className="value">{g.phone || "—"}</span>
+                  <div className="admin-card-row">
+                    <span className="admin-label">Телефон</span>
+                    <span className="admin-value">{g.phone || "—"}</span>
                   </div>
-                  <div className="card-row">
-                    <span className="label">Telegram</span>
-                    <span className="value">{g.telegram_username || "—"}</span>
+                  <div className="admin-card-row">
+                    <span className="admin-label">Telegram</span>
+                    <span className="admin-value">{g.telegram_username || "—"}</span>
                   </div>
-                  <div className="card-row">
-                    <span className="label">TG ID</span>
-                    <span className="value">{g.telegram_id || "—"}</span>
+                  <div className="admin-card-row">
+                    <span className="admin-label">TG ID</span>
+                    <span className="admin-value">{g.telegram_id || "—"}</span>
                   </div>
-                  <div className="card-row">
-                    <span className="label">До</span>
-                    <span className="value">
+                  <div className="admin-card-row">
+                    <span className="admin-label">До</span>
+                    <span className="admin-value">
                       {g.subscription_until ? toDateInputValue(g.subscription_until) : "без даты"}
                     </span>
                   </div>
                   {!!g.categories?.length && (
-                    <div className="card-tags">
+                    <div className="admin-card-tags">
                       {g.categories.map((c) => {
                         const meta = CATEGORY_OPTIONS.find((o) => o.id === c);
                         const Label = meta?.label || c;
                         const Icon = meta?.Icon || FaUsers;
                         return (
-                          <span className="tag" key={c}>
-                            <Icon className="tag-ico" />
+                          <span className="admin-tag" key={c}>
+                            <Icon className="admin-tag-ico" />
                             {Label}
                           </span>
                         );
@@ -297,15 +296,15 @@ export default function Adminpage(){
 
           {/* EDIT MODAL */}
           {modalOpen && editing && (
-            <div className="modal-backdrop" onClick={closeModal}>
-              <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                  <h3>Редактирование гида</h3>
-                  <button className="icon-btn" onClick={closeModal} aria-label="Close">✕</button>
+            <div className="admin-modal-backdrop" onClick={closeModal}>
+              <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="admin-modal-header">
+                  <h3 className="admin-modal-title">Редактирование гида</h3>
+                  <button className="admin-icon-btn" onClick={closeModal} aria-label="Close">✕</button>
                 </div>
 
-                <div className="modal-body">
-                  <div className="form-row">
+                <div className="admin-modal-body">
+                  <div className="admin-form-row">
                     <label>Имя</label>
                     <input
                       type="text"
@@ -315,21 +314,21 @@ export default function Adminpage(){
                     />
                   </div>
 
-                  <div className="form-row switch-row">
+                  <div className="admin-form-row admin-switch-row">
                     <label>Подписка включена</label>
-                    <label className="switch">
+                    <label className="admin-switch">
                       <input
                         type="checkbox"
                         checked={!!editing.is_active}
                         onChange={(e) => setEditingField("is_active", e.target.checked)}
                       />
-                      <span className="slider" />
+                      <span className="admin-slider" />
                     </label>
                   </div>
 
-                  <div className="form-row">
+                  <div className="admin-form-row">
                     <label>Активна до</label>
-                    <div className="date-row">
+                    <div className="admin-date-row">
                       <input
                         type="date"
                         value={editing.subscription_until_date || ""}
@@ -339,28 +338,29 @@ export default function Adminpage(){
                       />
                       {editing.subscription_until_date && (
                         <button
-                          className="btn secondary"
+                          className="admin-btn admin-btn--secondary"
                           onClick={() => setEditingField("subscription_until_date", "")}
                         >
                           Очистить
                         </button>
                       )}
                     </div>
+                    <div className="admin-hint">Если дата пустая — подписка без ограничения по дате.</div>
                   </div>
 
-                  <div className="form-row">
+                  <div className="admin-form-row">
                     <label>Категории</label>
-                    <CategoryPicker
+                    <AdminCategoryPicker
                       value={editing.categories || []}
                       onChange={(v) => setEditingField("categories", v)}
                     />
-                    <div className="hint">Выберите, по каким категориям гид будет получать заявки.</div>
+                    <div className="admin-hint">Выберите, по каким категориям гид будет получать заявки.</div>
                   </div>
                 </div>
 
-                <div className="modal-actions">
-                  <button className="btn ghost" onClick={closeModal}>Отмена</button>
-                  <button className="btn primary" onClick={saveEditing} disabled={saving}>
+                <div className="admin-modal-actions">
+                  <button className="admin-btn admin-btn--ghost" onClick={closeModal}>Отмена</button>
+                  <button className="admin-btn admin-btn--primary" onClick={saveEditing} disabled={saving}>
                     {saving ? "Сохранение…" : "Сохранить"}
                   </button>
                 </div>
@@ -370,16 +370,16 @@ export default function Adminpage(){
 
           {/* CREATE MODAL */}
           {createOpen && (
-            <div className="modal-backdrop" onClick={closeCreate}>
-              <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                  <h3>Добавить гида</h3>
-                  <button className="icon-btn" onClick={closeCreate} aria-label="Close">✕</button>
+            <div className="admin-modal-backdrop" onClick={closeCreate}>
+              <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="admin-modal-header">
+                  <h3 className="admin-modal-title">Добавить гида</h3>
+                  <button className="admin-icon-btn" onClick={closeCreate} aria-label="Close">✕</button>
                 </div>
 
-                <div className="modal-body">
-                  <div className="grid-2">
-                    <div className="form-row">
+                <div className="admin-modal-body">
+                  <div className="admin-grid-2">
+                    <div className="admin-form-row">
                       <label>Имя *</label>
                       <input
                         type="text"
@@ -388,7 +388,7 @@ export default function Adminpage(){
                         placeholder="Иван Петров"
                       />
                     </div>
-                    <div className="form-row">
+                    <div className="admin-form-row">
                       <label>Телефон</label>
                       <input
                         type="text"
@@ -397,7 +397,7 @@ export default function Adminpage(){
                         placeholder="+79990001122"
                       />
                     </div>
-                    <div className="form-row">
+                    <div className="admin-form-row">
                       <label>Telegram username</label>
                       <input
                         type="text"
@@ -406,7 +406,7 @@ export default function Adminpage(){
                         placeholder="@username"
                       />
                     </div>
-                    <div className="form-row">
+                    <div className="admin-form-row">
                       <label>Telegram ID</label>
                       <input
                         type="text"
@@ -417,21 +417,21 @@ export default function Adminpage(){
                     </div>
                   </div>
 
-                  <div className="form-row switch-row">
+                  <div className="admin-form-row admin-switch-row">
                     <label>Подписка включена</label>
-                    <label className="switch">
+                    <label className="admin-switch">
                       <input
                         type="checkbox"
                         checked={!!newGuide.is_active}
                         onChange={(e) => setNewField("is_active", e.target.checked)}
                       />
-                      <span className="slider" />
+                      <span className="admin-slider" />
                     </label>
                   </div>
 
-                  <div className="form-row">
+                  <div className="admin-form-row">
                     <label>Активна до</label>
-                    <div className="date-row">
+                    <div className="admin-date-row">
                       <input
                         type="date"
                         value={newGuide.subscription_until_date}
@@ -439,7 +439,7 @@ export default function Adminpage(){
                       />
                       {newGuide.subscription_until_date && (
                         <button
-                          className="btn secondary"
+                          className="admin-btn admin-btn--secondary"
                           onClick={() => setNewField("subscription_until_date", "")}
                         >
                           Очистить
@@ -448,18 +448,18 @@ export default function Adminpage(){
                     </div>
                   </div>
 
-                  <div className="form-row">
+                  <div className="admin-form-row">
                     <label>Категории</label>
-                    <CategoryPicker
+                    <AdminCategoryPicker
                       value={newGuide.categories}
                       onChange={(v) => setNewField("categories", v)}
                     />
                   </div>
                 </div>
 
-                <div className="modal-actions">
-                  <button className="btn ghost" onClick={closeCreate}>Отмена</button>
-                  <button className="btn primary" onClick={createGuide} disabled={creating || !newGuide.name.trim()}>
+                <div className="admin-modal-actions">
+                  <button className="admin-btn admin-btn--ghost" onClick={closeCreate}>Отмена</button>
+                  <button className="admin-btn admin-btn--primary" onClick={createGuide} disabled={creating || !newGuide.name.trim()}>
                     {creating ? "Создание…" : "Создать"}
                   </button>
                 </div>
@@ -470,10 +470,10 @@ export default function Adminpage(){
       )}
 
       {tab === "news" && (
-        <section>
-          <div className="empty-block">
-            <h3>Новости</h3>
-            <p className="muted">Раздел пока пустой.</p>
+        <section className="admin-section">
+          <div className="admin-empty-block">
+            <h3 className="admin-subtitle">Новости</h3>
+            <p className="admin-muted">Раздел пока пустой.</p>
           </div>
         </section>
       )}
