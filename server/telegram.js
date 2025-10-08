@@ -21,7 +21,7 @@ async function findGuideByTelegramId(telegramId) {
   return r.rows[0] || null;
 }
 
-const token = process.env.TELEGRAM_BOT_TOKEN || "ТВОЙ_ТОКЕН"; // пока оставляем как у тебя
+const token = '8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs'|| "ТВОЙ_ТОКЕН"; // пока оставляем как у тебя
 export const bot = new TelegramBot(token, { polling: true });
 
 // /start — приветствие + кнопка
