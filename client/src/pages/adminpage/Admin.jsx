@@ -263,6 +263,10 @@ export default function Adminpage(){
                     </span>
                   </div>
                   <div className="admin-card-row">
+                    <span className="admin-label">Описание</span>
+                    <span className="admin-value">{g.description}</span>
+                  </div>
+                  <div className="admin-card-row">
                     <span className="admin-label">Телефон</span>
                     <span className="admin-value">{g.phone || "—"}</span>
                   </div>
@@ -295,11 +299,6 @@ export default function Adminpage(){
                       })}
                     </div>
                   )}
-                  {g.description && (
-                    <div className="admin-card-desc">
-                      {g.description}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -322,6 +321,15 @@ export default function Adminpage(){
                       value={editing.name || ""}
                       onChange={(e) => setEditingField("name", e.target.value)}
                       disabled
+                    />
+                  </div>
+                  <div className="admin-form-row">
+                    <label>Описание</label>
+                    <textarea
+                      value={editing.description || ""}
+                      onChange={(e) => setEditingField("description", e.target.value)}
+                      placeholder="Коротко о гиде: опыт, локации, услуги…"
+                      rows={4}
                     />
                   </div>
 
@@ -368,15 +376,7 @@ export default function Adminpage(){
                     <div className="admin-hint">Выберите, по каким категориям гид будет получать заявки.</div>
                   </div>
 
-                  <div className="admin-form-row">
-                    <label>Описание</label>
-                    <textarea
-                      value={editing.description || ""}
-                      onChange={(e) => setEditingField("description", e.target.value)}
-                      placeholder="Коротко о гиде: опыт, локации, услуги…"
-                      rows={4}
-                    />
-                  </div>
+                  
                 </div>
 
                 <div className="admin-modal-actions">
