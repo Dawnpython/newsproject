@@ -29,8 +29,17 @@ export default function WelcomeAuth() {
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => {
-        if (data?.user) setUser(data.user);
-        else localStorage.removeItem("token");
+        if (data?.user) {
+          setUser(data.user);
+
+          // ⬅️ добавлено: если админ — сразу в админку
+          const isAdmin = data.user?.is_admin === true || data.user?.role === "admin";
+          if (isAdmin) {
+            navigate("/admin", { replace: true });
+          }
+        } else {
+          localStorage.removeItem("token");
+        }
       })
       .catch(() => {
         localStorage.removeItem("token");
@@ -48,6 +57,12 @@ export default function WelcomeAuth() {
 
   // если авторизованы — показываем профиль (вместо кнопок)
   if (user) {
+    // ⬅️ добавлено: защита, если попали сюда админом (редирект)
+    if (user?.is_admin === true || user?.role === "admin") {
+      navigate("/admin", { replace: true });
+      return null;
+    }
+
     return (
       <div className="welcome-auth">
         <Userprofile user={user} onLogout={logout} />

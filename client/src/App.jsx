@@ -6,6 +6,7 @@ import Login from "./pages/loginPage/Login.jsx";
 import WelcomeAuth from "./pages/welcomeAuth/welcomeAuth.jsx";
 import Userprofile from '/src/pages/userprofile/Userprofile.jsx'
 import Application from "./pages/applications/Applications.jsx";
+import Adminpage from '/src/pages/adminpage/Admin.jsx'
 import { IMAGES_TO_PRELOAD } from "/src/utils/Imagestack.jsx";
 import { preloadImages } from "/src/utils/usePreloadImages.jsx";
 
@@ -29,6 +30,7 @@ export default function App() {
              <Route path="/login" element={<Login />} />
              <Route path="/profile" element={<Userprofile/>} />
              <Route path="/application" element={<Application/>} />
+             <Route path="/admin" element={<Adminpage/>} />
         </Routes>
       ) : (
         <Preloader />

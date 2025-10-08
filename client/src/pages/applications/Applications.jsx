@@ -100,7 +100,7 @@ function MultiSelect({ value, onChange }) {
       {open && (
         <div className="ms-card" role="listbox" tabIndex={-1}>
           <ul className="ms-list">
-            {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
+            {CATEGORY_OPTIONS.map(({ id, label }) => {
               const checked = value.includes(id);
               return (
                 <li

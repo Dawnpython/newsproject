@@ -51,6 +51,9 @@ async function initDb() {
   // полезные индексы
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users ((lower(email)));`);
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_phone ON users (phone);`);
+
+  // ⬅️ добавлено: колонка роли (булевый флаг админа)
+  await dbQuery(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;`);
 }
 
 // ==== utils ====
@@ -120,7 +123,7 @@ app.post("/api/auth/register", async (req, res) => {
     const insert = await dbQuery(
       `INSERT INTO users (name, email, phone, password_hash)
        VALUES ($1, lower($2), $3::text, $4)
-       RETURNING id, name, email, phone, created_at`,
+       RETURNING id, name, email, phone, created_at, is_admin`, // ⬅️ добавлено is_admin в возврат
       [name.trim(), email.trim(), phoneDigits, hash]
     );
 
@@ -142,7 +145,9 @@ app.post("/api/auth/login", async (req, res) => {
     if (!password) return res.status(400).json({ error: "PASSWORD_REQUIRED" });
 
     const r = await dbQuery(
-      `SELECT id, name, email, phone, password_hash FROM users WHERE lower(email)=lower($1)`,
+      `SELECT id, name, email, phone, password_hash, is_admin   -- ⬅️ добавлено is_admin
+       FROM users
+       WHERE lower(email)=lower($1)`,
       [email.trim()]
     );
     if (r.rowCount === 0) return res.status(401).json({ error: "INVALID_CREDENTIALS" });
@@ -165,7 +170,9 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
   try {
     const { uid } = req.user;
     const r = await dbQuery(
-      `SELECT id, name, email, phone, created_at FROM users WHERE id=$1`,
+      `SELECT id, name, email, phone, created_at, is_admin   -- ⬅️ добавлено is_admin
+       FROM users
+       WHERE id=$1`,
       [uid]
     );
     if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
