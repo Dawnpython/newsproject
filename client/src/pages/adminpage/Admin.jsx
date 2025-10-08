@@ -1,6 +1,6 @@
 // Adminpage.jsx
 import { useEffect, useMemo, useState } from "react";
-import "client/src/pages/adminpage/Admin.css";
+import "/src/pages/adminpage/Admin.css";
 
 export default function Adminpage(){
   const API_BASE = "https://newsproject-tnkc.onrender.com";
