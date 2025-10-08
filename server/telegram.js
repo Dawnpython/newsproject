@@ -72,30 +72,31 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
 
 /* ===== Ответы/сообщения ===== */
 
-// Создаём оффер гида + первое сообщение
+// Создаём/обновляем оффер гида + первое сообщение (user_id проставляем явно из заявки)
 async function createGuideResponse({ requestId, guideId, text }) {
-  // Проверка: заявка активна?
+  // Проверка: заявка активна + возьмём владельца
   const rq = await pool.query(
-    `SELECT id, status, categories FROM requests WHERE id=$1`,
+    `SELECT id, status, user_id FROM requests WHERE id=$1`,
     [requestId]
   );
   if (rq.rowCount === 0) throw new Error("REQUEST_NOT_FOUND");
   if (rq.rows[0].status !== 'active') throw new Error("REQUEST_NOT_ACTIVE");
+  const userIdOfRequest = rq.rows[0].user_id;
 
-  // Создаём/обновляем единственный оффер от гида
+  // Upsert ответа с user_id
   const upsert = await pool.query(
     `
-    INSERT INTO request_responses (request_id, guide_id, status, text)
-    VALUES ($1, $2, 'sent', $3)
+    INSERT INTO request_responses (request_id, guide_id, user_id, status, text)
+    VALUES ($1, $2, $3, 'sent', $4)
     ON CONFLICT (request_id, guide_id)
     DO UPDATE SET status='sent', text=EXCLUDED.text, updated_at=now()
     RETURNING id
     `,
-    [requestId, guideId, text]
+    [requestId, guideId, userIdOfRequest, text]
   );
   const responseId = upsert.rows[0].id;
 
-  // Сообщение в тред
+  // Первое сообщение в тред
   await pool.query(
     `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
      VALUES ($1, 'guide', $2, $3)`,
@@ -105,17 +106,24 @@ async function createGuideResponse({ requestId, guideId, text }) {
   return responseId;
 }
 
-// Отказать по заявке
+// Отказать по заявке (user_id проставляем явно)
 async function rejectGuideResponse({ requestId, guideId, reason = null }) {
+  const rq = await pool.query(
+    `SELECT id, status, user_id FROM requests WHERE id=$1`,
+    [requestId]
+  );
+  if (rq.rowCount === 0) throw new Error("REQUEST_NOT_FOUND");
+  const userIdOfRequest = rq.rows[0].user_id;
+
   const upsert = await pool.query(
     `
-    INSERT INTO request_responses (request_id, guide_id, status, text)
-    VALUES ($1, $2, 'rejected', $3)
+    INSERT INTO request_responses (request_id, guide_id, user_id, status, text)
+    VALUES ($1, $2, $3, 'rejected', $4)
     ON CONFLICT (request_id, guide_id)
     DO UPDATE SET status='rejected', text=COALESCE(request_responses.text, EXCLUDED.text), updated_at=now()
     RETURNING id
     `,
-    [requestId, guideId, reason]
+    [requestId, guideId, userIdOfRequest, reason]
   );
   const responseId = upsert.rows[0].id;
 
@@ -307,8 +315,13 @@ bot.on("callback_query", async (query) => {
       if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
       if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
 
-      await rejectGuideResponse({ requestId, guideId: guide.id });
-      await bot.sendMessage(chatId, "Заявка отмечена как отклонённая для вас.");
+      try {
+        await rejectGuideResponse({ requestId, guideId: guide.id });
+        await bot.sendMessage(chatId, "Заявка отмечена как отклонённая для вас.");
+      } catch (e) {
+        console.error("[reject] error:", e);
+        await bot.sendMessage(chatId, `Не удалось отклонить: ${e.message || "ошибка"}`);
+      }
       return;
     }
   } catch (e) {
@@ -340,7 +353,7 @@ bot.on("message", async (msg) => {
     await bot.sendMessage(chatId, "Спасибо! Ваш ответ отправлен пользователю.");
   } catch (e) {
     console.error("[reply] create error:", e);
-    await bot.sendMessage(chatId, "Не удалось сохранить ответ. Попробуйте позже.");
+    await bot.sendMessage(chatId, `Не удалось сохранить ответ: ${e.message || "ошибка"}`);
   } finally {
     pendingReplyByUser.delete(userId);
   }
