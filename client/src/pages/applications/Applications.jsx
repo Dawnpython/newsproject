@@ -100,8 +100,10 @@ function MultiSelect({ value, onChange }) {
       {open && (
         <div className="ms-card" role="listbox" tabIndex={-1}>
           <ul className="ms-list">
-            {CATEGORY_OPTIONS.map(({ id, label }) => {
+            {/** ⬇️ ВАЖНО: добавили Icon в деструктуризацию и сделали SafeIcon */}
+            {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
               const checked = value.includes(id);
+              const SafeIcon = Icon || FaUsers;
               return (
                 <li
                   key={id}
@@ -111,7 +113,7 @@ function MultiSelect({ value, onChange }) {
                   aria-selected={checked}
                 >
                   <span className="ms-left">
-                    <Icon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
+                    <SafeIcon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
                     <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
                       {label}
                     </span>
@@ -128,6 +130,7 @@ function MultiSelect({ value, onChange }) {
     </div>
   );
 }
+
 
 function formatDate(iso) {
   const d = new Date(iso);
