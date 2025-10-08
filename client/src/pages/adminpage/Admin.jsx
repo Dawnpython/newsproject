@@ -494,7 +494,7 @@ export default function Adminpage() {
                       />
                       {editing.avatar_url && (
                         <div className="admin-avatar-preview">
-                          <img className="admin-avatar-preview" src={editing.avatar_url} alt="avatar preview" />
+                          <img className="avatar-2" src={editing.avatar_url} alt="avatar preview" />
                           <button
                             type="button"
                             className="admin-btn admin-btn--secondary"
