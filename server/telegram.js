@@ -4,7 +4,7 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-// --- DB соединение
+// --- DB
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_SSL ? { rejectUnauthorized: false } : false,
@@ -21,84 +21,96 @@ async function findGuideByTelegramId(telegramId) {
   return r.rows[0] || null;
 }
 
-const token =
-  process.env.TELEGRAM_BOT_TOKEN ||
-  '8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs' ||
-  "ТВОЙ_ТОКЕН";
-export const bot = new TelegramBot(token, { polling: true });
+const token = process.env.TELEGRAM_BOT_TOKEN || '8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs';
+export const bot = new TelegramBot(token, { polling: false });
 
-// Утилита форматирования даты (ru-RU)
+// --- запуск: webhook в проде, polling в деве
+(async () => {
+  try {
+    const useWebhook = process.env.USE_WEBHOOK === "true";
+    if (useWebhook) {
+      const baseUrl = process.env.BASE_URL;
+      if (!baseUrl) throw new Error("BASE_URL is required when USE_WEBHOOK=true");
+      const path = `/bot${token}`;
+      const url = `${baseUrl}${path}`;
+      // В твоём Express-сервере должен быть:
+      // app.post(path, (req, res) => { bot.processUpdate(req.body); res.sendStatus(200); });
+      await bot.setWebHook(url, { drop_pending_updates: true });
+      console.log("[bot] Webhook set:", url);
+    } else {
+      await bot.deleteWebHook({ drop_pending_updates: true });
+      await bot.startPolling();
+      console.log("[bot] Polling started");
+    }
+  } catch (e) {
+    console.error("[bot] start error:", e);
+  }
+})();
+
+// --- утилиты
 function formatDateRu(d) {
   try {
     return new Date(d).toLocaleDateString("ru-RU", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      year: "numeric", month: "long", day: "numeric",
     });
-  } catch {
-    return String(d);
-  }
+  } catch { return String(d); }
 }
 
-// Проверка активной подписки: и флаг, и дата
 function hasActiveSubscription(guide) {
   const flag = !!guide.is_active;
   const until = guide.subscription_until ? new Date(guide.subscription_until) : null;
   const today = new Date();
-  // Считаем активной, если флаг true и дата не прошла (или дата отсутствует — тогда только по флагу)
   const dateOk = !until || until >= today;
   return flag && dateOk;
 }
 
-// /start — приветствие + следующее сообщение и кнопка "Отправить мой Telegram ID"
+// --- сценарий
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
-  const firstName = msg.from.first_name || "друг";
+  const userId = msg.from?.id;
 
-  await bot.sendMessage(chatId, `Привет, я бот платформы Гидов.`);
+  // 1) Приветствие
+  await bot.sendMessage(chatId, `Привет, я бот гидов.`);
 
-  await bot.sendMessage(
-    chatId,
-    `Проверим, являешься ли ты гидом?`,
-    {
+  // 2) Проверяем, является ли пользователь гидом
+  try {
+    const guide = await findGuideByTelegramId(userId);
+
+    if (!guide) {
+      await bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
+      return;
+    }
+
+    // Нашли гида — предлагаем проверить подписку
+    await bot.sendMessage(chatId, `Привет, ${guide.name?.trim() || "гид"}!`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📤 Отправить мой Telegram ID", callback_data: "send_id" }],
+          [{ text: "✅ Проверить подписку", callback_data: "check_sub" }],
         ],
       },
-    }
-  );
+    });
+  } catch (e) {
+    console.error("[/start] findGuide error:", e);
+    await bot.sendMessage(chatId, "Упс, что-то пошло не так. Попробуйте позже.");
+  }
 });
 
-// Обработка нажатий на кнопки
+// Кнопки
 bot.on("callback_query", async (query) => {
   try {
     if (!query?.data) return;
-
     const chatId = query.message?.chat?.id;
-    const userId = query.from?.id; // telegram_id
-    const data = query.data;
-
-    // Убираем "часики"
+    const userId = query.from?.id;
     await bot.answerCallbackQuery(query.id);
 
-    if (data === "send_id") {
-      // 1) ищем гида в БД по telegram_id
+    if (query.data === "check_sub") {
       const guide = await findGuideByTelegramId(userId);
 
       if (!guide) {
-        await bot.sendMessage(
-          chatId,
-          `❌ Гид с вашим Telegram ID не найден.\nЕсли вы ожидаете доступ — свяжитесь с администратором.`
-        );
+        await bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
         return;
       }
 
-      // 2) приветствие по имени
-      const name = guide.name?.trim();
-      await bot.sendMessage(chatId, `Привет, ${name || "гид"}!`);
-
-      // 3) статус подписки
       if (hasActiveSubscription(guide)) {
         const until = guide.subscription_until
           ? formatDateRu(guide.subscription_until)
@@ -118,25 +130,20 @@ bot.on("callback_query", async (query) => {
       } else {
         await bot.sendMessage(
           chatId,
-          `⚠️ Упс, подписка неактивна.\nОбратитесь к администратору, чтобы продлить доступ.`
+          `⚠️ Подписка не активна.\nОбратитесь к администратору, чтобы продлить доступ.`
         );
       }
       return;
     }
 
-    if (data === "view_requests") {
-      // Здесь можно открыть веб-страницу с заявками или вывести список из БД.
-      // Пока даём ссылку в вашу админку/веб-приложение (при необходимости замените URL):
+    if (query.data === "view_requests") {
       const base = process.env.APP_BASE_URL || "https://newsproject-tnkc.onrender.com";
-      const url = `${base}/guides/requests`; // при желании сделайте deep-link под ваш роут
-      await bot.sendMessage(
-        chatId,
-        `Открыть заявки: ${url}`
-      );
+      const url = `${base}/guides/requests`;
+      await bot.sendMessage(chatId, `Открыть заявки: ${url}`);
       return;
     }
   } catch (e) {
-    console.error("[telegram] callback_query error:", e);
+    console.error("[callback_query] error:", e);
     const chatId = query?.message?.chat?.id;
     if (chatId) {
       await bot.sendMessage(chatId, "Упс, что-то пошло не так. Попробуйте позже.");
