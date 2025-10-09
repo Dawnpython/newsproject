@@ -421,35 +421,3 @@ async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
   }
 }
 
-/* ====== (Старая функция листинга на 5 — оставляю на месте, но не используем) ====== */
-async function sendRequestsPage(chatId, guide, offset) {
-  const categories = Array.isArray(guide.categories) ? guide.categories : [];
-  const pageSize = 5;
-  const { items, total } = await fetchRequestsForCategories(categories, pageSize, offset);
-
-  if (!items.length) {
-    if (offset === 0) await bot.sendMessage(chatId, "Пока заявок по вашим категориям нет.");
-    else await bot.sendMessage(chatId, "Больше заявок нет.");
-    return;
-  }
-
-  const from = offset + 1;
-  const to = offset + items.length;
-  const header = `📋 Заявки по вашим категориям (${from}–${to} из ${total}):`;
-  const text = [header, "", items.map(formatRequestLine).join("\n\n")].join("\n");
-
-  const keyboardRow = [];
-  if (offset > 0) {
-    const prevOffset = Math.max(0, offset - pageSize);
-    keyboardRow.push({ text: "◀️ Назад", callback_data: `view_requests:${prevOffset}` });
-  }
-  if (offset + pageSize < total) {
-    const nextOffset = offset + pageSize;
-    keyboardRow.push({ text: "▶️ Далее", callback_data: `view_requests:${nextOffset}` });
-  }
-
-  await bot.sendMessage(chatId, text, {
-    reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
-  });
-
- 
