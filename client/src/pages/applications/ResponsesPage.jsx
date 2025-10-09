@@ -23,20 +23,22 @@ function GuideProfileModal({ open, guide, onClose }) {
     <>
       <div className={`sheet-backdrop ${open ? "is-open" : ""}`} onClick={onClose} />
       <aside className={`sheet is-open`} role="dialog" aria-modal="true">
-        <div className="sheet-handle" />
+        
         <div className="gp-card">
+            <div className="gp-ava-ring">
           <img className="gp-avatar" src={guide.avatar_url || "/placeholder-avatar.png"} />
+          </div>
           <h2 className="gp-name">{guide.name}</h2>
-          <div className="gp-sub">{guide.org_title || "Местный гид"}</div>
+          <div className="gp-sub">{guide.description || "Местный гид"}</div>
 
           {telHref && (
             <a className="btn btn-success" href={telHref}>
-              📞 {guide.phone}
+               {guide.phone}
             </a>
           )}
           {tgHref && (
             <a className="btn btn-primary" href={tgHref} target="_blank" rel="noreferrer">
-              ✈️ Написать в Telegram
+               Написать в Telegram
             </a>
           )}
           {!telHref && !tgHref && (
@@ -96,12 +98,13 @@ export default function ResponsesPage() {
 
   return (
     <div className="application responses-page">
-      <div className="responses-top">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          <FiArrowLeft /> Назад
-        </button>
-        <h1 className="responses-title">Отклики</h1>
-      </div>
+      <div className="responses-appbar">
+  <div className="row">
+    <button className="back-btn" onClick={() => navigate(-1)}><span className="back-dot">‹</span> Назад</button>
+    <div className="title">Отклики</div>
+    <div /> {/* пустой заполнители для выравнивания */}
+  </div>
+</div>
 
       {loading ? (
         <div className="empty-apps">Загрузка…</div>
@@ -115,7 +118,9 @@ export default function ResponsesPage() {
           {responses.map((it) => (
             <article key={it.id} className="resp-card">
               <div className="resp-head">
+                <div className="resp-ava-ring">
                 <img className="resp-ava" src={it.guide.avatar_url || "/placeholder-avatar.png"} />
+                </div>
                 <div className="resp-meta">
                   <div className="resp-name">{it.guide.name}</div>
                   <div className="resp-role">{it.guide.org_title || it.guide.role || "Местный гид"}</div>

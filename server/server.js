@@ -406,7 +406,8 @@ app.get("/api/requests/:id/responses", authMiddleware, async (req, res) => {
            'phone', g.phone,
            'telegram_username', g.telegram_username,
            'telegram_id', g.telegram_id,
-           'avatar_url', g.avatar_url
+           'avatar_url', g.avatar_url,
+           'description', NULLIF(g.description, '')
          ) AS guide
        FROM request_responses rr
        JOIN guides g ON g.id = rr.guide_id
@@ -428,7 +429,7 @@ app.get("/api/guides/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const r = await dbQuery(
-      `SELECT id, name, phone, telegram_username, telegram_id, avatar_url
+      `SELECT id, name, phone, telegram_username, telegram_id, avatar_url,NULLIF(description, '') AS description
        FROM guides WHERE id=$1`,
       [id]
     );
