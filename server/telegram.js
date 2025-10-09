@@ -22,6 +22,8 @@ async function findGuideByTelegramId(telegramId) {
   return r.rows[0] || null;
 }
 
+
+
 /**
  * Выборка активных заявок по категориям гида (requests.categories text[])
  * Скрываем заявки, по которым у этого гида уже есть запись в request_responses
@@ -469,11 +471,17 @@ async function sendRequestsPage(chatId, guide, offset) {
 
 /* ======================= PUSH: LISTEN/NOTIFY ======================= */
 
+// ⚠️ ВАЖНО: отдельный endpoint для LISTEN (session/direct). Если не задан — используем DATABASE_URL.
+const LISTEN_URL = process.env.DATABASE_URL_LISTEN || process.env.DATABASE_URL;
+
 // Отдельный persistent-клиент для LISTEN
 const listenClient = new Client({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: LISTEN_URL,
   ssl: process.env.DATABASE_SSL ? { rejectUnauthorized: false } : false,
+  keepAlive: true,
 });
+
+console.log("[db] LISTEN endpoint:", LISTEN_URL === process.env.DATABASE_URL ? "DATABASE_URL" : "DATABASE_URL_LISTEN");
 
 async function startDbListener() {
   try {
@@ -487,6 +495,7 @@ async function startDbListener() {
         const payload = JSON.parse(msg.payload);
         const requestId = Number(payload.request_id);
         if (!requestId) return;
+        console.log('[db] got NOTIFY new_request:', requestId);
         await handleNewRequestPush(requestId);
       } catch (e) {
         console.error('[db] notification parse error:', e, msg.payload);
@@ -495,7 +504,7 @@ async function startDbListener() {
 
     listenClient.on('error', (e) => {
       console.error('[db] listen error:', e);
-      // Можно добавить реконеκт с backoff при желании
+      // Можно добавить реконнект с backoff при желании
     });
   } catch (e) {
     console.error('[db] LISTEN start error:', e);
