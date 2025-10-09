@@ -2,14 +2,15 @@
 import TelegramBot from "node-telegram-bot-api";
 import pg from "pg";
 
-const { Pool } = pg;
+const { Pool, Client } = pg;
 
-/* ======================= DB ======================= */
+/* ======================= DB (Pool) ======================= */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_SSL ? { rejectUnauthorized: false } : false,
 });
 
+/* ===== helpers to query ===== */
 async function findGuideByTelegramId(telegramId) {
   const r = await pool.query(
     `SELECT id, name, is_active, subscription_until, categories
@@ -23,7 +24,7 @@ async function findGuideByTelegramId(telegramId) {
 
 /**
  * Выборка активных заявок по категориям гида (requests.categories text[])
- * Теперь скрываем заявки, по которым у этого гида уже есть запись в request_responses
+ * Скрываем заявки, по которым у этого гида уже есть запись в request_responses
  */
 async function fetchRequestsForCategories(guideCategories = [], limit = 5, offset = 0, guideId = null) {
   if (!guideCategories?.length) return { items: [], total: 0 };
@@ -34,14 +35,14 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
       SELECT r.id, r.short_code, r.text, r.categories, r.created_at
         FROM requests r
        WHERE r.status = 'active'
-         AND r.categories && $1::text[]             -- пересечение массивов
+         AND r.categories && $1::text[]
          AND (
            $4::int IS NULL
            OR NOT EXISTS (
              SELECT 1
                FROM request_responses rr
               WHERE rr.request_id = r.id
-                AND rr.guide_id = $4                 -- уже есть ответ/отказ от этого гида
+                AND rr.guide_id = $4
            )
          )
     )
@@ -93,7 +94,7 @@ async function createGuideResponse({ requestId, guideId, text }) {
   if (rq.rows[0].status !== 'active') throw new Error("REQUEST_NOT_ACTIVE");
   const userIdOfRequest = rq.rows[0].user_id;
 
-  // Upsert ответа с user_id (ВАЖНО: передаём userIdOfRequest третьим параметром)
+  // Upsert ответа с user_id
   const upsert = await pool.query(
     `
     INSERT INTO request_responses (request_id, guide_id, user_id, status, text)
@@ -106,7 +107,7 @@ async function createGuideResponse({ requestId, guideId, text }) {
   );
   const responseId = upsert.rows[0].id;
 
-  // Первое сообщение в тред (4 плейсхолдера + 'guide' как параметр)
+  // Первое сообщение в тред
   await pool.query(
     `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
      VALUES ($1, $2, $3, $4)`,
@@ -148,7 +149,10 @@ async function rejectGuideResponse({ requestId, guideId, reason = null }) {
 }
 
 /* ======================= BOT INSTANCE ======================= */
-const token = process.env.TELEGRAM_BOT_TOKEN || "8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs";
+const token = process.env.TELEGRAM_BOT_TOKEN;
+if (!token) {
+  throw new Error("TELEGRAM_BOT_TOKEN is not set");
+}
 export const bot = new TelegramBot(token, { polling: false });
 
 /* ======================= STARTUP (webhook prod / polling dev) ======================= */
@@ -431,7 +435,7 @@ async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
   }
 }
 
-/* ====== (Старая функция листинга на 5 — оставил для возможного использования; тоже скрывает уже отвеченные) ====== */
+/* ====== (Старая функция листинга на 5 — оставил для возможного использования) ====== */
 async function sendRequestsPage(chatId, guide, offset) {
   const categories = Array.isArray(guide.categories) ? guide.categories : [];
   const pageSize = 5;
@@ -461,22 +465,133 @@ async function sendRequestsPage(chatId, guide, offset) {
   await bot.sendMessage(chatId, text, {
     reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
   });
+}
 
-  // Кнопки по каждому итему оставлены закомментированными (если вернёмся к формату "по 5").
-  /*
-  for (const it of items) {
-    await bot.sendMessage(
-      chatId,
-      `Заявка #${String(it.short_code || it.id).padStart(5, "0")}:`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "✍️ Ответить",  callback_data: `reply:${it.id}` },
-            { text: "🚫 Отклонить", callback_data: `reject:${it.id}` },
-          ]]
-        }
+/* ======================= PUSH: LISTEN/NOTIFY ======================= */
+
+// Отдельный persistent-клиент для LISTEN
+const listenClient = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL ? { rejectUnauthorized: false } : false,
+});
+
+async function startDbListener() {
+  try {
+    await listenClient.connect();
+    await listenClient.query('LISTEN new_request');
+    console.log('[db] LISTEN new_request');
+
+    listenClient.on('notification', async (msg) => {
+      if (msg.channel !== 'new_request' || !msg.payload) return;
+      try {
+        const payload = JSON.parse(msg.payload);
+        const requestId = Number(payload.request_id);
+        if (!requestId) return;
+        await handleNewRequestPush(requestId);
+      } catch (e) {
+        console.error('[db] notification parse error:', e, msg.payload);
       }
-    );
+    });
+
+    listenClient.on('error', (e) => {
+      console.error('[db] listen error:', e);
+      // Можно добавить реконеκт с backoff при желании
+    });
+  } catch (e) {
+    console.error('[db] LISTEN start error:', e);
   }
-  */
+}
+startDbListener();
+
+/* ===== Вспомогательные функции для пушей ===== */
+async function getRequestById(requestId) {
+  const r = await pool.query(
+    `SELECT id, status, categories, text, created_at, short_code
+       FROM requests
+      WHERE id = $1`,
+    [requestId]
+  );
+  return r.rows[0] || null;
+}
+
+async function getEligibleGuidesForRequest(requestId) {
+  const q = `
+    WITH req AS (
+      SELECT id, categories
+        FROM requests
+       WHERE id = $1 AND status = 'active'
+    )
+    SELECT g.id, g.name, g.telegram_id, g.is_active, g.subscription_until, g.categories
+      FROM guides g
+      JOIN req ON TRUE
+     WHERE g.telegram_id IS NOT NULL
+       AND (g.categories && req.categories)
+       AND g.is_active = TRUE
+       AND (g.subscription_until IS NULL OR g.subscription_until >= now())
+       AND NOT EXISTS (
+             SELECT 1 FROM request_responses rr
+              WHERE rr.request_id = req.id AND rr.guide_id = g.id
+           )
+       AND NOT EXISTS (
+             SELECT 1 FROM request_notifications rn
+              WHERE rn.request_id = req.id AND rn.guide_id = g.id
+           )
+  `;
+  const r = await pool.query(q, [requestId]);
+  return r.rows;
+}
+
+async function markNotified(requestId, guideId) {
+  try {
+    await pool.query(
+      `INSERT INTO request_notifications (request_id, guide_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [requestId, guideId]
+    );
+  } catch (e) {
+    console.error('[notify] markNotified error:', e);
+  }
+}
+
+function buildRequestMessageForPush(r) {
+  const header = '🆕 Новая заявка';
+  return [header, '', formatRequestLine(r)].join('\n');
+}
+
+function buildRequestKeyboard(requestId) {
+  return {
+    inline_keyboard: [[
+      { text: "✍️ Ответить",  callback_data: `reply:${requestId}` },
+      { text: "🚫 Отклонить", callback_data: `reject:${requestId}` },
+    ]],
+  };
+}
+
+async function handleNewRequestPush(requestId) {
+  const r = await getRequestById(requestId);
+  if (!r || r.status !== 'active') return;
+
+  const guides = await getEligibleGuidesForRequest(requestId);
+  if (!guides.length) return;
+
+  // простая батч-рассылка
+  const chunkSize = 20;
+  for (let i = 0; i < guides.length; i += chunkSize) {
+    const chunk = guides.slice(i, i + chunkSize);
+    await Promise.allSettled(
+      chunk.map(async (g) => {
+        try {
+          await bot.sendMessage(g.telegram_id, buildRequestMessageForPush(r), {
+            reply_markup: buildRequestKeyboard(r.id),
+          });
+          await markNotified(requestId, g.id);
+        } catch (e) {
+          console.error(`[notify] send to guide ${g.id} failed:`, e.message);
+        }
+      })
+    );
+    // Пауза между пачками
+    await new Promise(res => setTimeout(res, 1000));
+  }
 }
