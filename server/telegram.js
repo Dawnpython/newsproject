@@ -604,3 +604,46 @@ async function handleNewRequestPush(requestId) {
     await new Promise(res => setTimeout(res, 1000));
   }
 }
+
+/* ======================= BACKUP POLLING (страховка) ======================= */
+let lastSeenId = 0;
+
+(async () => {
+  try {
+    const r = await pool.query("SELECT COALESCE(MAX(id), 0) AS max FROM requests");
+    lastSeenId = Number(r.rows[0]?.max || 0);
+    console.log('[poll] start from id >', lastSeenId);
+  } catch (e) {
+    console.error('[poll] init error:', e);
+  }
+})();
+
+async function pollNewRequests() {
+  try {
+    const r = await pool.query(`
+      SELECT r.id
+        FROM requests r
+       WHERE r.status = 'active'
+         AND r.id > $1
+         AND NOT EXISTS (
+               SELECT 1 FROM request_notifications rn
+                WHERE rn.request_id = r.id
+             )
+       ORDER BY r.id ASC
+       LIMIT 200
+    `, [lastSeenId]);
+
+    for (const row of r.rows) {
+      const id = Number(row.id);
+      console.log('[poll] found request_id =', id);
+      try { await handleNewRequestPush(id); }
+      catch (e) { console.error('[poll] handleNewRequestPush error for', id, e); }
+      if (id > lastSeenId) lastSeenId = id;
+    }
+  } catch (e) {
+    console.error('[poll] error:', e);
+  }
+}
+
+setInterval(pollNewRequests, 10_000);
+setTimeout(pollNewRequests, 2000);
