@@ -92,7 +92,7 @@ async function createGuideResponse({ requestId, guideId, text }) {
     DO UPDATE SET status='sent', text=EXCLUDED.text, updated_at=now()
     RETURNING id
     `,
-    [requestId, guideId, userIdOfRequest, text]
+    [requestId, guideId, text]
   );
   const responseId = upsert.rows[0].id;
 
@@ -247,7 +247,8 @@ bot.onText(/^\/requests$/, async (msg) => {
   if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
   if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
 
-  await sendRequestsPage(chatId, guide, 0);
+  // Показ первой заявки (индекс 0)
+  await sendRequestItem(chatId, guide, 0);
 });
 
 bot.on("callback_query", async (query) => {
@@ -284,17 +285,17 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("view_requests")) {
-      let offset = 0;
+      // data формат: view_requests:<index>
+      let index = 0;
       const parts = data.split(":");
-      if (parts.length > 1) offset = parseInt(parts[1] || "0", 10) || 0;
-
-      try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: msgId }); } catch {}
+      if (parts.length > 1) index = parseInt(parts[1] || "0", 10) || 0;
 
       const guide = await findGuideByTelegramId(userId);
       if (!guide) return bot.sendMessage(chatId, `К сожалению, вы не гид :(`);
       if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
 
-      await sendRequestsPage(chatId, guide, offset);
+      // Перерисуем текущим сообщением
+      await sendRequestItem(chatId, guide, index, { editMessageId: msgId });
       return;
     }
 
@@ -359,7 +360,68 @@ bot.on("message", async (msg) => {
   }
 });
 
-/* ===== Рендер страниц заявок ===== */
+/* ===== Рендер одной заявки с навигацией (◀️ ▶️) ===== */
+async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
+  const categories = Array.isArray(guide.categories) ? guide.categories : [];
+  // тянем ровно 1 заявку на указанной позиции
+  const { items, total } = await fetchRequestsForCategories(categories, 1, index);
+
+  if (!total) {
+    const msg = "Пока заявок по вашим категориям нет.";
+    if (opts.editMessageId) {
+      try { await bot.editMessageText(msg, { chat_id: chatId, message_id: opts.editMessageId }); } catch {}
+    } else {
+      await bot.sendMessage(chatId, msg);
+    }
+    return;
+  }
+
+  // если индекс вышел за границы — скорректируем и перерисуем
+  if (index < 0 || index >= total) {
+    const boundedIndex = Math.max(0, Math.min(index, total - 1));
+    if (boundedIndex !== index) {
+      return sendRequestItem(chatId, guide, boundedIndex, opts);
+    }
+  }
+
+  if (!items.length) {
+    const msg = "Больше заявок нет.";
+    if (opts.editMessageId) {
+      try { await bot.editMessageText(msg, { chat_id: chatId, message_id: opts.editMessageId }); } catch {}
+    } else {
+      await bot.sendMessage(chatId, msg);
+    }
+    return;
+  }
+
+  const it = items[0];
+  const header = `📋 Заявка ${index + 1} из ${total}`;
+  const text = [header, "", formatRequestLine(it)].join("\n");
+
+  const navRow = [];
+  if (index > 0) navRow.push({ text: "◀️ Назад", callback_data: `view_requests:${index - 1}` });
+  if (index + 1 < total) navRow.push({ text: "▶️ Далее", callback_data: `view_requests:${index + 1}` });
+
+  const actionRow = [
+    { text: "✍️ Ответить",  callback_data: `reply:${it.id}` },
+    { text: "🚫 Отклонить", callback_data: `reject:${it.id}` },
+  ];
+
+  const reply_markup = { inline_keyboard: [actionRow, ...(navRow.length ? [navRow] : [])] };
+
+  if (opts.editMessageId) {
+    try {
+      await bot.editMessageText(text, { chat_id: chatId, message_id: opts.editMessageId, reply_markup });
+    } catch {
+      // если редактирование не удалось (например, старое сообщение), просто отправим новое
+      await bot.sendMessage(chatId, text, { reply_markup });
+    }
+  } else {
+    await bot.sendMessage(chatId, text, { reply_markup });
+  }
+}
+
+/* ====== (Старая функция листинга на 5 — оставляю на месте, но не используем) ====== */
 async function sendRequestsPage(chatId, guide, offset) {
   const categories = Array.isArray(guide.categories) ? guide.categories : [];
   const pageSize = 5;
@@ -390,20 +452,4 @@ async function sendRequestsPage(chatId, guide, offset) {
     reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
   });
 
-  // Для каждого итема — отдельные кнопки "Ответить/Отклонить"
-  for (const it of items) {
-    const num = String(it.short_code || it.id).padStart(5, "0");
-    await bot.sendMessage(
-      chatId,
-      `Заявка #${num}:`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "✍️ Ответить",  callback_data: `reply:${it.id}` },
-            { text: "🚫 Отклонить", callback_data: `reject:${it.id}` },
-          ]]
-        }
-      }
-    );
-  }
-}
+ 
