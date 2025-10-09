@@ -238,10 +238,12 @@
 .profile-btn--call {
   background: #7ce35f;
   color: #063a12;
-} /* ярко-зелёная */
+}
+
 .profile-btn--tg {
   background: #2ca8ff;
-} /* телеграм-синяя */
+}
+
 .profile-btn:active {
   transform: translateY(1px);
 }
@@ -271,17 +273,17 @@
 
 .resp-ava-ring {
   background: conic-gradient(from 0deg, rgb(15, 182, 255), rgb(0, 213, 134), rgb(190, 239, 34), rgb(15, 182, 255));
-  padding: 2px; /* толщина градиентного кольца */
+  padding: 2px;
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
-  width: 60px; /* чуть больше чем сама ава */
+  width: 60px;
   height: 60px;
   flex-shrink: 0;
 }
 
-/* ===== Bottom-sheet (как на макете) ===== */
-.sheet-backdrop {
+/* ===== Bottom-sheet (уникальные классы, чтобы не конфликтовать) ===== */
+.sheet-profile-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(2, 6, 23, 0.45);
@@ -291,12 +293,12 @@
   z-index: 50;
 }
 
-.sheet-backdrop.is-open {
+.sheet-profile-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
 }
 
-.sheet {
+.sheet-profile {
   position: fixed;
   left: 0;
   right: 0;
@@ -314,11 +316,11 @@
   z-index: 60;
 }
 
-.sheet.is-open {
+.sheet-profile.is-open {
   transform: translateY(0);
 }
 
-.sheet-handle {
+.sheet-profile-handle {
   width: 44px;
   height: 5px;
   border-radius: 999px;
@@ -345,7 +347,6 @@
 }
 
 /* ==== Аватар с градиентным бордером (БЕЗ обёрток, чисто CSS) ==== */
-/* градиент по кругу */
 .gp-avatar {
   width: 118px;
   height: 118px;
@@ -355,7 +356,6 @@
   display: block;
   margin: 0 auto 10px;
   border: 3px solid transparent;
-  /* белая внутренняя окантовка поверх фото */
   box-shadow: inset 0 0 0 3px #fff, 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -424,11 +424,11 @@
 
 .gp-ava-ring {
   background: conic-gradient(from 0deg, rgb(15, 182, 255), rgb(0, 213, 134), rgb(190, 239, 34), rgb(15, 182, 255));
-  padding: 3px; /* толщина кольца */
+  padding: 3px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  width: 126px; /* чуть больше аватарки */
+  width: 126px;
   height: 126px;
   margin: 0 auto 10px;
   position: absolute;
