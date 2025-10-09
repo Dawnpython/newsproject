@@ -606,39 +606,40 @@ async function handleNewRequestPush(requestId) {
 }
 
 /* ======================= BACKUP POLLING (страховка) ======================= */
-let lastSeenId = 0;
-
-(async () => {
-  try {
-    const r = await pool.query("SELECT COALESCE(MAX(id), 0) AS max FROM requests");
-    lastSeenId = Number(r.rows[0]?.max || 0);
-    console.log('[poll] start from id >', lastSeenId);
-  } catch (e) {
-    console.error('[poll] init error:', e);
-  }
-})();
+/* ======================= BACKUP POLLING (страховка по времени) ======================= */
+let lastPollTs = null; // Date
 
 async function pollNewRequests() {
   try {
+    // окно: либо с прошлого запуска, либо последние 15 минут
+    const since = lastPollTs
+      ? lastPollTs.toISOString()
+      : new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    // сразу обновим якорь времени, чтобы не пропускать бёрсты
+    lastPollTs = new Date();
+
     const r = await pool.query(`
       SELECT r.id
         FROM requests r
        WHERE r.status = 'active'
-         AND r.id > $1
+         AND r.created_at >= $1::timestamptz
          AND NOT EXISTS (
                SELECT 1 FROM request_notifications rn
                 WHERE rn.request_id = r.id
              )
-       ORDER BY r.id ASC
-       LIMIT 200
-    `, [lastSeenId]);
+       ORDER BY r.created_at ASC
+       LIMIT 500
+    `, [since]);
 
     for (const row of r.rows) {
-      const id = Number(row.id);
+      const id = row.id; // uuid
       console.log('[poll] found request_id =', id);
-      try { await handleNewRequestPush(id); }
-      catch (e) { console.error('[poll] handleNewRequestPush error for', id, e); }
-      if (id > lastSeenId) lastSeenId = id;
+      try {
+        await handleNewRequestPush(id);
+      } catch (e) {
+        console.error('[poll] handleNewRequestPush error for', id, e);
+      }
     }
   } catch (e) {
     console.error('[poll] error:', e);
