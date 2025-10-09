@@ -376,7 +376,7 @@ app.post(BOT_PATH, (req, res) => {
   }
 });
 
-// 1) список откликов по заявке
+// получить все отклики по заявке
 app.get("/api/requests/:id/responses", authMiddleware, async (req, res) => {
   try {
     const { uid } = req.user;
@@ -391,11 +391,14 @@ app.get("/api/requests/:id/responses", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "REQUEST_NOT_FOUND" });
     }
 
-    // ЧИТАЕМ ИЗ request_responses
+    // получаем отклики из request_responses
     const q = await dbQuery(
       `SELECT
          rr.id,
          rr.text,
+         rr.status,
+         rr.price_amount,
+         rr.price_currency,
          rr.created_at,
          jsonb_build_object(
            'id', g.id,
@@ -420,17 +423,23 @@ app.get("/api/requests/:id/responses", authMiddleware, async (req, res) => {
 });
 
 
-// 2) профиль гида
+// профиль гида
 app.get("/api/guides/:id", authMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const r = await dbQuery(
-    `SELECT id, name, phone, telegram_username, telegram_id, avatar_url
-     FROM guides WHERE id=$1`,
-    [id]
-  );
-  if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
-  res.json({ guide: r.rows[0] });
+  try {
+    const { id } = req.params;
+    const r = await dbQuery(
+      `SELECT id, name, phone, telegram_username, telegram_id, avatar_url
+       FROM guides WHERE id=$1`,
+      [id]
+    );
+    if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
+    res.json({ guide: r.rows[0] });
+  } catch (e) {
+    console.error("GET /api/guides/:id error:", e);
+    res.status(500).json({ error: "SERVER_ERROR" });
+  }
 });
+
 
 
 
