@@ -23,8 +23,9 @@ async function findGuideByTelegramId(telegramId) {
 
 /**
  * Выборка активных заявок по категориям гида (requests.categories text[])
+ * Теперь скрываем заявки, по которым у этого гида уже есть запись в request_responses
  */
-async function fetchRequestsForCategories(guideCategories = [], limit = 5, offset = 0) {
+async function fetchRequestsForCategories(guideCategories = [], limit = 5, offset = 0, guideId = null) {
   if (!guideCategories?.length) return { items: [], total: 0 };
 
   const r = await pool.query(
@@ -33,7 +34,16 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
       SELECT r.id, r.short_code, r.text, r.categories, r.created_at
         FROM requests r
        WHERE r.status = 'active'
-         AND r.categories && $1::text[]   -- пересечение массивов
+         AND r.categories && $1::text[]             -- пересечение массивов
+         AND (
+           $4::int IS NULL
+           OR NOT EXISTS (
+             SELECT 1
+               FROM request_responses rr
+              WHERE rr.request_id = r.id
+                AND rr.guide_id = $4                 -- уже есть ответ/отказ от этого гида
+           )
+         )
     )
     SELECT
       (SELECT COUNT(*) FROM filtered) AS total,
@@ -55,7 +65,7 @@ async function fetchRequestsForCategories(guideCategories = [], limit = 5, offse
        LIMIT $2 OFFSET $3
     ) f
     `,
-    [guideCategories, limit, offset]
+    [guideCategories, limit, offset, guideId]
   );
 
   const row = r.rows[0] || {};
@@ -83,7 +93,7 @@ async function createGuideResponse({ requestId, guideId, text }) {
   if (rq.rows[0].status !== 'active') throw new Error("REQUEST_NOT_ACTIVE");
   const userIdOfRequest = rq.rows[0].user_id;
 
-  // Upsert ответа с user_id
+  // Upsert ответа с user_id (ВАЖНО: передаём userIdOfRequest третьим параметром)
   const upsert = await pool.query(
     `
     INSERT INTO request_responses (request_id, guide_id, user_id, status, text)
@@ -92,15 +102,15 @@ async function createGuideResponse({ requestId, guideId, text }) {
     DO UPDATE SET status='sent', text=EXCLUDED.text, updated_at=now()
     RETURNING id
     `,
-    [requestId, guideId, text]
+    [requestId, guideId, userIdOfRequest, text]
   );
   const responseId = upsert.rows[0].id;
 
-  // Первое сообщение в тред
+  // Первое сообщение в тред (4 плейсхолдера + 'guide' как параметр)
   await pool.query(
     `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
-     VALUES ($1, 'guide', $2, $3)`,
-    [responseId, guideId, text]
+     VALUES ($1, $2, $3, $4)`,
+    [responseId, 'guide', guideId, text]
   );
 
   return responseId;
@@ -130,8 +140,8 @@ async function rejectGuideResponse({ requestId, guideId, reason = null }) {
   if (reason) {
     await pool.query(
       `INSERT INTO request_messages (response_id, sender_type, sender_id, text)
-       VALUES ($1, 'guide', $2, $3)`,
-      [responseId, guideId, `(отклонено) ${reason}`]
+       VALUES ($1, $2, $3, $4)`,
+      [responseId, 'guide', guideId, `(отклонено) ${reason}`]
     );
   }
   return responseId;
@@ -363,8 +373,8 @@ bot.on("message", async (msg) => {
 /* ===== Рендер одной заявки с навигацией (◀️ ▶️) ===== */
 async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
   const categories = Array.isArray(guide.categories) ? guide.categories : [];
-  // тянем ровно 1 заявку на указанной позиции
-  const { items, total } = await fetchRequestsForCategories(categories, 1, index);
+  // тянем ровно 1 заявку на указанной позиции; скрыты те, где уже есть response для этого guide.id
+  const { items, total } = await fetchRequestsForCategories(categories, 1, index, guide.id);
 
   if (!total) {
     const msg = "Пока заявок по вашим категориям нет.";
@@ -421,3 +431,52 @@ async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
   }
 }
 
+/* ====== (Старая функция листинга на 5 — оставил для возможного использования; тоже скрывает уже отвеченные) ====== */
+async function sendRequestsPage(chatId, guide, offset) {
+  const categories = Array.isArray(guide.categories) ? guide.categories : [];
+  const pageSize = 5;
+  const { items, total } = await fetchRequestsForCategories(categories, pageSize, offset, guide.id);
+
+  if (!items.length) {
+    if (offset === 0) await bot.sendMessage(chatId, "Пока заявок по вашим категориям нет.");
+    else await bot.sendMessage(chatId, "Больше заявок нет.");
+    return;
+  }
+
+  const from = offset + 1;
+  const to = offset + items.length;
+  const header = `📋 Заявки по вашим категориям (${from}–${to} из ${total}):`;
+  const text = [header, "", items.map(formatRequestLine).join("\n\n")].join("\n");
+
+  const keyboardRow = [];
+  if (offset > 0) {
+    const prevOffset = Math.max(0, offset - pageSize);
+    keyboardRow.push({ text: "◀️ Назад", callback_data: `view_requests:${prevOffset}` });
+  }
+  if (offset + pageSize < total) {
+    const nextOffset = offset + pageSize;
+    keyboardRow.push({ text: "▶️ Далее", callback_data: `view_requests:${nextOffset}` });
+  }
+
+  await bot.sendMessage(chatId, text, {
+    reply_markup: { inline_keyboard: keyboardRow.length ? [keyboardRow] : [] },
+  });
+
+  // Кнопки по каждому итему оставлены закомментированными (если вернёмся к формату "по 5").
+  /*
+  for (const it of items) {
+    await bot.sendMessage(
+      chatId,
+      `Заявка #${String(it.short_code || it.id).padStart(5, "0")}:`,
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "✍️ Ответить",  callback_data: `reply:${it.id}` },
+            { text: "🚫 Отклонить", callback_data: `reject:${it.id}` },
+          ]]
+        }
+      }
+    );
+  }
+  */
+}
