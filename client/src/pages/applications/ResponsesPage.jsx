@@ -123,7 +123,7 @@ export default function ResponsesPage() {
                 </div>
                 <div className="resp-meta">
                   <div className="resp-name">{it.guide.name}</div>
-                  <div className="resp-role">{it.guide.org_title || it.guide.role || "Местный гид"}</div>
+                  <div className="resp-role">{it.guide.org_title || it.guide.description || "Местный гид"}</div>
                 </div>
               </div>
 
