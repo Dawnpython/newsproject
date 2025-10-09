@@ -143,13 +143,17 @@ function formatDate(iso) {
   });
 }
 
+// в Application.jsx — заменяем оболочку RequestCard на кликабельную
 function RequestCard({ req, onAskCancel }) {
+  const navigate = useNavigate();
+  const goResponses = () => navigate(`/applications/${req.id}/responses`);
+
   const firstCat = req.categories?.[0];
   const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
   const Icon = catMeta?.Icon || FaUsers;
 
   return (
-    <div className="rq-card">
+    <div className="rq-card rq-card-click" onClick={goResponses} role="button" tabIndex={0}>
       <div className="rq-mail">
         <span className="rq-mail-icon">✉️</span>
         {!!req.messages_cnt && <span className="rq-mail-count">{req.messages_cnt}</span>}
@@ -167,12 +171,17 @@ function RequestCard({ req, onAskCancel }) {
 
       <div className="rq-text">{req.text}</div>
 
-      <button className="rq-cancel" onClick={() => onAskCancel(req)}>
+      {/* отдельная кнопка отмены — останавливаем всплытие */}
+      <button
+        className="rq-cancel"
+        onClick={(e) => { e.stopPropagation(); onAskCancel(req); }}
+      >
         Отменить
       </button>
     </div>
   );
 }
+
 
 /* ---------- Bottom Sheet ---------- */
 function CancelSheet({ open, request, onClose, onConfirm }) {

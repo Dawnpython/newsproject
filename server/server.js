@@ -376,6 +376,50 @@ app.post(BOT_PATH, (req, res) => {
   }
 });
 
+// 1) список откликов по заявке
+app.get("/api/requests/:id/responses", authMiddleware, async (req, res) => {
+  const { uid } = req.user;
+  const { id } = req.params;
+
+  // заявка принадлежит пользователю?
+  const rq = await dbQuery(`SELECT id FROM requests WHERE id=$1 AND user_id=$2`, [id, uid]);
+  if (rq.rowCount === 0) return res.status(404).json({ error: "REQUEST_NOT_FOUND" });
+
+  const q = await dbQuery(
+    `SELECT
+       rsp.id, rsp.text, rsp.created_at,
+       jsonb_build_object(
+         'id', g.id,
+         'name', g.name,
+         'phone', g.phone,
+         'telegram_username', g.telegram_username,
+         'telegram_id', g.telegram_id,
+         'avatar_url', g.avatar_url
+       ) AS guide
+     FROM responses rsp
+     JOIN guides g ON g.id = rsp.guide_id
+     WHERE rsp.request_id = $1
+     ORDER BY rsp.created_at DESC`,
+    [id]
+  );
+
+  res.json({ responses: q.rows });
+});
+
+// 2) профиль гида
+app.get("/api/guides/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const r = await dbQuery(
+    `SELECT id, name, phone, telegram_username, telegram_id, avatar_url
+     FROM guides WHERE id=$1`,
+    [id]
+  );
+  if (r.rowCount === 0) return res.status(404).json({ error: "NOT_FOUND" });
+  res.json({ guide: r.rows[0] });
+});
+
+
+
 // ==== start ====
 (async () => {
   try {
