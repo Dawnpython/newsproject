@@ -1,0 +1,218 @@
+/* ===========================
+   Отклики (ResponsesPage)
+   =========================== */
+
+:root {
+  --primary: rgba(0,195,255,1);
+  --primary-10: rgba(0,195,255,.1);
+  --success: #5ad27d;
+  --text: #0f172a;           /* slate-900 */
+  --muted: #64748b;          /* slate-500 */
+  --card: #ffffff;
+  --bg: #f3f6fb;
+  --shadow: 0 8px 24px rgba(15, 23, 42, .06);
+  --radius: 16px;
+}
+
+/* верхняя панель */
+.responses-page .responses-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 6px;
+}
+.responses-page .responses-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* кнопка "Назад" стилизованная */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(2, 6, 23, .08);
+  background: #fff;
+  box-shadow: var(--shadow);
+  transition: transform .08s ease, box-shadow .2s ease;
+}
+.back-btn:active { transform: translateY(1px); }
+
+/* список карточек */
+.resp-list {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 84px; /* отступ под Navbar */
+}
+
+/* карточка отклика */
+.resp-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(2, 6, 23, .06);
+  transition: box-shadow .2s ease, transform .06s ease;
+}
+.resp-card:active { transform: translateY(1px); }
+
+/* шапка карточки */
+.resp-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.resp-ava {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  border: 2px solid #fff;
+}
+.resp-meta { display: grid; gap: 2px; }
+.resp-name {
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+.resp-sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* «пузырь» текста отклика */
+.resp-bubble, .resp-text {
+  background: #eef6ff;            /* мягкий голубой, как в макете */
+  border-radius: 14px;
+  padding: 12px;
+  color: #0b1324;
+  line-height: 1.35;
+  margin: 8px 0 12px;
+  border: 1px solid rgba(2, 6, 23, .05);
+}
+.resp-bubble.is-new { background: #f3ffeb; }  /* вариант для новых */
+
+/* кнопка "Связаться" под карточкой */
+.resp-card .btn { width: 100%; }
+
+/* ===========================
+   Кнопки (если нет — добавит)
+   =========================== */
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: #fff;
+  color: var(--text);
+  transition: filter .15s ease, transform .06s ease, box-shadow .2s ease;
+  cursor: pointer;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-outline {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,195,255,.15);
+}
+.btn-outline:hover { filter: brightness(1.03); background: #f8feff; }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,195,255,.35);
+}
+.btn-primary:hover { filter: brightness(1.02); }
+
+.btn-success {
+  background: var(--success);
+  color: #03230f;
+  box-shadow: 0 8px 20px rgba(90,210,125,.35);
+}
+
+/* ===========================
+   Модалка профиля (bottom-sheet)
+   =========================== */
+.sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(2, 6, 23, .45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 50;
+}
+.sheet-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #fff;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -10px 30px rgba(15, 23, 42, .2);
+  transform: translateY(110%);
+  transition: transform .25s ease;
+  padding: 16px;
+  z-index: 60;
+}
+.sheet.is-open { transform: translateY(0); }
+.sheet-handle {
+  width: 44px; height: 5px;
+  border-radius: 999px;
+  background: rgba(2,6,23,.15);
+  margin: 6px auto 12px;
+}
+
+/* содержимое модалки профиля */
+.gp-card {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  padding-bottom: 8px;
+}
+.gp-avatar {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 2px auto 6px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  border: 3px solid #fff;
+}
+.gp-name { font-size: 20px; font-weight: 800; }
+.gp-sub  { font-size: 13px; color: var(--muted); margin-top: -6px; }
+.gp-empty { color: var(--muted); }
+
+/* ===========================
+   Мелочи и адаптив
+   =========================== */
+.rq-card-click { cursor: pointer; }
+@media (min-width: 540px) {
+  .resp-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 840px) {
+  .resp-list { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* лёгкая поддержка dark (если будет) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card: #0b1220;
+    --bg: #070c16;
+    --text: #e6edf6;
+    --muted: #98a2b3;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  }
+  .resp-bubble, .resp-text { background: #0f2030; border-color: rgba(255,255,255,.06); }
+  .back-btn { background: #0b1220; border-color: rgba(255,255,255,.08); }
+}

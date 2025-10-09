@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "/src/components/navbar/Navbar.jsx";
 import { FiArrowLeft } from "react-icons/fi";
+
+import '/src/pages/applications/ResponsesPage.css'
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
 function GuideProfileModal({ open, guide, onClose }) {
