@@ -1,6 +1,5 @@
 import "/src/pages/applications/Applications.css";
 import Navbar from "/src/components/navbar/Navbar.jsx";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiSearch, FiX, FiCheck } from "react-icons/fi";
