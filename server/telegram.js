@@ -322,7 +322,7 @@ bot.on("callback_query", async (query) => {
       if (!hasActiveSubscription(guide)) return bot.sendMessage(chatId, `⚠️ Подписка не активна.`);
 
       pendingReplyByUser.set(userId, { requestId, guideId: guide.id });
-      await bot.sendMessage(chatId, "Напишите текст вашего ответа на эту заявку одним сообщением:");
+      await bot.sendMessage(chatId, "Напишите текст вашего ответа на эту заявку одним сообщением:",CANCEL_KB);
       return;
     }
 
@@ -349,6 +349,16 @@ bot.on("callback_query", async (query) => {
 });
 
 /* Принятие текстового ответа от гида */
+const CANCEL_TEXT = "Отмена";
+const CANCEL_KB = {
+  reply_markup: {
+    keyboard: [[{ text: CANCEL_TEXT }]],
+    resize_keyboard: true,
+    one_time_keyboard: true, // свернётся после нажатия
+  },
+};
+const REMOVE_KB = { reply_markup: { remove_keyboard: true } };
+
 bot.on("message", async (msg) => {
   // игнор команд
   if (!msg.text || msg.text.startsWith("/")) return;
@@ -359,22 +369,45 @@ bot.on("message", async (msg) => {
   const pending = pendingReplyByUser.get(userId);
   if (!pending) return;
 
+  const text = msg.text.trim();
+
+  // 1) Обработка отмены
+  if (text.toLowerCase() === CANCEL_TEXT.toLowerCase()) {
+    await bot.sendMessage(chatId, "Ок, отменил. Ничего не отправляю.", REMOVE_KB);
+    pendingReplyByUser.delete(userId);
+    return;
+  }
+
+  // 2) Пустой ответ — просим ввести текст и показываем кнопку Отмена
+  if (!text) {
+    await bot.sendMessage(
+      chatId,
+      "Пустой ответ не отправлен. Напишите текст и попробуйте снова или нажмите «Отмена».",
+      CANCEL_KB
+    );
+    return;
+  }
+
+  // 3) Обычная отправка ответа
   const { requestId, guideId } = pending;
   try {
-    const text = msg.text.trim();
-    if (!text) {
-      await bot.sendMessage(chatId, "Пустой ответ не отправлен. Напишите текст и попробуйте снова.");
-      return;
-    }
     await createGuideResponse({ requestId, guideId, text });
-    await bot.sendMessage(chatId, "Спасибо! Ваш ответ отправлен пользователю.");
+    await bot.sendMessage(chatId, "Спасибо! Ваш ответ отправлен пользователю.", REMOVE_KB);
   } catch (e) {
     console.error("[reply] create error:", e);
-    await bot.sendMessage(chatId, `Не удалось сохранить ответ: ${e.message || "ошибка"}`);
+    const msgText = e?.message ? String(e.message) : "ошибка";
+    await bot.sendMessage(
+      chatId,
+      `Не удалось сохранить ответ: ${msgText}\nМожете попробовать ещё раз или нажать «Отмена».`,
+      CANCEL_KB
+    );
+    return; // остаёмся в режиме ожидания, чтобы мог повторить или отменить
   } finally {
+    // чистим ожидание только при успешной отправке или явной отмене
     pendingReplyByUser.delete(userId);
   }
 });
+
 
 /* ===== Рендер одной заявки с навигацией (◀️ ▶️) ===== */
 async function sendRequestItem(chatId, guide, index = 0, opts = {}) {
