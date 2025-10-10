@@ -97,16 +97,7 @@
   .ms-clear { color: #7aa7c6; }
   .ms-clear:hover { background: rgba(0,0,0,.06); color: #3a5770; }
 
-  .ms-card {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0; right: 0;
-    background: #fff;
-    border-radius: 28px;
-    box-shadow: 0 26px 40px rgba(0,0,0,.25);
-    padding: 6px 6px 10px;
-    z-index: 20;
-  }
+  
 
   .ms-list { list-style: none; margin: 0; padding: 4px 8px; max-height: 340px; overflow: auto; }
   .ms-row {
@@ -423,14 +414,19 @@
 
 /* Оверлей поверх всей страницы, блокирует клики по фону */
 .ms-overlay {
+  display: block;
   position: fixed;
   inset: 0;
-  background: transparent; /* можно поставить rgba(0,0,0,.1) для затемнения */
-  z-index: 998;            /* ниже .ms-card, но выше остального контента */
+  background: transparent; /* можно rgba(0,0,0,.1) если хочешь затемнение */
+  z-index: 9998;           /* выше карточек заявок и интерфейса */
+  pointer-events: auto;    /* важно! — чтобы ловил клики */
 }
 
 /* Контейнер мультиселекта создаёт свой контекст */
-.ms { position: relative; z-index: 999; }
+.ms {
+  position: relative;
+  z-index: 9999;
+}
 
 /* Карточка списка категорий поверх оверлея */
 .ms-card {
