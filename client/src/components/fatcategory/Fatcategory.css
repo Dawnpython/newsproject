@@ -45,10 +45,6 @@
   color: inherit;
 }
 
-.tile:hover {
-  transform: translateY(-1px);
-}
-
 /* узкая плитка */
 .tile--small {
   width: 82px;

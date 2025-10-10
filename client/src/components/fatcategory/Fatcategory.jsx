@@ -18,7 +18,7 @@ import tenIcon from "/src/assets/icons/fatcategory/img-category-10.png";
  * чтобы ретина брала более чёткие источники.
  */
 const DEFAULT_TILES = [
-  { label: "Лодки \nи паромы", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)", icon: firstIcon },
+  { label: "Лодки \nи паромы", color: "white", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)", icon: firstIcon },
   { label: "Такси", bg: "#F3F4F6", icon: secondIcon, color: "black" },
   { label: "Отели \nи турбазы", bg: "#1DDA94", bgImage: otelImg, icon: thirdIcon },
   { label: "Где поесть", bg: "#FFDC4C", icon: fourIcon, color: "black" },

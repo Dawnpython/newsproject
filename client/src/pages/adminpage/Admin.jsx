@@ -283,7 +283,7 @@ export default function Adminpage() {
             }`}
             onClick={() => setTab("guides")}
           >
-            Гиды
+            Партнеры
           </button>
           <button
             className={`admin-tab ${tab === "news" ? "admin-tab--active" : ""}`}

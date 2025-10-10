@@ -6,7 +6,12 @@ import People from "/src/assets/People.png";
 import formkeyBackground from "/src/assets/img-form-mountain.png";
 import feedbackImage from '/src/assets/img-form-message.png'
 
+import { useNavigate } from "react-router-dom"; 
+
 export default function Formkey() {
+
+  const navigate = useNavigate();
+
   return (
     <div className="formkeycon">
       <div className="formkey">
@@ -26,7 +31,7 @@ export default function Formkey() {
         </div>
         <div className="low-form">
           <img src={feedbackImage}></img>
-          <button>
+          <button onClick={() => navigate("/application")}>
           <FaRegEnvelope />
           Отправить
         </button>

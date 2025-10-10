@@ -197,7 +197,7 @@ export default function Login() {
               placeholder="+7 (000) 000-00-00"
               type="tel"
               inputMode="numeric"
-              pattern="[0-9]*"
+              pattern="\+?[0-9]*"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
               onBlur={() => setTouched((p) => ({ ...p, phone: true }))}

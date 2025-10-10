@@ -3,6 +3,7 @@
   justify-content: center;
   align-items: center;
   height: 290px;
+  padding-bottom: 20px;
 }
 .formkeycon .formkey {
   display: flex;
@@ -66,6 +67,12 @@
   border-radius: 99px;
   border: none;
   color: white;
+}
+.formkeycon .formkey .low-form img {
+  width: 180px;
+  height: 58px;
+  border-radius: 10px;
+  transform: rotate(-10deg) translateX(-10px) translateY(15px);
 }
 .formkeycon .formkey .formkeyBackground {
   position: absolute;
