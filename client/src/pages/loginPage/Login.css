@@ -1,17 +1,12 @@
 @charset "UTF-8";
-/* ------------------ БАЗА ------------------ */
-:root {
-  --footer-h: 48px;
-} /* высота нижней ссылки "Нет аккаунта?" */
 .login-container {
   display: flex;
   flex-direction: column;
   position: relative;
   width: 100%;
-  height: 100svh; /* лучше чем 100vh на мобилках */
+  height: 100vh;
 }
 
-/* ------------------ ХЕДЕР ------------------ */
 .login-container .title {
   display: flex;
   position: relative;
@@ -31,25 +26,19 @@
   left: 10px;
 }
 
-/* ------------------ КОНТЕНТ ------------------ */
 .login-container .login-content {
   display: flex;
   position: absolute;
   bottom: 0;
   width: 100%;
-  /* Хедер = 120px → оставшееся место: */
-  height: calc(100% - 120px);
+  height: calc(100% - 100px);
   flex-direction: column;
   align-items: center;
   background-color: white;
-  border-radius: 24px 24px 0 0;
-  /* место под фикс-ссылку снизу */
-  padding-bottom: calc(var(--footer-h) + env(safe-area-inset-bottom, 0px));
-  box-sizing: border-box;
-  overflow: auto; /* скролл, если полей много */
+  border-radius: 24px;
 }
 
-/* ------------------ КНОПКА ------------------ */
+/* кнопка */
 .login-container .login-content button {
   width: calc(100% - 20px);
   border: none;
@@ -63,55 +52,25 @@
   font-weight: 600;
 }
 
-/* отключённая кнопка */
-.login-container .login-content button[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ------------------ ССЫЛКИ ------------------ */
+/* ссылки */
 .login-container .login-content a {
   color: rgb(0, 195, 255);
   font-size: 16px;
   font-weight: 500;
 }
 
-/* "Нет аккаунта?" — фиксируем как футер, но без прыжков */
+/* "Нет аккаунта?" фикс внизу */
 .login-container .login-content .no-acc {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: env(safe-area-inset-bottom, 0px);
-  height: var(--footer-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  place-items: center;
-  background: #fff;
+  bottom: 50px;
   color: black;
-  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
-  z-index: 10;
 }
 
 .login-container .login-content .no-acc span {
   color: rgb(0, 195, 255);
 }
 
-/* Когда фокус на поле (обычно открыта клавиатура) — переводим футер в поток */
-@supports selector(:has(*)) {
-  .login-container .login-content:has(input:focus, textarea:focus, select:focus) .no-acc {
-    position: static;
-    height: auto;
-    box-shadow: none;
-    margin-top: 12px;
-  }
-  .login-container .login-content:has(input:focus, textarea:focus, select:focus) {
-    /* уменьшаем нижний запас, т.к. "футер" уже в потоке */
-    padding-bottom: 12px;
-  }
-}
-/* ------------------ ЛЕЙБЛЫ ------------------ */
+/* метки */
 .login-container .login-content label {
   display: flex;
   justify-content: left;
@@ -122,8 +81,9 @@
   font-weight: 600;
 }
 
-/* ------------------ ИНПУТЫ ------------------ */
-/* Без «прыжков»: постоянная толщина рамки, меняем только цвет. */
+/* ИНПУТЫ: без прыжков
+   — сразу даём border: 2px transparent;
+   — на фокус/ошибку меняем ТОЛЬКО цвет. */
 .login-container .login-content input {
   display: flex;
   align-items: center;
@@ -133,25 +93,28 @@
   font-size: 16px;
   height: 52px;
   border-radius: 12px;
-  border: 2px solid transparent;
+  border: 2px solid transparent; /* ← было none */
   background-color: rgb(243, 244, 246);
   outline: none;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
+/* фокус — только цвет бордера */
 .login-container .login-content input:focus {
   border-color: rgb(0, 195, 255) !important;
   background-color: #fff;
 }
 
-.login-container .login-content input.error {
-  border-color: #e53935 !important;
-  background-color: #fff;
+/* (если вдруг у тебя есть вложенный .title в .login-content) */
+.login-container .login-content .title {
+  width: 100%;
+  text-align: center;
 }
 
-/* ------------------ ЧЕКБОКС + ТЕКСТ ------------------ */
+/* --- чекбокс + текст --- */
 .agree-row {
   display: flex;
+  align-items: flex-start;
   align-items: center;
   gap: 12px;
   line-height: 1.35;
@@ -159,14 +122,15 @@
   font-size: 12px;
 }
 
+/* кастомный чекбокс: фиксируем размеры без прыжков */
 .checkbox-20 {
   -webkit-appearance: none;
   -moz-appearance: none;
        appearance: none;
-  width: 40px !important;
+  width: 40px !important; /* как у тебя сейчас */
   height: 40px !important;
-  box-sizing: border-box;
-  border: 2px solid #cbd5e1;
+  box-sizing: border-box; /* ← учитываем бордер в размере */
+  border: 2px solid #cbd5e1; /* одинаковая толщина всегда */
   border-radius: 2px !important;
   display: grid;
   place-content: center;
@@ -179,9 +143,10 @@
   outline-offset: 2px;
 }
 
+/* галочка — чуть компактнее, чтобы не упираться в края */
 .checkbox-20::after {
   content: "";
-  width: 12px !important;
+  width: 12px !important; /* было 10 — можно оставить 10, если нравилось */
   height: 7px;
   border: 2px solid transparent;
   border-left-color: rgb(0, 195, 255);
@@ -191,17 +156,12 @@
 }
 
 .checkbox-20:checked {
-  background: #3b82f6;
+  background: #3b82f6; /* blue-500 */
   border-color: #3b82f6;
 }
 
 .checkbox-20:checked::after {
   opacity: 1;
-}
-
-.checkbox-20.error {
-  border-color: #e53935 !important;
-  box-shadow: 0 0 0 1px #e53935 inset;
 }
 
 .agree-row a {
@@ -214,8 +174,20 @@
   text-decoration: underline;
 }
 
-/* ------------------ СЛУЖЕБНОЕ ------------------ */
-.login-container .login-content .title {
-  width: 100%;
-  text-align: center;
+/* подсветка ошибок — только цвет бордера, без «прыжков» */
+.login-container .login-content input.error {
+  border-color: #e53935 !important;
+  background-color: #fff;
+}
+
+/* чекбокс с ошибкой */
+.checkbox-20.error {
+  border-color: #e53935 !important;
+  box-shadow: 0 0 0 1px #e53935 inset;
+}
+
+/* отключённая кнопка — визуально понятная */
+.login-container .login-content button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }/*# sourceMappingURL=Login.css.map */
