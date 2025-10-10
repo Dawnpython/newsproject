@@ -59,77 +59,88 @@ function MultiSelect({ value, onChange }) {
   const clear = () => onChange([]);
 
   return (
-    <div className="ms" ref={boxRef}>
-      <button
-        type="button"
-        className={`ms-trigger ${open ? "is-open" : ""}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <FiSearch className="ms-search" aria-hidden />
-        <div className="ms-chips">
-          {selected.length === 0 ? (
-            <span className="ms-placeholder">Выберите категории</span>
-          ) : (
-            selected.map((c, i) => (
-              <span key={c.id} className={`ms-chip ${i % 2 ? "alt" : ""}`}>
-                <c.Icon className="ms-chip-ico" />
-                {c.label}
-              </span>
-            ))
-          )}
-        </div>
-        {selected.length > 0 ? (
-          <span
-            className="ms-clear"
-            onClick={(e) => {
-              e.stopPropagation();
-              clear();
-            }}
-            role="button"
-            aria-label="Очистить"
-          >
-            <FiX />
-          </span>
-        ) : (
-          <span className="ms-clear-placeholder" />
-        )}
-      </button>
-
+    <>
+      {/* ⬇️ Оверлей над всей страницей, ловит клики и закрывает список */}
       {open && (
-        <div className="ms-card" role="listbox" tabIndex={-1}>
-          <ul className="ms-list">
-            {/** ⬇️ ВАЖНО: добавили Icon в деструктуризацию и сделали SafeIcon */}
-            {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
-              const checked = value.includes(id);
-              const SafeIcon = Icon || FaUsers;
-              return (
-                <li
-                  key={id}
-                  className="ms-row"
-                  onClick={() => toggle(id)}
-                  role="option"
-                  aria-selected={checked}
-                >
-                  <span className="ms-left">
-                    <SafeIcon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
-                    <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
-                      {label}
-                    </span>
-                  </span>
-                  <span className={`ms-check ${checked ? "is-on" : ""}`}>
-                    <FiCheck />
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <div
+          className="ms-overlay"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
       )}
-    </div>
+
+      <div className="ms" ref={boxRef}>
+        <button
+          type="button"
+          className={`ms-trigger ${open ? "is-open" : ""}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <FiSearch className="ms-search" aria-hidden />
+          <div className="ms-chips">
+            {selected.length === 0 ? (
+              <span className="ms-placeholder">Выберите категории</span>
+            ) : (
+              selected.map((c, i) => (
+                <span key={c.id} className={`ms-chip ${i % 2 ? "alt" : ""}`}>
+                  <c.Icon className="ms-chip-ico" />
+                  {c.label}
+                </span>
+              ))
+            )}
+          </div>
+          {selected.length > 0 ? (
+            <span
+              className="ms-clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                clear();
+              }}
+              role="button"
+              aria-label="Очистить"
+            >
+              <FiX />
+            </span>
+          ) : (
+            <span className="ms-clear-placeholder" />
+          )}
+        </button>
+
+        {open && (
+          <div className="ms-card" role="listbox" tabIndex={-1}>
+            <ul className="ms-list">
+              {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
+                const checked = value.includes(id);
+                const SafeIcon = Icon || FaUsers;
+                return (
+                  <li
+                    key={id}
+                    className="ms-row"
+                    onClick={() => toggle(id)}
+                    role="option"
+                    aria-selected={checked}
+                  >
+                    <span className="ms-left">
+                      <SafeIcon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
+                      <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
+                        {label}
+                      </span>
+                    </span>
+                    <span className={`ms-check ${checked ? "is-on" : ""}`}>
+                      <FiCheck />
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
+
 
 
 function formatDate(iso) {

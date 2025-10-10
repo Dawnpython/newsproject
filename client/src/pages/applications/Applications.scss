@@ -419,3 +419,27 @@
   border: 2px solid #c7d2de;
 }
 .btn-outline:active { transform: translateY(1px); }
+
+
+/* Оверлей поверх всей страницы, блокирует клики по фону */
+.ms-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent; /* можно поставить rgba(0,0,0,.1) для затемнения */
+  z-index: 998;            /* ниже .ms-card, но выше остального контента */
+}
+
+/* Контейнер мультиселекта создаёт свой контекст */
+.ms { position: relative; z-index: 999; }
+
+/* Карточка списка категорий поверх оверлея */
+.ms-card {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0; right: 0;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 26px 40px rgba(0,0,0,.25);
+  padding: 6px 6px 10px;
+  z-index: 1000; /* выше .ms-overlay */
+}
