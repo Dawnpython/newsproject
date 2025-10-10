@@ -16,6 +16,7 @@
   align-items: center;
   background-image: url("/src/assets/img-sm-banner-bg.png");
   background-repeat: no-repeat;
+  background-size: cover;
   height: 92px;
   margin: 0px 10px;
   border-radius: 24px;
