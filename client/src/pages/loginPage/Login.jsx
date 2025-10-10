@@ -245,7 +245,7 @@ export default function Login() {
             </button>
 
             <div className="politics"></div>
-            <a className="no-acc">
+            <a className="no-acc-2">
               Уже есть аккаунт?
               <span onClick={() => setIsRegister(false)}> Войти</span>
             </a>

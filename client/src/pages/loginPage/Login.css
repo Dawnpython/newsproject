@@ -66,6 +66,13 @@
   color: black;
 }
 
+.no-acc-2 {
+  color: black !important;
+}
+.no-acc-2 span {
+  color: rgb(0, 195, 255);
+}
+
 .login-container .login-content .no-acc span {
   color: rgb(0, 195, 255);
 }
