@@ -59,7 +59,7 @@
 
 /* "Нет аккаунта?" фикс внизу */
 .login-container .login-content .no-acc{
-  position: fixed;
+  position: absolute;
   bottom: 50px;
   color: black;
 }
