@@ -83,7 +83,10 @@
   right: 0;
   bottom: env(safe-area-inset-bottom, 0px);
   height: var(--footer-h);
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   place-items: center;
   background: #fff;
   color: black;
