@@ -301,7 +301,7 @@ export default function Adminpage() {
               className="admin-btn admin-btn--primary"
               onClick={openCreate}
             >
-              + Добавить гида
+              + Добавить Партнера
             </button>
           </div>
 
