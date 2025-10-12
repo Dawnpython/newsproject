@@ -10,7 +10,7 @@ import ResponsesPage from "./pages/applications/ResponsesPage.jsx";
 import Adminpage from '/src/pages/adminpage/Admin.jsx'
 import { IMAGES_TO_PRELOAD } from "/src/utils/Imagestack.jsx";
 import { preloadImages } from "/src/utils/usePreloadImages.jsx";
-import Categorygepage from '/src/pages/categorygenpage/Categorygenpage.jsx'
+import Categorygenpage from "./pages/categorygenpage/Categorygenpage.jsx";
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -34,7 +34,7 @@ export default function App() {
              <Route path="/application" element={<Application/>} />
              <Route path="/admin" element={<Adminpage/>} />
              <Route path="/applications/:requestId/responses" element={<ResponsesPage />} />
-             <Route path="/c/:slug" element={<CategoryPage />} />
+             <Route path="/c/:slug" element={<Categorygenpage />} />
         </Routes>
       ) : (
         <Preloader />
