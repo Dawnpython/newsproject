@@ -1,7 +1,7 @@
 // server.js
 
 import "./telegram.js";
-import './category.js';
+import registerCategoryRoutes from "./category.js";
 
 
 import "dotenv/config";
@@ -34,6 +34,21 @@ async function dbQuery(text, params) {
   const res = await pool.query(text, params);
   return res;
 }
+
+(async () => {
+  try {
+    await initDb();
+
+    // 👉 здесь регистрируем наши маршруты
+    registerCategoryRoutes(app, pool);
+
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => console.log(`API listening on :${port}`));
+  } catch (e) {
+    console.error("Failed to init:", e);
+    process.exit(1);
+  }
+})();
 
 async function initDb() {
   await dbQuery(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
