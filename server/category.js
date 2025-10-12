@@ -42,7 +42,8 @@ export default function registerCategoryRoutes(app, pool) {
       ]);
 
       const category = catRes.rows[0];
-      if (!category) return res.status(404).json({ error: "category_not_found" });
+      if (!category)
+        return res.status(404).json({ error: "category_not_found" });
 
       const article = artRes.rows[0] || { content_json: [] };
       res.json({ category, article });
@@ -56,7 +57,8 @@ export default function registerCategoryRoutes(app, pool) {
   router.patch("/categories/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, subtitle, cover_url, label, order_index, is_active } = req.body || {};
+      const { title, subtitle, cover_url, label, order_index, is_active } =
+        req.body || {};
 
       const { rows } = await pool.query(
         `UPDATE categories
@@ -69,10 +71,19 @@ export default function registerCategoryRoutes(app, pool) {
              updated_at = NOW()
          WHERE id=$7
          RETURNING id, slug, label, title, subtitle, cover_url, order_index, is_active`,
-        [title ?? null, subtitle ?? null, cover_url ?? null, label ?? null, order_index ?? null, is_active ?? null, id]
+        [
+          title ?? null,
+          subtitle ?? null,
+          cover_url ?? null,
+          label ?? null,
+          order_index ?? null,
+          is_active ?? null,
+          id,
+        ]
       );
 
-      if (!rows[0]) return res.status(404).json({ error: "category_not_found" });
+      if (!rows[0])
+        return res.status(404).json({ error: "category_not_found" });
       res.json(rows[0]);
     } catch (err) {
       console.error(err);
@@ -80,12 +91,13 @@ export default function registerCategoryRoutes(app, pool) {
     }
   });
 
+  
   // PUT /category-page/:slug — upsert контента страницы
   // PUT /category-page/:slug — upsert контента страницы
 router.put("/category-page/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    const {
+    let {
       content_json = [],
       status = "draft",
       seo_meta_title = null,
@@ -94,6 +106,19 @@ router.put("/category-page/:slug", async (req, res) => {
       title = null,
       excerpt = null,
     } = req.body || {};
+
+    // 🔧 нормализуем content_json: строка → массив/объект
+    if (typeof content_json === "string") {
+      try {
+        content_json = JSON.parse(content_json);
+      } catch (e) {
+        return res.status(400).json({ error: "invalid_content_json", details: "content_json is not valid JSON" });
+      }
+    }
+    if (!Array.isArray(content_json)) {
+      // храним массив блоков
+      content_json = [];
+    }
 
     // проверка категории
     const cat = await pool.query(
@@ -108,7 +133,7 @@ router.put("/category-page/:slug", async (req, res) => {
          seo_meta_title, seo_meta_description,
          cover_image_url, title, excerpt
        )
-       VALUES ('category_page', $1, $2, $3, $4, $5, $6, $7, $8)
+       VALUES ('category_page', $1, $2, $3::jsonb, $4, $5, $6, $7, $8)
        ON CONFLICT (type, category_slug)
        DO UPDATE SET
          status = EXCLUDED.status,
