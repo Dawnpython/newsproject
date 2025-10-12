@@ -1,0 +1,87 @@
+.p-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #111;
+  background: #fff;
+}
+
+/* hero */
+.p-hero {
+  position: relative;
+  min-height: 160px;
+  background: #e9eef2 center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+}
+.p-hero__overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 100%);
+}
+.p-hero__text {
+  position: relative;
+  padding: 14px;
+  color: #fff;
+}
+.p-hero__text h1 { margin: 0 0 6px; font-size: 22px; line-height: 1.2; }
+.p-hero__text p  { margin: 0; opacity: 0.95; }
+
+/* контент */
+.p-body { padding: 12px; }
+.p-card {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+/* текст */
+.p-text { font-size: 15px; line-height: 1.5; }
+
+/* одиночное изображение */
+.p-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+}
+.p-imgcap { font-size: 12px; color: #666; margin-top: 6px; }
+
+/* слайдер */
+.p-slider {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.p-slider img {
+  height: 100px;
+  width: auto;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  scroll-snap-align: start;
+}
+
+/* реклама */
+.p-ad { display: flex; gap: 10px; align-items: center; }
+.p-ad__badge {
+  background: #ffe7a3;
+  color: #7a4e00;
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+.p-ad__content strong { display: block; margin-bottom: 2px; }
+
+/* статусы */
+.p-skeleton, .p-error {
+  margin: 20px 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f5f5;
+  color: #555;
+}
+.p-error { background: #ffe3e3; color: #8a0000; }

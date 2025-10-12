@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "/src/components/slimcategory/slimCategory.css";
 
 import iconNews from '/src/assets/icons/slimcategory/icon-doc.png'
@@ -9,34 +10,63 @@ import iconBank from '/src/assets/icons/slimcategory/icon-money.png'
 import iconFarm from '/src/assets/icons/slimcategory/icon-pharm.png'
 import iconChuch from '/src/assets/icons/slimcategory/icon-church.png'
 
+/** Явная карта соответствий label -> slug, чтобы точно совпало с БД */
+const LABEL_TO_SLUG = {
+  "Новости": "news",                // если нет страницы — можно убрать/поменять
+  "Погода": "weather",
+  "Скидки города": "city-deals",
+  "Авторемонт": "auto-repair",
+  "Банкоматы": "atms",
+  "Аптеки": "pharmacies",
+  "Церкви и храмы": "churches",
+};
+
+/** Значения по умолчанию (сразу со slug’ами) */
 const DEFAULT_CATEGORIES = [
-  { label: "Новости",        icon: iconNews },
-  { label: "Погода",         icon: iconCloud },
-  { label: "Скидки города",  icon: iconSale},
-  { label: "Авторемонт",     icon: iconCar},
-  { label: "Банкоматы",      icon: iconBank },
-  { label: "Аптеки",         icon: iconFarm },
-  { label: "Церкви и храмы", icon: iconChuch },
+  { label: "Новости",        icon: iconNews,  slug: LABEL_TO_SLUG["Новости"] },
+  { label: "Погода",         icon: iconCloud, slug: LABEL_TO_SLUG["Погода"] },
+  { label: "Скидки города",  icon: iconSale,  slug: LABEL_TO_SLUG["Скидки города"] },
+  { label: "Авторемонт",     icon: iconCar,   slug: LABEL_TO_SLUG["Авторемонт"] },
+  { label: "Банкоматы",      icon: iconBank,  slug: LABEL_TO_SLUG["Банкоматы"] },
+  { label: "Аптеки",         icon: iconFarm,  slug: LABEL_TO_SLUG["Аптеки"] },
+  { label: "Церкви и храмы", icon: iconChuch, slug: LABEL_TO_SLUG["Церкви и храмы"] },
 ];
 
 export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
   const trackRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleClick = (item) => {
+    const slug = item.slug || LABEL_TO_SLUG[item.label];
+    if (!slug) return;
+
+    if (onSelect) {
+      onSelect(slug, item);
+    } else {
+      // по умолчанию — идём на универсальную страницу генератора
+      navigate(`/c/${slug}`, { state: { slug } });
+    }
+  };
 
   return (
     <div className="cat-carousel">
       <div className="cat-track" ref={trackRef}>
-        {items.map(({ label, icon }) => (
-          <button
-            key={label}
-            type="button"
-            className="cat-chip"
-            onClick={() => onSelect?.(label)}
-            aria-label={label}
-          >
-            <img className="cat-chip__icon" style={{width:12}} src={icon} alt="" aria-hidden />
-            <span className="cat-chip__label">{label}</span>
-          </button>
-        ))}
+        {items.map((item) => {
+          const slug = item.slug || LABEL_TO_SLUG[item.label];
+          return (
+            <button
+              key={`${item.label}-${slug}`}
+              type="button"
+              className="cat-chip"
+              onClick={() => handleClick(item)}
+              aria-label={item.label}
+              data-slug={slug}
+            >
+              <img className="cat-chip__icon" style={{width:12}} src={item.icon} alt="" aria-hidden />
+              <span className="cat-chip__label">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
