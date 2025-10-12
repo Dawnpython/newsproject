@@ -1,36 +1,27 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "/src/components/makecategory/Makecategory.css";
 
-/**
- * Мобильная админка для страниц категорий:
- * - Выбор категории
- * - Редактор Hero (title/subtitle/cover)
- * - Редактор блоков статьи (rich_text, image_slider, guides_carousel)
- * - Сохранение черновика / Публикация (status)
- *
- * Зависимости: только React + native fetch.
- * Эндпоинты (как договорились):
- *  - GET    /categories
- *  - GET    /page/:slug          (для начальной загрузки hero+контента published)
- *  - PATCH  /categories/:id       (hero)
- *  - PUT    /category-page/:slug  (content_json + status)
- */
+/** ===== API base (очень важно для продакшена) ===== */
+
+const API_BASE = "https://newsproject-tnkc.onrender.com"; // ← твой бек на Render
 
 const API = {
-  categories: "/categories",
-  page: (slug) => `/page/${slug}`,
-  patchCategory: (id) => `/categories/${id}`,
-  upsertCategoryPage: (slug) => `/category-page/${slug}`,
+  categories: `${API_BASE}/categories`,
+  page: (slug) => `${API_BASE}/page/${slug}`,
+  patchCategory: (id) => `${API_BASE}/categories/${id}`,
+  upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`,
 };
 
+
+/** Стартовые структуры блоков */
 const initialBlock = (type) => {
   switch (type) {
-    case "rich_text":
-      return { type: "rich_text", data: { markdown: "" } }; // хранить markdown в data.markdown
     case "image_slider":
       return { type: "image_slider", data: { images: [{ url: "", alt: "" }] } };
-    case "guides_carousel":
-      return { type: "guides_carousel", data: { filter: { categories: [], limit: 10 } } };
+    case "ad_block":
+      return { type: "ad_block", data: {} }; // статичный JSX
+    case "template_block":
+      return { type: "template_block", data: {} }; // статичный JSX
     default:
       return { type, data: {} };
   }
@@ -51,7 +42,7 @@ export default function Makecategory() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
-  // ===== Load categories on mount
+  // загрузка категорий
   useEffect(() => {
     (async () => {
       try {
@@ -59,7 +50,6 @@ export default function Makecategory() {
         const res = await fetch(API.categories);
         const data = await res.json();
         setCategories(data || []);
-        // авто-выбор первой активной
         const first = (data || []).find((c) => c.is_active) || (data || [])[0];
         if (first) setSelectedSlug(first.slug);
       } catch (e) {
@@ -71,14 +61,13 @@ export default function Makecategory() {
     })();
   }, []);
 
-  // ===== Load page (hero + content) when slug changes
+  // загрузка страницы по slug
   useEffect(() => {
     if (!selectedSlug) return;
     (async () => {
       try {
         setLoading(true);
         setMsg("");
-        // подтягиваем геро из локального списка категорий
         const cat = categories.find((c) => c.slug === selectedSlug);
         if (cat) {
           setSelectedCategory(cat);
@@ -91,7 +80,6 @@ export default function Makecategory() {
           setSelectedCategory(null);
           setHero({ title: "", subtitle: "", cover_url: "" });
         }
-        // article (published) — если пусто, просто покажем пустые блоки
         const res = await fetch(API.page(selectedSlug));
         if (res.status === 404) {
           setBlocks([]);
@@ -110,10 +98,9 @@ export default function Makecategory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSlug, categories.length]);
 
-  // ===== Handlers: HERO
-  const updateHeroField = (key, value) => {
+  // hero handlers
+  const updateHeroField = (key, value) =>
     setHero((h) => ({ ...h, [key]: value }));
-  };
 
   const saveHero = async () => {
     if (!selectedCategory) return setMsg("Категория не выбрана");
@@ -128,10 +115,7 @@ export default function Makecategory() {
       if (!res.ok) throw new Error("PATCH category failed");
       const updated = await res.json();
       setSelectedCategory(updated);
-      // синхронизируем в общем списке
-      setCategories((arr) =>
-        arr.map((c) => (c.id === updated.id ? updated : c))
-      );
+      setCategories((arr) => arr.map((c) => (c.id === updated.id ? updated : c)));
       setMsg("Hero сохранён");
       setLastSavedAt(new Date());
     } catch (e) {
@@ -142,7 +126,7 @@ export default function Makecategory() {
     }
   };
 
-  // ===== Handlers: CONTENT
+  // content handlers
   const addBlock = (type) => setBlocks((b) => [...b, initialBlock(type)]);
 
   const updateBlock = (index, updater) => {
@@ -183,7 +167,6 @@ export default function Makecategory() {
         body: JSON.stringify({
           status,
           content_json: blocks,
-          // SEO можно дописать здесь по желанию
         }),
       });
       if (!res.ok) throw new Error("PUT content failed");
@@ -198,27 +181,23 @@ export default function Makecategory() {
     }
   };
 
+  // локальный предпросмотр
   const localPreview = useMemo(() => {
-    // Простой локальный рендер — чтобы понять структуру блоков (без красивого форматирования)
     return (
       <div className="preview">
-        <div className="preview-hero" style={{ backgroundImage: hero.cover_url ? `url(${hero.cover_url})` : undefined }}>
+        <div
+          className="preview-hero"
+          style={{ backgroundImage: hero.cover_url ? `url(${hero.cover_url})` : undefined }}
+        >
           <div className="preview-hero-overlay" />
           <div className="preview-hero-text">
             <h2>{hero.title || "Без заголовка"}</h2>
             <p>{hero.subtitle || "Подзаголовок"}</p>
           </div>
         </div>
+
         <div className="preview-body">
           {blocks.map((b, idx) => {
-            if (b.type === "rich_text") {
-              return (
-                <div key={idx} className="preview-block">
-                  <h4>Текст</h4>
-                  <pre className="preview-md">{b.data?.markdown || ""}</pre>
-                </div>
-              );
-            }
             if (b.type === "image_slider") {
               return (
                 <div key={idx} className="preview-block">
@@ -231,13 +210,32 @@ export default function Makecategory() {
                 </div>
               );
             }
-            if (b.type === "guides_carousel") {
-              const f = b.data?.filter || {};
+            if (b.type === "ad_block") {
               return (
-                <div key={idx} className="preview-block">
-                  <h4>Подборка гидов</h4>
-                  <p>Категории: {(f.categories || []).join(", ") || "—"}</p>
-                  <p>Лимит: {f.limit || 10}</p>
+                <div key={idx} className="preview-block ad">
+                  {/* Статичный рекламный блок-превью */}
+                  <div className="ad-box">
+                    <div className="ad-label">Реклама</div>
+                    <div className="ad-content">
+                      <strong>Промо от партнёра</strong>
+                      <p>Баннер/виджет появится здесь.</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            if (b.type === "template_block") {
+              return (
+                <div key={idx} className="preview-block template">
+                  {/* Статичный шаблонный блок-превью */}
+                  <div className="tpl-box">
+                    <h4>Шаблонный блок</h4>
+                    <ul>
+                      <li>Пункт 1</li>
+                      <li>Пункт 2</li>
+                      <li>Пункт 3</li>
+                    </ul>
+                  </div>
                 </div>
               );
             }
@@ -327,16 +325,16 @@ export default function Makecategory() {
       <section className="adm-card">
         <h3 className="adm-card-title">Контент (блоки)</h3>
 
-        {/* Палитра добавления */}
+        {/* Палитра */}
         <div className="adm-addrow">
-          <button className="adm-chip" onClick={() => addBlock("rich_text")}>
-            + Текст
-          </button>
           <button className="adm-chip" onClick={() => addBlock("image_slider")}>
             + Слайдер
           </button>
-          <button className="adm-chip" onClick={() => addBlock("guides_carousel")}>
-            + Подборка гидов
+          <button className="adm-chip" onClick={() => addBlock("ad_block")}>
+            + Реклама
+          </button>
+          <button className="adm-chip" onClick={() => addBlock("template_block")}>
+            + Шаблон
           </button>
         </div>
 
@@ -354,18 +352,18 @@ export default function Makecategory() {
             />
           ))}
           {blocks.length === 0 && (
-            <p className="adm-muted">Пока нет блоков. Добавь текст или слайдер.</p>
+            <p className="adm-muted">Пока нет блоков. Добавь слайдер, рекламу или шаблон.</p>
           )}
         </div>
       </section>
 
-      {/* Превью (локальное) */}
+      {/* Превью */}
       <section className="adm-card">
         <h3 className="adm-card-title">Локальный предпросмотр</h3>
         {localPreview}
       </section>
 
-      {/* Нижняя панель действий */}
+      {/* Нижняя панель */}
       <div className="adm-footer">
         <button className="adm-btn ghost" onClick={() => saveContent("draft")} disabled={saving}>
           Сохранить черновик
@@ -375,7 +373,6 @@ export default function Makecategory() {
         </button>
       </div>
 
-      {/* Сообщения */}
       {!!msg && <div className="adm-toast">{msg}</div>}
       {!!lastSavedAt && (
         <div className="adm-toast muted">
@@ -386,13 +383,14 @@ export default function Makecategory() {
   );
 }
 
-/* --- Блок-редактор (внутренний) --- */
-
+/* --- Редактор отдельного блока --- */
 function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
   return (
     <div className="blk">
       <div className="blk-head">
-        <span className="blk-type">{index + 1}. {labelByType(block.type)}</span>
+        <span className="blk-type">
+          {index + 1}. {labelByType(block.type)}
+        </span>
         <div className="blk-actions">
           <button className="blk-ctrl" onClick={onUp} aria-label="Вверх">▲</button>
           <button className="blk-ctrl" onClick={onDown} aria-label="Вниз">▼</button>
@@ -400,19 +398,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       </div>
 
-      {block.type === "rich_text" && (
-        <div className="blk-body">
-          <label className="adm-label">Текст (Markdown)</label>
-          <textarea
-            className="adm-textarea"
-            rows={6}
-            value={block.data?.markdown || ""}
-            onChange={(e) => onChange({ data: { ...block.data, markdown: e.target.value } })}
-            placeholder="## Заголовок&#10;Текстовый блок в Markdown..."
-          />
-        </div>
-      )}
-
+      {/* image_slider — единственный редактируемый */}
       {block.type === "image_slider" && (
         <div className="blk-body">
           <label className="adm-label">Изображения</label>
@@ -461,31 +447,30 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       )}
 
-      {block.type === "guides_carousel" && (
+      {/* ad_block / template_block — статичные, без форм */}
+      {block.type === "ad_block" && (
         <div className="blk-body">
-          <label className="adm-label">Категории (через запятую)</label>
-          <input
-            className="adm-input"
-            placeholder="Напр.: taxi, boats"
-            value={(block.data?.filter?.categories || []).join(", ")}
-            onChange={(e) => {
-              const cats = e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean);
-              onChange({ data: { ...block.data, filter: { ...(block.data?.filter || {}), categories: cats } } });
-            }}
-          />
-          <label className="adm-label">Лимит</label>
-          <input
-            type="number"
-            min={1}
-            className="adm-input"
-            value={block.data?.filter?.limit ?? 10}
-            onChange={(e) =>
-              onChange({ data: { ...block.data, filter: { ...(block.data?.filter || {}), limit: Number(e.target.value || 1) } } })
-            }
-          />
+          <div className="ad-box editor">
+            <div className="ad-label">Реклама</div>
+            <div className="ad-content">
+              <strong>Статичный рекламный блок</strong>
+              <p>Настроек нет. Перемещай или удаляй.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {block.type === "template_block" && (
+        <div className="blk-body">
+          <div className="tpl-box editor">
+            <h4>Шаблонный блок</h4>
+            <p>Готовый JSX. Настроек нет.</p>
+            <ul>
+              <li>Элемент 1</li>
+              <li>Элемент 2</li>
+              <li>Элемент 3</li>
+            </ul>
+          </div>
         </div>
       )}
     </div>
@@ -494,12 +479,12 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
 
 function labelByType(type) {
   switch (type) {
-    case "rich_text":
-      return "Текст (Markdown)";
     case "image_slider":
       return "Слайдер изображений";
-    case "guides_carousel":
-      return "Подборка гидов";
+    case "ad_block":
+      return "Реклама (статичный)";
+    case "template_block":
+      return "Шаблон (статичный)";
     default:
       return type;
   }
