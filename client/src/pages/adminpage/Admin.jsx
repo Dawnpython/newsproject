@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa6";
 import "/src/pages/adminpage/Admin.css";
 import Navbar from "../../components/navbar/Navbar";
+import Makecategory from "../../components/makecategory/Makecategory";
 
 const CATEGORY_OPTIONS = [
   { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
@@ -712,12 +713,7 @@ export default function Adminpage() {
       )}
 
       {tab === "news" && (
-        <section className="admin-section">
-          <div className="admin-empty-block">
-            <h3 className="admin-subtitle">Новости</h3>
-            <p className="admin-muted">Раздел пока пустой.</p>
-          </div>
-        </section>
+       <Makecategory/>
       )}
       <Navbar />
     </div>
