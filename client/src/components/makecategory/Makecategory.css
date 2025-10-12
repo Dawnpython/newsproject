@@ -1,0 +1,329 @@
+@charset "UTF-8";
+/* Контейнер */
+.adm-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 12px 72px; /* отступ под фиксированный футер */
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #111;
+  background: #fff;
+}
+
+/* Шапка */
+.adm-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 6px 0 12px;
+}
+
+/* Карточка секции */
+.adm-card {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.adm-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 4px 0 10px;
+}
+
+/* Поля */
+.adm-field {
+  margin-bottom: 10px;
+}
+
+.adm-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.adm-input, .adm-select, .adm-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.adm-input:focus, .adm-select:focus, .adm-textarea:focus {
+  border-color: rgb(0, 195, 255);
+  box-shadow: 0 0 0 2px rgba(0, 195, 255, 0.15);
+}
+
+.adm-textarea {
+  resize: vertical;
+}
+
+/* Ряды, бейджи, muted */
+.adm-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.adm-badge {
+  font-size: 12px;
+  color: #555;
+  background: #eee;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.adm-muted {
+  color: #777;
+  font-size: 12px;
+}
+
+/* Кнопки */
+.adm-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.adm-btn.primary {
+  background: rgb(0, 195, 255);
+  border-color: rgb(0, 195, 255);
+  color: #fff;
+}
+
+.adm-btn.ghost {
+  background: #fff;
+}
+
+.adm-btn:disabled {
+  opacity: 0.6;
+}
+
+.adm-mini {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.adm-mini.danger {
+  border-color: #f2c7c7;
+  color: #c30000;
+}
+
+/* Кнопки добавления блоков */
+.adm-addrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.adm-chip {
+  border: 1px dashed #bbb;
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* Редактор блоков */
+.adm-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blk {
+  border: 1px solid #eaeaea;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.blk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.blk-type {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.blk-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.blk-ctrl {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.blk-ctrl.danger {
+  border-color: #f2c7c7;
+  color: #c30000;
+}
+
+.blk-body {
+  margin-top: 10px;
+}
+
+.img-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Превью */
+.preview {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.preview-hero {
+  position: relative;
+  min-height: 140px;
+  background: #eaeaea center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+}
+
+.preview-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.preview-hero-text {
+  position: relative;
+  padding: 12px;
+  color: #fff;
+}
+
+.preview-hero-text h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.preview-hero-text p {
+  margin: 0;
+  opacity: 0.92;
+}
+
+.preview-body {
+  padding: 10px;
+}
+
+.preview-block {
+  margin-bottom: 10px;
+}
+
+.preview-block h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.preview-md {
+  background: #fcfcfc;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.preview-slider {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.preview-slider img {
+  height: 80px;
+  width: auto;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+/* Картинка hero в форме */
+.adm-cover-preview {
+  width: 100%;
+  height: 140px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  margin-top: 8px;
+}
+
+.adm-cover-skeleton {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  border: 1px dashed #ddd;
+  display: grid;
+  place-items: center;
+  color: #888;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+/* Нижняя панель действий (фикс) */
+.adm-footer {
+  position: fixed;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+
+/* Тосты */
+.adm-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 70px;
+  background: #111;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.adm-toast.muted {
+  background: #666;
+}
+
+/* Мобильные правки */
+@media (max-width: 420px) {
+  .img-row {
+    grid-template-columns: 1fr;
+  }
+}/*# sourceMappingURL=Makecategory.css.map */

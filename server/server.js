@@ -1,6 +1,7 @@
 // server.js
 
 import "./telegram.js";
+import './category.js';
 
 
 import "dotenv/config";
