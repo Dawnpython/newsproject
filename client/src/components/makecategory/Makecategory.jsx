@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import "/src/components/makecategory/Makecategory.css";
 
 /** ===== API base (очень важно для продакшена) ===== */
-
 const API_BASE = "https://newsproject-tnkc.onrender.com"; // ← твой бек на Render
 
 const API = {
@@ -12,12 +11,13 @@ const API = {
   upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`,
 };
 
-
 /** Стартовые структуры блоков */
 const initialBlock = (type) => {
   switch (type) {
     case "image_slider":
       return { type: "image_slider", data: { images: [{ url: "", alt: "" }] } };
+    case "text_block":
+      return { type: "text_block", data: { text: "" } }; // НОВОЕ
     case "ad_block":
       return { type: "ad_block", data: {} }; // статичный JSX
     case "template_block":
@@ -166,7 +166,7 @@ export default function Makecategory() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status,
-          content_json: blocks,
+          content_json: blocks, // <-- сохраняем все блоки, включая text_block
         }),
       });
       if (!res.ok) throw new Error("PUT content failed");
@@ -183,6 +183,21 @@ export default function Makecategory() {
 
   // локальный предпросмотр
   const localPreview = useMemo(() => {
+    // вспомогательный рендер многострочного текста (каждый абзац разделён пустой строкой)
+    const renderText = (text = "") => {
+      const paragraphs = String(text).split(/\n{2,}/);
+      return paragraphs.map((p, i) => (
+        <p key={i}>
+          {p.split(/\n/).map((line, j) => (
+            <React.Fragment key={j}>
+              {line}
+              {j < p.split(/\n/).length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </p>
+      ));
+    };
+
     return (
       <div className="preview">
         <div
@@ -210,10 +225,16 @@ export default function Makecategory() {
                 </div>
               );
             }
+            if (b.type === "text_block") {
+              return (
+                <div key={idx} className="preview-block text">
+                  {renderText(b.data?.text || "")}
+                </div>
+              );
+            }
             if (b.type === "ad_block") {
               return (
                 <div key={idx} className="preview-block ad">
-                  {/* Статичный рекламный блок-превью */}
                   <div className="ad-box">
                     <div className="ad-label">Реклама</div>
                     <div className="ad-content">
@@ -227,7 +248,6 @@ export default function Makecategory() {
             if (b.type === "template_block") {
               return (
                 <div key={idx} className="preview-block template">
-                  {/* Статичный шаблонный блок-превью */}
                   <div className="tpl-box">
                     <h4>Шаблонный блок</h4>
                     <ul>
@@ -330,6 +350,9 @@ export default function Makecategory() {
           <button className="adm-chip" onClick={() => addBlock("image_slider")}>
             + Слайдер
           </button>
+          <button className="adm-chip" onClick={() => addBlock("text_block")}>
+            + Текст
+          </button>
           <button className="adm-chip" onClick={() => addBlock("ad_block")}>
             + Реклама
           </button>
@@ -352,7 +375,7 @@ export default function Makecategory() {
             />
           ))}
           {blocks.length === 0 && (
-            <p className="adm-muted">Пока нет блоков. Добавь слайдер, рекламу или шаблон.</p>
+            <p className="adm-muted">Пока нет блоков. Добавь слайдер, текст, рекламу или шаблон.</p>
           )}
         </div>
       </section>
@@ -398,7 +421,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       </div>
 
-      {/* image_slider — единственный редактируемый */}
+      {/* image_slider — редактируемый */}
       {block.type === "image_slider" && (
         <div className="blk-body">
           <label className="adm-label">Изображения</label>
@@ -447,6 +470,25 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       )}
 
+      {/* text_block — редактируемый (НОВОЕ) */}
+      {block.type === "text_block" && (
+        <div className="blk-body">
+          <label className="adm-label">Текст (абзацы разделяй пустой строкой)</label>
+          <textarea
+            className="adm-textarea"
+            rows={8}
+            placeholder="Напиши контент..."
+            value={block.data?.text || ""}
+            onChange={(e) =>
+              onChange({ data: { ...block.data, text: e.target.value } })
+            }
+          />
+          <div className="adm-muted" style={{ marginTop: 8 }}>
+            Символов: {(block.data?.text || "").length}
+          </div>
+        </div>
+      )}
+
       {/* ad_block / template_block — статичные, без форм */}
       {block.type === "ad_block" && (
         <div className="blk-body">
@@ -481,6 +523,8 @@ function labelByType(type) {
   switch (type) {
     case "image_slider":
       return "Слайдер изображений";
+    case "text_block":
+      return "Текстовый блок";
     case "ad_block":
       return "Реклама (статичный)";
     case "template_block":
