@@ -81,53 +81,55 @@ export default function registerCategoryRoutes(app, pool) {
   });
 
   // PUT /category-page/:slug — upsert контента страницы
-  router.put("/category-page/:slug", async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const {
-        content_json = [],
-        status = "draft",
-        seo_meta_title = null,
-        seo_meta_description = null,
-        cover_image_url = null,
-        title = null,
-        excerpt = null,
-      } = req.body || {};
+  // PUT /category-page/:slug — upsert контента страницы
+router.put("/category-page/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const {
+      content_json = [],
+      status = "draft",
+      seo_meta_title = null,
+      seo_meta_description = null,
+      cover_image_url = null,
+      title = null,
+      excerpt = null,
+    } = req.body || {};
 
-      // проверка категории
-      const cat = await pool.query(
-        "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true",
-        [slug]
-      );
-      if (!cat.rows[0]) return res.status(404).json({ error: "category_not_found" });
+    // проверка категории
+    const cat = await pool.query(
+      "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true",
+      [slug]
+    );
+    if (!cat.rows[0]) return res.status(404).json({ error: "category_not_found" });
 
-      const { rows } = await pool.query(
-        `INSERT INTO articles (
-           type, category_slug, status, content_json,
-           seo_meta_title, seo_meta_description,
-           cover_image_url, title, excerpt
-         )
-         VALUES ('category_page', $1, $2, $3, $4, $5, $6, $7, $8)
-         ON CONFLICT (category_slug)
-         DO UPDATE SET
-           status = EXCLUDED.status,
-           content_json = EXCLUDED.content_json,
-           seo_meta_title = EXCLUDED.seo_meta_title,
-           seo_meta_description = EXCLUDED.seo_meta_description,
-           cover_image_url = EXCLUDED.cover_image_url,
-           title = EXCLUDED.title,
-           excerpt = EXCLUDED.excerpt,
-           updated_at = NOW()
-         RETURNING *`,
-        [slug, status, content_json, seo_meta_title, seo_meta_description, cover_image_url, title, excerpt]
-      );
+    const { rows } = await pool.query(
+      `INSERT INTO articles (
+         type, category_slug, status, content_json,
+         seo_meta_title, seo_meta_description,
+         cover_image_url, title, excerpt
+       )
+       VALUES ('category_page', $1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (type, category_slug)
+       DO UPDATE SET
+         status = EXCLUDED.status,
+         content_json = EXCLUDED.content_json,
+         seo_meta_title = EXCLUDED.seo_meta_title,
+         seo_meta_description = EXCLUDED.seo_meta_description,
+         cover_image_url = EXCLUDED.cover_image_url,
+         title = EXCLUDED.title,
+         excerpt = EXCLUDED.excerpt,
+         updated_at = NOW()
+       RETURNING *`,
+      [slug, status, content_json, seo_meta_title, seo_meta_description, cover_image_url, title, excerpt]
+    );
 
-      res.json(rows[0]);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "failed_to_upsert_category_page" });
-    }
-  });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "failed_to_upsert_category_page" });
+  }
+});
+
 
   app.use("/", router);
 }
