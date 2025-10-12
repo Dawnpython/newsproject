@@ -92,8 +92,7 @@ export default function registerCategoryRoutes(app, pool) {
   });
 
   
-  // PUT /category-page/:slug — upsert контента страницы
-  // PUT /category-page/:slug — upsert контента страницы
+// PUT /category-page/:slug — upsert контента страницы
 router.put("/category-page/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
@@ -107,26 +106,33 @@ router.put("/category-page/:slug", async (req, res) => {
       excerpt = null,
     } = req.body || {};
 
-    // 🔧 нормализуем content_json: строка → массив/объект
+    // 1) Нормализуем content_json в JS-массив блоков
     if (typeof content_json === "string") {
       try {
         content_json = JSON.parse(content_json);
-      } catch (e) {
-        return res.status(400).json({ error: "invalid_content_json", details: "content_json is not valid JSON" });
+      } catch {
+        return res.status(400).json({
+          error: "invalid_content_json",
+          details: "content_json must be valid JSON (array of blocks)",
+        });
       }
     }
     if (!Array.isArray(content_json)) {
-      // храним массив блоков
+      // всегда храним список блоков
       content_json = [];
     }
 
-    // проверка категории
+    // 2) Категория существует и активна?
     const cat = await pool.query(
       "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true",
       [slug]
     );
     if (!cat.rows[0]) return res.status(404).json({ error: "category_not_found" });
 
+    // 3) Готовим параметр для jsonb
+    const contentJsonParam = JSON.stringify(content_json);
+
+    // 4) Upsert
     const { rows } = await pool.query(
       `INSERT INTO articles (
          type, category_slug, status, content_json,
@@ -145,7 +151,7 @@ router.put("/category-page/:slug", async (req, res) => {
          excerpt = EXCLUDED.excerpt,
          updated_at = NOW()
        RETURNING *`,
-      [slug, status, content_json, seo_meta_title, seo_meta_description, cover_image_url, title, excerpt]
+      [slug, status, contentJsonParam, seo_meta_title, seo_meta_description, cover_image_url, title, excerpt]
     );
 
     res.json(rows[0]);
@@ -154,6 +160,7 @@ router.put("/category-page/:slug", async (req, res) => {
     res.status(500).json({ error: "failed_to_upsert_category_page" });
   }
 });
+
 
 
   app.use("/", router);
