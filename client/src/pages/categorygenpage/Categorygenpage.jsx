@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
 
+import Pr from '/src/blocks/pr/Pr.jsx'
+
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
 export default function Categorygenpage(props) {
@@ -148,11 +150,7 @@ function BlockRenderer({ block }) {
   if (type === "ad_block") {
     return (
       <div className="p-card p-ad">
-        <div className="p-ad__badge">Реклама</div>
-        <div className="p-ad__content">
-          <strong>Промо от партнёра</strong>
-          <p>Здесь будет баннер/виджет.</p>
-        </div>
+        <Pr/>
       </div>
     );
   }
