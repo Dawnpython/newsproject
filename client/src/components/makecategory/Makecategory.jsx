@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Pr from '/src/blocks/pr/Pr.jsx'
 import "/src/components/makecategory/Makecategory.css";
 
 /** ===== API base (очень важно для продакшена) ===== */
@@ -491,15 +492,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
 
       {/* ad_block / template_block — статичные, без форм */}
       {block.type === "ad_block" && (
-        <div className="blk-body">
-          <div className="ad-box editor">
-            <div className="ad-label">Реклама</div>
-            <div className="ad-content">
-              <strong>Статичный рекламный блок</strong>
-              <p>Настроек нет. Перемещай или удаляй.</p>
-            </div>
-          </div>
-        </div>
+        <Pr/>
       )}
 
       {block.type === "template_block" && (
