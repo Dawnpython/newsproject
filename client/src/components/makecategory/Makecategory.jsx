@@ -236,13 +236,7 @@ export default function Makecategory() {
             if (b.type === "ad_block") {
               return (
                 <div key={idx} className="preview-block ad">
-                  <div className="ad-box">
-                    <div className="ad-label">Реклама</div>
-                    <div className="ad-content">
-                      <strong>Промо от партнёра</strong>
-                      <p>Баннер/виджет появится здесь.</p>
-                    </div>
-                  </div>
+                  <Pr/>
                 </div>
               );
             }
