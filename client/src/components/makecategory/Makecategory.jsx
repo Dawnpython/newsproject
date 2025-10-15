@@ -1,5 +1,5 @@
 // /src/components/makecategory/Makecategory.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import Pr from "/src/blocks/pr/Pr.jsx";
 import "/src/components/makecategory/Makecategory.css";
 
@@ -31,8 +31,7 @@ async function getSignature({ folder } = {}) {
     const t = await res.text().catch(() => "");
     throw new Error(`signature_failed (${res.status}) ${t}`);
   }
-  // { timestamp, signature, folder, api_key, cloud_name }
-  return res.json();
+  return res.json(); // { timestamp, signature, folder, api_key, cloud_name }
 }
 
 function uploadFileToCloudinary(file, sig, onProgress) {
@@ -42,7 +41,7 @@ function uploadFileToCloudinary(file, sig, onProgress) {
   form.append("api_key", sig.api_key);
   form.append("timestamp", sig.timestamp);
   form.append("signature", sig.signature);
-  form.append("folder", sig.folder);
+  if (sig.folder) form.append("folder", sig.folder);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -69,7 +68,7 @@ function uploadFileToCloudinary(file, sig, onProgress) {
 }
 
 async function uploadManyToCloudinary(files, { folder }, onFileProgress) {
-  const sig = await getSignature({ folder });
+  const sig = await getSignature({ folder }).catch(() => getSignature({}));
   const results = [];
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
@@ -106,7 +105,7 @@ export default function Makecategory() {
   const [selectedSlug, setSelectedSlug] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // HERO (добавили cover_public_id)
+  // HERO
   const [hero, setHero] = useState({
     title: "",
     subtitle: "",
@@ -126,73 +125,92 @@ export default function Makecategory() {
 
   /** Загрузка категорий */
   useEffect(() => {
+    let alive = true;
     (async () => {
       try {
         setLoading(true);
         const res = await fetch(API.categories);
+        if (!res.ok) throw new Error("categories_failed");
         const data = await res.json();
-        setCategories(data || []);
+        if (!alive) return;
+        setCategories(Array.isArray(data) ? data : []);
         const first = (data || []).find((c) => c.is_active) || (data || [])[0];
         if (first) setSelectedSlug(first.slug);
       } catch (e) {
         console.error(e);
-        setMsg("Не удалось загрузить категории");
+        if (alive) setMsg("Не удалось загрузить категории");
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  /** Загрузка статьи/страницы */
+  /** Загрузка статьи/страницы при смене slug или списков категорий */
   useEffect(() => {
     if (!selectedSlug) return;
+    let alive = true;
     (async () => {
       try {
         setLoading(true);
         setMsg("");
-        const cat = categories.find((c) => c.slug === selectedSlug);
-        if (cat) {
+
+        const cat = categories.find((c) => c.slug === selectedSlug) || null;
+        if (alive) {
           setSelectedCategory(cat);
           setHero({
-            title: cat.title || "",
-            subtitle: cat.subtitle || "",
-            cover_url: cat.cover_url || "",
-            cover_public_id: cat.cover_public_id || "",
+            title: cat?.title || "",
+            subtitle: cat?.subtitle || "",
+            cover_url: cat?.cover_url || "",
+            cover_public_id: cat?.cover_public_id || "",
           });
-        } else {
-          setSelectedCategory(null);
-          setHero({ title: "", subtitle: "", cover_url: "", cover_public_id: "" });
         }
+
         const res = await fetch(API.page(selectedSlug));
         if (res.status === 404) {
-          setBlocks([]);
+          if (alive) setBlocks([]);
           return;
         }
+        if (!res.ok) throw new Error("page_failed");
         const data = await res.json();
         const content = data?.article?.content_json || [];
-        setBlocks(Array.isArray(content) ? content : []);
+        if (alive) setBlocks(Array.isArray(content) ? content : []);
       } catch (e) {
         console.error(e);
-        setMsg("Не удалось загрузить страницу");
+        if (alive) setMsg("Не удалось загрузить страницу");
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSlug, categories.length]);
+    return () => {
+      alive = false;
+    };
+  }, [selectedSlug, categories]); // важно: следим за списком целиком
 
   /** Hero handlers */
   const updateHeroField = (key, value) => setHero((h) => ({ ...h, [key]: value }));
+
+  const clearCover = () => {
+    setHero((h) => ({ ...h, cover_url: "", cover_public_id: "" }));
+  };
 
   const saveHero = async () => {
     if (!selectedCategory) return setMsg("Категория не выбрана");
     try {
       setSaving(true);
       setMsg("");
+      const body = {
+        title: hero.title || "",
+        subtitle: hero.subtitle || "",
+        cover_url: hero.cover_url || "",
+        cover_public_id: hero.cover_public_id || "",
+      };
       const res = await fetch(API.patchCategory(selectedCategory.id), {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify(hero), // title, subtitle, cover_url, cover_public_id
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error("PATCH category failed");
       const updated = await res.json();
@@ -212,13 +230,9 @@ export default function Makecategory() {
     try {
       setUploadingHero(true);
       setHeroProgress(0);
-
-      // желательно хранить обложки отдельно
-      const sig = await getSignature({ folder: "categories/covers" }).catch(async () => {
-        // fallback на дефолтную папку, если бэк не поддерживает folder
-        return getSignature({});
-      });
-
+      const sig = await getSignature({ folder: "categories/covers" }).catch(() =>
+        getSignature({})
+      );
       const meta = await uploadFileToCloudinary(file, sig, (p) => setHeroProgress(p));
       updateHeroField("cover_url", meta.secure_url);
       updateHeroField("cover_public_id", meta.public_id);
@@ -236,22 +250,15 @@ export default function Makecategory() {
   const addBlock = (type) => setBlocks((b) => [...b, initialBlock(type)]);
   const updateBlock = (index, updater) =>
     setBlocks((prev) => prev.map((b, i) => (i === index ? { ...b, ...updater } : b)));
-  const moveBlockUp = (index) => {
-    if (index === 0) return;
-    setBlocks((prev) => {
-      const arr = [...prev];
-      [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
-      return arr;
-    });
+
+  const swap = (arr, i, j) => {
+    const next = [...arr];
+    [next[i], next[j]] = [next[j], next[i]];
+    return next;
   };
-  const moveBlockDown = (index) => {
-    setBlocks((prev) => {
-      if (index === prev.length - 1) return prev;
-      const arr = [...prev];
-      [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
-      return arr;
-    });
-  };
+  const moveBlockUp = (index) => setBlocks((prev) => (index > 0 ? swap(prev, index, index - 1) : prev));
+  const moveBlockDown = (index) =>
+    setBlocks((prev) => (index < prev.length - 1 ? swap(prev, index, index + 1) : prev));
   const removeBlock = (index) => setBlocks((prev) => prev.filter((_, i) => i !== index));
 
   const saveContent = async (status = "draft") => {
@@ -276,6 +283,28 @@ export default function Makecategory() {
     }
   };
 
+  /** Drag&Drop для зоны предпросмотра cover (не обязательно, но приятно) */
+  const dropRef = useRef(null);
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      const f = e.dataTransfer?.files?.[0];
+      if (f) uploadHeroToCloudinary(f);
+    },
+    [] // eslint-disable-line
+  );
+  useEffect(() => {
+    const el = dropRef.current;
+    if (!el) return;
+    const prevent = (e) => e.preventDefault();
+    el.addEventListener("dragover", prevent);
+    el.addEventListener("drop", onDrop);
+    return () => {
+      el.removeEventListener("dragover", prevent);
+      el.removeEventListener("drop", onDrop);
+    };
+  }, [onDrop]);
+
   /** Локальный предпросмотр */
   const localPreview = useMemo(() => {
     const renderText = (text = "") => {
@@ -296,6 +325,8 @@ export default function Makecategory() {
       <div className="preview">
         <div
           className="preview-hero"
+          ref={dropRef}
+          title="Перетащи сюда изображение для обложки"
           style={{ backgroundImage: hero.cover_url ? `url(${hero.cover_url})` : undefined }}
         >
           <div className="preview-hero-overlay" />
@@ -431,13 +462,27 @@ export default function Makecategory() {
               <img className="adm-cover-preview" src={hero.cover_url} alt="cover" />
               <div className="adm-cover-meta">
                 <div className="adm-muted small">public_id: {hero.cover_public_id || "—"}</div>
-                <button className="adm-mini" onClick={() => updateHeroField("cover_url", "")}>
-                  Очистить
-                </button>
+                <div className="adm-cover-actions">
+                  <button className="adm-mini" onClick={clearCover}>
+                    Очистить
+                  </button>
+                  <button
+                    className="adm-mini"
+                    onClick={() => {
+                      const url = prompt("Вставь URL обложки", hero.cover_url || "");
+                      if (url !== null) {
+                        updateHeroField("cover_url", url.trim());
+                        if (!url.trim()) updateHeroField("cover_public_id", "");
+                      }
+                    }}
+                  >
+                    Вставить URL
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="adm-cover-skeleton">Нет изображения</div>
+            <div className="adm-cover-skeleton">Нет изображения (можно перетащить файл в предпросмотр)</div>
           )}
         </div>
 
@@ -518,24 +563,20 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
           {index + 1}. {labelByType(block.type)}
         </span>
         <div className="blk-actions">
-          <button className="blk-ctrl" onClick={onUp} aria-label="Вверх">
+          <button className="blk-ctrl" onClick={onUp} aria-label="Вверх" title="Вверх">
             ▲
           </button>
-          <button className="blk-ctrl" onClick={onDown} aria-label="Вниз">
+          <button className="blk-ctrl" onClick={onDown} aria-label="Вниз" title="Вниз">
             ▼
           </button>
-          <button className="blk-ctrl danger" onClick={onRemove} aria-label="Удалить">
+          <button className="blk-ctrl danger" onClick={onRemove} aria-label="Удалить" title="Удалить">
             ✖
           </button>
         </div>
       </div>
 
-      {/* image_slider — расширенный редактор */}
-      {block.type === "image_slider" && (
-        <ImageSliderEditor block={block} onChange={onChange} />
-      )}
+      {block.type === "image_slider" && <ImageSliderEditor block={block} onChange={onChange} />}
 
-      {/* text_block */}
       {block.type === "text_block" && (
         <div className="blk-body">
           <label className="adm-label">Текст (абзацы разделяй пустой строкой)</label>
@@ -552,7 +593,6 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       )}
 
-      {/* ad_block / template_block */}
       {block.type === "ad_block" && <Pr />}
 
       {block.type === "template_block" && (
@@ -572,16 +612,15 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
   );
 }
 
-/** Редактор слайдера (мультизагрузка, точечная перезагрузка, ALT, перенос, удаление) */
+/** Редактор слайдера (мультизагрузка, точечная перезагрузка, ALT, перенос, удаление, drag&drop) */
 function ImageSliderEditor({ block, onChange }) {
   const images = Array.isArray(block.data?.images) ? block.data.images : [];
-  const [progressMap, setProgressMap] = React.useState({}); // { "file_0": 35, 2: 60, ... }
+  const [progressMap, setProgressMap] = React.useState({});
   const [uploadingIdx, setUploadingIdx] = React.useState(null);
 
   const setImages = (next) => onChange({ data: { ...block.data, images: next } });
 
-  const handleAddEmpty = () =>
-    setImages([...images, { url: "", alt: "", public_id: "" }]);
+  const handleAddEmpty = () => setImages([...images, { url: "", alt: "", public_id: "" }]);
 
   const handleUploadMany = async (fileList) => {
     try {
@@ -609,16 +648,13 @@ function ImageSliderEditor({ block, onChange }) {
       setUploadingIdx(index);
       setProgressMap((p) => ({ ...p, [index]: 0 }));
 
-      let sig;
-      try {
-        sig = await getSignature({ folder: "categories/sliders" });
-      } catch {
-        sig = await getSignature({});
-      }
+      const sig = await getSignature({ folder: "categories/sliders" }).catch(() =>
+        getSignature({})
+      );
 
-      const meta = await uploadFileToCloudinary(file, sig, (p) => {
-        setProgressMap((prev) => ({ ...prev, [index]: p }));
-      });
+      const meta = await uploadFileToCloudinary(file, sig, (p) =>
+        setProgressMap((prev) => ({ ...prev, [index]: p }))
+      );
 
       const next = [...images];
       next[index] = {
@@ -658,28 +694,56 @@ function ImageSliderEditor({ block, onChange }) {
     setImages(next);
   };
 
+  /** drag&drop зона для массовой загрузки */
+  const dropRef = useRef(null);
+  useEffect(() => {
+    const el = dropRef.current;
+    if (!el) return;
+    const onDragOver = (e) => e.preventDefault();
+    const onDrop = (e) => {
+      e.preventDefault();
+      const fl = e.dataTransfer?.files;
+      if (fl?.length) handleUploadMany(fl);
+    };
+    el.addEventListener("dragover", onDragOver);
+    el.addEventListener("drop", onDrop);
+    return () => {
+      el.removeEventListener("dragover", onDragOver);
+      el.removeEventListener("drop", onDrop);
+    };
+  }, []); // eslint-disable-line
+
   return (
     <div className="blk-body">
       <label className="adm-label">Слайдер: изображения</label>
 
-      {/* Массовая загрузка */}
+      {/* Массовая загрузка + dnd */}
       <div className="img-row" style={{ alignItems: "center", gap: 12 }}>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => handleUploadMany(e.target.files)}
-        />
-        <span className="adm-muted">Можно выбрать несколько файлов сразу</span>
-        {/* Прогресс по пакетной загрузке (суммарно) */}
+        <input type="file" accept="image/*" multiple onChange={(e) => handleUploadMany(e.target.files)} />
+        <span className="adm-muted">Можно выбрать несколько файлов сразу или перетащить в область ниже</span>
+      </div>
+
+      <div
+        ref={dropRef}
+        style={{
+          margin: "8px 0 12px",
+          padding: 12,
+          border: "1px dashed #cfd8dc",
+          borderRadius: 8,
+          fontSize: 13,
+          color: "#607d8b",
+        }}
+      >
+        Перетащи сюда изображения для массовой загрузки
+        {/* прогресс по пакету */}
         {Object.keys(progressMap).some((k) => k.startsWith("file_")) && (
-          <span className="adm-progress">
+          <div className="adm-progress" style={{ marginTop: 8 }}>
             {Math.round(
               Object.values(progressMap).reduce((a, b) => a + (b || 0), 0) /
                 Math.max(1, Object.keys(progressMap).length)
             )}
             %
-          </span>
+          </div>
         )}
       </div>
 
@@ -711,7 +775,7 @@ function ImageSliderEditor({ block, onChange }) {
             </div>
           )}
 
-          {/* Поле URL (можно исправить вручную) */}
+          {/* Поле URL */}
           <input
             className="adm-input"
             style={{ flex: 1 }}
@@ -729,7 +793,7 @@ function ImageSliderEditor({ block, onChange }) {
             onChange={(e) => updateAlt(i, e.target.value)}
           />
 
-          {/* Точечная загрузка в эту ячейку */}
+          {/* Точечная загрузка */}
           <label className="adm-mini">
             <input
               type="file"
@@ -744,10 +808,10 @@ function ImageSliderEditor({ block, onChange }) {
           </label>
 
           {/* Переместить */}
-          <button className="adm-mini" onClick={() => move(i, i - 1)}>
+          <button className="adm-mini" onClick={() => move(i, i - 1)} title="Вверх">
             ↑
           </button>
-          <button className="adm-mini" onClick={() => move(i, i + 1)}>
+          <button className="adm-mini" onClick={() => move(i, i + 1)} title="Вниз">
             ↓
           </button>
 
@@ -775,7 +839,7 @@ function ImageSliderEditor({ block, onChange }) {
           + Добавить пустую строку
         </button>
         <span className="adm-muted small">
-          Поддерживается перезалив конкретного кадра и массовая загрузка.
+          Поддерживается перезалив конкретного кадра, массовая загрузка и drag&drop.
         </span>
       </div>
     </div>

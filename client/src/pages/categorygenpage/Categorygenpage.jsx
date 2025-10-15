@@ -1,17 +1,176 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
-
-import Pr from '/src/blocks/pr/Pr.jsx'
+import Pr from "/src/blocks/pr/Pr.jsx";
 
 const API_BASE = "https://newsproject-tnkc.onrender.com";
+
+/* ========= Универсальный слайдер ========== */
+function ImageSlider({
+  images = [],
+  aspectRatio = "16/9",
+  autoPlay = true,
+  autoPlayMs = 4000,
+}) {
+  const [idx, setIdx] = useState(0);
+  const wrapRef = useRef(null);
+  const pointerRef = useRef({ x: 0, active: false, moved: false });
+  const timerRef = useRef(null);
+  const count = images.length;
+
+  const clamp = (n) => Math.max(0, Math.min(n, count - 1));
+  const go = (n) => setIdx((i) => clamp(n ?? i));
+  const next = () => go(idx + 1);
+  const prev = () => go(idx - 1);
+
+  // autoplay
+  useEffect(() => {
+    if (!autoPlay || count <= 1) return;
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setIdx((i) => (i + 1) % count);
+    }, autoPlayMs);
+    return () => clearInterval(timerRef.current);
+  }, [autoPlay, autoPlayMs, count]);
+
+  // pause on hover
+  const pause = () => clearInterval(timerRef.current);
+  const resume = () => {
+    if (!autoPlay || count <= 1) return;
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setIdx((i) => (i + 1) % count);
+    }, autoPlayMs);
+  };
+
+  // keyboard
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.matches(":hover, :focus-within")) return;
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [idx, count]);
+
+  // swipe
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    const onPointerDown = (e) => {
+      pointerRef.current = { x: e.clientX ?? e.touches?.[0]?.clientX ?? 0, active: true, moved: false };
+      pause();
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp, { once: true });
+    };
+    const onPointerMove = (e) => {
+      if (!pointerRef.current.active) return;
+      const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+      const dx = x - pointerRef.current.x;
+      if (Math.abs(dx) > 8) pointerRef.current.moved = true;
+    };
+    const onPointerUp = (e) => {
+      const x = e.clientX ?? e.changedTouches?.[0]?.clientX ?? 0;
+      const dx = x - pointerRef.current.x;
+      if (pointerRef.current.moved) {
+        if (dx < -40) next();
+        else if (dx > 40) prev();
+      }
+      pointerRef.current = { x: 0, active: false, moved: false };
+      resume();
+      window.removeEventListener("pointermove", onPointerMove);
+    };
+
+    el.addEventListener("pointerdown", onPointerDown, { passive: true });
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+    };
+  }, [idx, count]);
+
+  if (count === 0) return null;
+
+  return (
+    <div
+      className="p-slider"
+      ref={wrapRef}
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Галерея изображений"
+    >
+      <div
+        className="p-slider__viewport"
+        style={{
+          aspectRatio,
+        }}
+      >
+        <div
+          className="p-slider__track"
+          style={{
+            width: `${count * 100}%`,
+            transform: `translateX(-${(100 / count) * idx}%)`,
+          }}
+        >
+          {images.map((img, i) => (
+            <div className="p-slider__slide" key={i} aria-hidden={i !== idx}>
+              <img
+                src={img.url}
+                alt={img.alt || ""}
+                loading={i === 0 ? "eager" : "lazy"}
+                decoding="async"
+                draggable={false}
+              />
+              {img.alt ? <div className="p-slider__caption">{img.alt}</div> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            className="p-slider__nav prev"
+            aria-label="Предыдущее"
+            onClick={prev}
+          >
+            ‹
+          </button>
+          <button
+            className="p-slider__nav next"
+            aria-label="Следующее"
+            onClick={next}
+          >
+            ›
+          </button>
+
+          <div className="p-slider__dots" aria-hidden>
+            {images.map((_, i) => (
+              <button
+                key={i}
+                className={`dot ${i === idx ? "active" : ""}`}
+                onClick={() => go(i)}
+                tabIndex={-1}
+                aria-label={`К слайду ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+/* ========= конец слайдера ========== */
 
 export default function Categorygenpage(props) {
   const params = useParams();
   const location = useLocation();
   const fromStateSlug = location?.state?.slug;
   const fromPropSlug = props?.slug;
-
   const slug = (params?.slug || fromStateSlug || fromPropSlug || "").trim();
 
   const [page, setPage] = useState(null);
@@ -63,9 +222,7 @@ export default function Categorygenpage(props) {
     );
 
   const { category, article } = page;
-  const blocks = Array.isArray(article?.content_json)
-    ? article.content_json
-    : [];
+  const blocks = Array.isArray(article?.content_json) ? article.content_json : [];
 
   return (
     <div className="p-wrap">
@@ -73,9 +230,7 @@ export default function Categorygenpage(props) {
       <section
         className="p-hero"
         style={{
-          backgroundImage: category.cover_url
-            ? `url(${category.cover_url})`
-            : undefined,
+          backgroundImage: category.cover_url ? `url(${category.cover_url})` : undefined,
         }}
       >
         <div className="p-hero__overlay" />
@@ -121,13 +276,13 @@ function BlockRenderer({ block }) {
     );
   }
 
-  /** === Изображение (если решишь добавить image) === */
+  /** === Изображение === */
   if (type === "image") {
     const { url, alt } = data;
     if (!url) return null;
     return (
       <div className="p-card p-image">
-        <img src={url} alt={alt || ""} />
+        <img src={url} alt={alt || ""} loading="lazy" decoding="async" />
         {alt ? <div className="p-imgcap">{alt}</div> : null}
       </div>
     );
@@ -135,13 +290,11 @@ function BlockRenderer({ block }) {
 
   /** === Слайдер изображений === */
   if (type === "image_slider") {
-    const images = Array.isArray(data.images) ? data.images : [];
+    const images = Array.isArray(data.images) ? data.images.filter(Boolean) : [];
     if (!images.length) return null;
     return (
-      <div className="p-card p-slider">
-        {images.map((img, i) => (
-          <img key={i} src={img.url} alt={img.alt || ""} />
-        ))}
+      <div className="p-card">
+        <ImageSlider images={images} aspectRatio="16/9" />
       </div>
     );
   }
@@ -150,7 +303,7 @@ function BlockRenderer({ block }) {
   if (type === "ad_block") {
     return (
       <div className="p-card p-ad">
-        <Pr/>
+        <Pr />
       </div>
     );
   }
@@ -169,7 +322,7 @@ function BlockRenderer({ block }) {
     );
   }
 
-  /** === fallback для неизвестных типов === */
+  /** === fallback === */
   return (
     <div className="p-card">
       <p>Неизвестный блок: {type}</p>

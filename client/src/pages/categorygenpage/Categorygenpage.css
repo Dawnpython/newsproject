@@ -80,20 +80,63 @@
 }
 
 /* слайдер */
+/* Контейнер карточки слайдера */
 .p-slider {
-  display: grid;
-  grid-auto-flow: column;
-  gap: 8px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  padding: 0 10px; /* отступы слева/справа */
+  box-sizing: border-box;
 }
 
-.p-slider img {
-  height: 100px;
-  width: auto;
-  border-radius: 10px;
-  border: 1px solid #eee;
-  scroll-snap-align: start;
+/* Полоса со слайдами */
+.p-slider__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 10px; /* зазор между слайдами, если нужен */
+  scrollbar-width: none; /* скрыть скроллбар */
+}
+
+.p-slider__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Один слайд — на всю ширину видимой области (с учётом паддингов контейнера) */
+.p-slider__slide {
+  flex: 0 0 100%;
+  height: 467px; /* фиксированная высота */
+  border-radius: 18px;
+  overflow: hidden;
+  scroll-snap-align: center;
+  background: #f3f3f3;
+}
+
+/* Картинка внутри слайда */
+.p-slider__slide img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover; /* обрезаем, чтобы заполнить 467px */
+  display: block;
+}
+
+/* Точки навигации */
+.p-slider__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.p-slider__dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.p-slider__dots .dot.active {
+  width: 18px; /* активная шире — как на iOS-пейджере */
+  background: rgba(0, 0, 0, 0.6);
 }
 
 /* реклама */
