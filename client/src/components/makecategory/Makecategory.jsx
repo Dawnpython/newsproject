@@ -1,3 +1,4 @@
+// /src/components/makecategory/Makecategory.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Pr from '/src/blocks/pr/Pr.jsx'
 import "/src/components/makecategory/Makecategory.css";
@@ -10,7 +11,14 @@ const API = {
   page: (slug) => `${API_BASE}/page/${slug}`,
   patchCategory: (id) => `${API_BASE}/categories/${id}`,
   upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`,
+  cloudinarySignature: `${API_BASE}/api/uploads/signature`,
 };
+
+// простая обёртка для auth заголовка; поправь под свой сторедж токена
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 /** Стартовые структуры блоков */
 const initialBlock = (type) => {
@@ -18,11 +26,11 @@ const initialBlock = (type) => {
     case "image_slider":
       return { type: "image_slider", data: { images: [{ url: "", alt: "" }] } };
     case "text_block":
-      return { type: "text_block", data: { text: "" } }; // НОВОЕ
+      return { type: "text_block", data: { text: "" } };
     case "ad_block":
-      return { type: "ad_block", data: {} }; // статичный JSX
+      return { type: "ad_block", data: {} };
     case "template_block":
-      return { type: "template_block", data: {} }; // статичный JSX
+      return { type: "template_block", data: {} };
     default:
       return { type, data: {} };
   }
@@ -33,8 +41,16 @@ export default function Makecategory() {
   const [selectedSlug, setSelectedSlug] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // HERO
-  const [hero, setHero] = useState({ title: "", subtitle: "", cover_url: "" });
+  // HERO (добавили cover_public_id)
+  const [hero, setHero] = useState({
+    title: "",
+    subtitle: "",
+    cover_url: "",
+    cover_public_id: "",
+  });
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // CONTENT
   const [blocks, setBlocks] = useState([]);
@@ -76,10 +92,11 @@ export default function Makecategory() {
             title: cat.title || "",
             subtitle: cat.subtitle || "",
             cover_url: cat.cover_url || "",
+            cover_public_id: cat.cover_public_id || "",
           });
         } else {
           setSelectedCategory(null);
-          setHero({ title: "", subtitle: "", cover_url: "" });
+          setHero({ title: "", subtitle: "", cover_url: "", cover_public_id: "" });
         }
         const res = await fetch(API.page(selectedSlug));
         if (res.status === 404) {
@@ -100,8 +117,7 @@ export default function Makecategory() {
   }, [selectedSlug, categories.length]);
 
   // hero handlers
-  const updateHeroField = (key, value) =>
-    setHero((h) => ({ ...h, [key]: value }));
+  const updateHeroField = (key, value) => setHero((h) => ({ ...h, [key]: value }));
 
   const saveHero = async () => {
     if (!selectedCategory) return setMsg("Категория не выбрана");
@@ -110,8 +126,8 @@ export default function Makecategory() {
       setMsg("");
       const res = await fetch(API.patchCategory(selectedCategory.id), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(hero),
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(hero), // title, subtitle, cover_url, cover_public_id
       });
       if (!res.ok) throw new Error("PATCH category failed");
       const updated = await res.json();
@@ -127,15 +143,70 @@ export default function Makecategory() {
     }
   };
 
+  // ======= Cloudinary upload (signed) =======
+  async function uploadHeroToCloudinary(file) {
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      // 1) получаем подпись от нашего API
+      const sigRes = await fetch(API.cloudinarySignature, {
+        headers: { ...authHeaders() },
+      });
+      if (!sigRes.ok) throw new Error("signature_failed");
+      const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
+
+      // 2) отправляем файл в Cloudinary
+      const url = `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`;
+      const form = new FormData();
+      form.append("file", file);
+      form.append("api_key", api_key);
+      form.append("timestamp", timestamp);
+      form.append("signature", signature);
+      form.append("folder", folder);
+
+      const xhr = new XMLHttpRequest();
+      const uploadPromise = new Promise((resolve, reject) => {
+        xhr.open("POST", url);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const p = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(p);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch (err) {
+              reject(err);
+            }
+          } else {
+            reject(new Error("upload_failed"));
+          }
+        };
+        xhr.onerror = () => reject(new Error("xhr_error"));
+        xhr.send(form);
+      });
+
+      const result = await uploadPromise;
+      const { secure_url, public_id } = result;
+      updateHeroField("cover_url", secure_url);
+      updateHeroField("cover_public_id", public_id);
+      setMsg("Изображение загружено");
+    } catch (e) {
+      console.error(e);
+      setMsg("Не удалось загрузить в Cloudinary");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }
+
   // content handlers
   const addBlock = (type) => setBlocks((b) => [...b, initialBlock(type)]);
-
-  const updateBlock = (index, updater) => {
-    setBlocks((prev) =>
-      prev.map((b, i) => (i === index ? { ...b, ...updater } : b))
-    );
-  };
-
+  const updateBlock = (index, updater) =>
+    setBlocks((prev) => prev.map((b, i) => (i === index ? { ...b, ...updater } : b)));
   const moveBlockUp = (index) => {
     if (index === 0) return;
     setBlocks((prev) => {
@@ -144,7 +215,6 @@ export default function Makecategory() {
       return arr;
     });
   };
-
   const moveBlockDown = (index) => {
     setBlocks((prev) => {
       if (index === prev.length - 1) return prev;
@@ -153,9 +223,7 @@ export default function Makecategory() {
       return arr;
     });
   };
-
-  const removeBlock = (index) =>
-    setBlocks((prev) => prev.filter((_, i) => i !== index));
+  const removeBlock = (index) => setBlocks((prev) => prev.filter((_, i) => i !== index));
 
   const saveContent = async (status = "draft") => {
     if (!selectedSlug) return setMsg("Категория не выбрана");
@@ -164,11 +232,8 @@ export default function Makecategory() {
       setMsg("");
       const res = await fetch(API.upsertCategoryPage(selectedSlug), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status,
-          content_json: blocks, // <-- сохраняем все блоки, включая text_block
-        }),
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ status, content_json: blocks }),
       });
       if (!res.ok) throw new Error("PUT content failed");
       await res.json();
@@ -184,7 +249,6 @@ export default function Makecategory() {
 
   // локальный предпросмотр
   const localPreview = useMemo(() => {
-    // вспомогательный рендер многострочного текста (каждый абзац разделён пустой строкой)
     const renderText = (text = "") => {
       const paragraphs = String(text).split(/\n{2,}/);
       return paragraphs.map((p, i) => (
@@ -317,20 +381,36 @@ export default function Makecategory() {
             placeholder="Выбери лучший способ передвижения по городу"
           />
         </div>
+
+        {/* Новый блок загрузки */}
         <div className="adm-field">
-          <label className="adm-label">Cover URL</label>
-          <input
-            className="adm-input"
-            value={hero.cover_url}
-            onChange={(e) => updateHeroField("cover_url", e.target.value)}
-            placeholder="https://res.cloudinary.com/.../image.jpg"
-          />
+          <label className="adm-label">Cover</label>
+          <div className="adm-upload">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadHeroToCloudinary(f);
+              }}
+            />
+            {uploading && <div className="adm-progress">Загрузка: {uploadProgress}%</div>}
+          </div>
           {hero.cover_url ? (
-            <img className="adm-cover-preview" src={hero.cover_url} alt="cover" />
+            <div className="adm-cover-preview-wrap">
+              <img className="adm-cover-preview" src={hero.cover_url} alt="cover" />
+              <div className="adm-cover-meta">
+                <div className="adm-muted small">public_id: {hero.cover_public_id || "—"}</div>
+                <button className="adm-mini" onClick={() => updateHeroField("cover_url", "")}>
+                  Очистить
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="adm-cover-skeleton">Нет изображения</div>
           )}
         </div>
+
         <button className="adm-btn" onClick={saveHero} disabled={saving}>
           Сохранить Hero
         </button>
@@ -393,9 +473,7 @@ export default function Makecategory() {
 
       {!!msg && <div className="adm-toast">{msg}</div>}
       {!!lastSavedAt && (
-        <div className="adm-toast muted">
-          Обновлено: {lastSavedAt.toLocaleTimeString()}
-        </div>
+        <div className="adm-toast muted">Обновлено: {lastSavedAt.toLocaleTimeString()}</div>
       )}
     </div>
   );
@@ -416,7 +494,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       </div>
 
-      {/* image_slider — редактируемый */}
+      {/* image_slider */}
       {block.type === "image_slider" && (
         <div className="blk-body">
           <label className="adm-label">Изображения</label>
@@ -465,7 +543,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       )}
 
-      {/* text_block — редактируемый (НОВОЕ) */}
+      {/* text_block */}
       {block.type === "text_block" && (
         <div className="blk-body">
           <label className="adm-label">Текст (абзацы разделяй пустой строкой)</label>
@@ -474,9 +552,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
             rows={8}
             placeholder="Напиши контент..."
             value={block.data?.text || ""}
-            onChange={(e) =>
-              onChange({ data: { ...block.data, text: e.target.value } })
-            }
+            onChange={(e) => onChange({ data: { ...block.data, text: e.target.value } })}
           />
           <div className="adm-muted" style={{ marginTop: 8 }}>
             Символов: {(block.data?.text || "").length}
@@ -484,10 +560,8 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         </div>
       )}
 
-      {/* ad_block / template_block — статичные, без форм */}
-      {block.type === "ad_block" && (
-        <Pr/>
-      )}
+      {/* ad_block / template_block */}
+      {block.type === "ad_block" && <Pr/>}
 
       {block.type === "template_block" && (
         <div className="blk-body">

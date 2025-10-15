@@ -4,15 +4,18 @@
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
+  height: 100vh;
 }
 
 /* hero */
 .p-hero {
   position: relative;
-  min-height: 160px;
+  min-height: 300px;
   background: #e9eef2 center/cover no-repeat;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .p-hero__overlay {
   position: absolute; inset: 0;
@@ -23,21 +26,17 @@
   padding: 14px;
   color: #fff;
 }
-.p-hero__text h1 { margin: 0 0 6px; font-size: 22px; line-height: 1.2; }
-.p-hero__text p  { margin: 0; opacity: 0.95; }
+.p-hero__text h1 { margin: 0 0 6px; font-size: 29px; line-height: 1.2; font-weight: 700;  }
+.p-hero__text p  { margin: 0; opacity: 0.95; font-size: 16px; font-weight: 500; }
 
 /* контент */
-.p-body { padding: 12px; }
+.p-body { border-radius: 24px; background-color: white; transform: translateY(-20px);}
 .p-card {
-  background: #fafafa;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 10px 0px;
 }
 
 /* текст */
-.p-text { font-size: 15px; line-height: 1.5; }
+.p-text { font-size: 15px; line-height: 1.5; padding: 0px 10px; }
 
 /* одиночное изображение */
 .p-image img {
