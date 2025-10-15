@@ -1,30 +1,95 @@
 // /src/components/makecategory/Makecategory.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import Pr from '/src/blocks/pr/Pr.jsx'
+import Pr from "/src/blocks/pr/Pr.jsx";
 import "/src/components/makecategory/Makecategory.css";
 
-/** ===== API base (очень важно для продакшена) ===== */
-const API_BASE = "https://newsproject-tnkc.onrender.com"; // ← твой бек на Render
+/** ===== API base ===== */
+const API_BASE = "https://newsproject-tnkc.onrender.com";
 
 const API = {
   categories: `${API_BASE}/categories`,
   page: (slug) => `${API_BASE}/page/${slug}`,
   patchCategory: (id) => `${API_BASE}/categories/${id}`,
   upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`,
-  cloudinarySignature: `${API_BASE}/api/uploads/signature`,
+  cloudinarySignature: `${API_BASE}/api/uploads/signature`, // POST (auth + admin)
 };
 
-// простая обёртка для auth заголовка; поправь под свой сторедж токена
+/** ===== Auth header helper (поправь под свой сторедж) ===== */
 function authHeaders() {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/** Стартовые структуры блоков */
+/** ===== Cloudinary helpers ===== */
+async function getSignature({ folder } = {}) {
+  const res = await fetch(API.cloudinarySignature, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(folder ? { folder } : {}),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`signature_failed (${res.status}) ${t}`);
+  }
+  // { timestamp, signature, folder, api_key, cloud_name }
+  return res.json();
+}
+
+function uploadFileToCloudinary(file, sig, onProgress) {
+  const url = `https://api.cloudinary.com/v1_1/${sig.cloud_name}/auto/upload`;
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", sig.api_key);
+  form.append("timestamp", sig.timestamp);
+  form.append("signature", sig.signature);
+  form.append("folder", sig.folder);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.onprogress = (e) => {
+      if (onProgress && e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        reject(new Error("upload_failed"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("xhr_error"));
+    xhr.send(form);
+  });
+}
+
+async function uploadManyToCloudinary(files, { folder }, onFileProgress) {
+  const sig = await getSignature({ folder });
+  const results = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const meta = await uploadFileToCloudinary(f, sig, (p) => onFileProgress?.(i, p));
+    results.push({
+      url: meta.secure_url,
+      public_id: meta.public_id,
+      width: meta.width,
+      height: meta.height,
+      alt: "",
+    });
+  }
+  return results;
+}
+
+/** ===== Стартовые структуры блоков ===== */
 const initialBlock = (type) => {
   switch (type) {
     case "image_slider":
-      return { type: "image_slider", data: { images: [{ url: "", alt: "" }] } };
+      return { type: "image_slider", data: { images: [{ url: "", alt: "", public_id: "" }] } };
     case "text_block":
       return { type: "text_block", data: { text: "" } };
     case "ad_block":
@@ -49,8 +114,8 @@ export default function Makecategory() {
     cover_public_id: "",
   });
 
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [heroProgress, setHeroProgress] = useState(0);
 
   // CONTENT
   const [blocks, setBlocks] = useState([]);
@@ -59,7 +124,7 @@ export default function Makecategory() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
-  // загрузка категорий
+  /** Загрузка категорий */
   useEffect(() => {
     (async () => {
       try {
@@ -78,7 +143,7 @@ export default function Makecategory() {
     })();
   }, []);
 
-  // загрузка страницы по slug
+  /** Загрузка статьи/страницы */
   useEffect(() => {
     if (!selectedSlug) return;
     (async () => {
@@ -116,7 +181,7 @@ export default function Makecategory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSlug, categories.length]);
 
-  // hero handlers
+  /** Hero handlers */
   const updateHeroField = (key, value) => setHero((h) => ({ ...h, [key]: value }));
 
   const saveHero = async () => {
@@ -143,77 +208,31 @@ export default function Makecategory() {
     }
   };
 
-  // ======= Cloudinary upload (signed) =======
   async function uploadHeroToCloudinary(file) {
     try {
-      setUploading(true);
-      setUploadProgress(0);
+      setUploadingHero(true);
+      setHeroProgress(0);
 
-      // 1) получаем подпись от нашего API
-      // 1) получаем подпись от нашего API (POST, под админ-токеном)
-const sigRes = await fetch(API.cloudinarySignature, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    ...authHeaders(), // <-- здесь Authorization: Bearer <token>
-  },
-  body: JSON.stringify({}) // можно пусто
-});
-if (!sigRes.ok) {
-  const t = await sigRes.text().catch(() => "");
-  throw new Error(`signature_failed (${sigRes.status}) ${t}`);
-}
-const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
-
-
-      // 2) отправляем файл в Cloudinary
-      const url = `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`;
-      const form = new FormData();
-      form.append("file", file);
-      form.append("api_key", api_key);
-      form.append("timestamp", timestamp);
-      form.append("signature", signature);
-      form.append("folder", folder);
-
-      const xhr = new XMLHttpRequest();
-      const uploadPromise = new Promise((resolve, reject) => {
-        xhr.open("POST", url);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const p = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(p);
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.responseText));
-            } catch (err) {
-              reject(err);
-            }
-          } else {
-            reject(new Error("upload_failed"));
-          }
-        };
-        xhr.onerror = () => reject(new Error("xhr_error"));
-        xhr.send(form);
+      // желательно хранить обложки отдельно
+      const sig = await getSignature({ folder: "categories/covers" }).catch(async () => {
+        // fallback на дефолтную папку, если бэк не поддерживает folder
+        return getSignature({});
       });
 
-      const result = await uploadPromise;
-      const { secure_url, public_id } = result;
-      updateHeroField("cover_url", secure_url);
-      updateHeroField("cover_public_id", public_id);
-      setMsg("Изображение загружено");
+      const meta = await uploadFileToCloudinary(file, sig, (p) => setHeroProgress(p));
+      updateHeroField("cover_url", meta.secure_url);
+      updateHeroField("cover_public_id", meta.public_id);
+      setMsg("Обложка загружена");
     } catch (e) {
       console.error(e);
-      setMsg("Не удалось загрузить в Cloudinary");
+      setMsg("Не удалось загрузить обложку");
     } finally {
-      setUploading(false);
-      setUploadProgress(0);
+      setUploadingHero(false);
+      setHeroProgress(0);
     }
   }
 
-  // content handlers
+  /** Content handlers */
   const addBlock = (type) => setBlocks((b) => [...b, initialBlock(type)]);
   const updateBlock = (index, updater) =>
     setBlocks((prev) => prev.map((b, i) => (i === index ? { ...b, ...updater } : b)));
@@ -257,7 +276,7 @@ const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json(
     }
   };
 
-  // локальный предпросмотр
+  /** Локальный предпросмотр */
   const localPreview = useMemo(() => {
     const renderText = (text = "") => {
       const paragraphs = String(text).split(/\n{2,}/);
@@ -289,11 +308,12 @@ const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json(
         <div className="preview-body">
           {blocks.map((b, idx) => {
             if (b.type === "image_slider") {
+              const imgs = Array.isArray(b.data?.images) ? b.data.images : [];
               return (
                 <div key={idx} className="preview-block">
                   <h4>Слайдер</h4>
                   <div className="preview-slider">
-                    {(b.data?.images || []).map((img, i) => (
+                    {imgs.map((img, i) => (
                       <img key={i} src={img.url} alt={img.alt || ""} />
                     ))}
                   </div>
@@ -310,7 +330,7 @@ const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json(
             if (b.type === "ad_block") {
               return (
                 <div key={idx} className="preview-block ad">
-                  <Pr/>
+                  <Pr />
                 </div>
               );
             }
@@ -392,7 +412,7 @@ const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json(
           />
         </div>
 
-        {/* Новый блок загрузки */}
+        {/* Загрузка обложки */}
         <div className="adm-field">
           <label className="adm-label">Cover</label>
           <div className="adm-upload">
@@ -404,7 +424,7 @@ const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json(
                 if (f) uploadHeroToCloudinary(f);
               }}
             />
-            {uploading && <div className="adm-progress">Загрузка: {uploadProgress}%</div>}
+            {uploadingHero && <div className="adm-progress">Загрузка: {heroProgress}%</div>}
           </div>
           {hero.cover_url ? (
             <div className="adm-cover-preview-wrap">
@@ -498,59 +518,21 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
           {index + 1}. {labelByType(block.type)}
         </span>
         <div className="blk-actions">
-          <button className="blk-ctrl" onClick={onUp} aria-label="Вверх">▲</button>
-          <button className="blk-ctrl" onClick={onDown} aria-label="Вниз">▼</button>
-          <button className="blk-ctrl danger" onClick={onRemove} aria-label="Удалить">✖</button>
+          <button className="blk-ctrl" onClick={onUp} aria-label="Вверх">
+            ▲
+          </button>
+          <button className="blk-ctrl" onClick={onDown} aria-label="Вниз">
+            ▼
+          </button>
+          <button className="blk-ctrl danger" onClick={onRemove} aria-label="Удалить">
+            ✖
+          </button>
         </div>
       </div>
 
-      {/* image_slider */}
+      {/* image_slider — расширенный редактор */}
       {block.type === "image_slider" && (
-        <div className="blk-body">
-          <label className="adm-label">Изображения</label>
-          {(block.data?.images || []).map((img, i) => (
-            <div className="img-row" key={i}>
-              <input
-                className="adm-input"
-                placeholder="Image URL"
-                value={img.url}
-                onChange={(e) => {
-                  const next = [...(block.data?.images || [])];
-                  next[i] = { ...next[i], url: e.target.value };
-                  onChange({ data: { ...block.data, images: next } });
-                }}
-              />
-              <input
-                className="adm-input"
-                placeholder="ALT"
-                value={img.alt || ""}
-                onChange={(e) => {
-                  const next = [...(block.data?.images || [])];
-                  next[i] = { ...next[i], alt: e.target.value };
-                  onChange({ data: { ...block.data, images: next } });
-                }}
-              />
-              <button
-                className="adm-mini danger"
-                onClick={() => {
-                  const next = (block.data?.images || []).filter((_, k) => k !== i);
-                  onChange({ data: { ...block.data, images: next } });
-                }}
-              >
-                Удалить
-              </button>
-            </div>
-          ))}
-          <button
-            className="adm-mini"
-            onClick={() => {
-              const next = [...(block.data?.images || []), { url: "", alt: "" }];
-              onChange({ data: { ...block.data, images: next } });
-            }}
-          >
-            + Добавить изображение
-          </button>
-        </div>
+        <ImageSliderEditor block={block} onChange={onChange} />
       )}
 
       {/* text_block */}
@@ -571,7 +553,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
       )}
 
       {/* ad_block / template_block */}
-      {block.type === "ad_block" && <Pr/>}
+      {block.type === "ad_block" && <Pr />}
 
       {block.type === "template_block" && (
         <div className="blk-body">
@@ -586,6 +568,216 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Редактор слайдера (мультизагрузка, точечная перезагрузка, ALT, перенос, удаление) */
+function ImageSliderEditor({ block, onChange }) {
+  const images = Array.isArray(block.data?.images) ? block.data.images : [];
+  const [progressMap, setProgressMap] = React.useState({}); // { "file_0": 35, 2: 60, ... }
+  const [uploadingIdx, setUploadingIdx] = React.useState(null);
+
+  const setImages = (next) => onChange({ data: { ...block.data, images: next } });
+
+  const handleAddEmpty = () =>
+    setImages([...images, { url: "", alt: "", public_id: "" }]);
+
+  const handleUploadMany = async (fileList) => {
+    try {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      const added = await uploadManyToCloudinary(
+        files,
+        { folder: "categories/sliders" },
+        (fileIdx, percent) => {
+          setProgressMap((prev) => ({ ...prev, [`file_${fileIdx}`]: percent }));
+        }
+      );
+
+      setImages([...images, ...added]);
+      setProgressMap({});
+    } catch (e) {
+      console.error(e);
+      alert("Не удалось загрузить изображения");
+    }
+  };
+
+  const handleUploadSingleToIndex = async (file, index) => {
+    try {
+      setUploadingIdx(index);
+      setProgressMap((p) => ({ ...p, [index]: 0 }));
+
+      let sig;
+      try {
+        sig = await getSignature({ folder: "categories/sliders" });
+      } catch {
+        sig = await getSignature({});
+      }
+
+      const meta = await uploadFileToCloudinary(file, sig, (p) => {
+        setProgressMap((prev) => ({ ...prev, [index]: p }));
+      });
+
+      const next = [...images];
+      next[index] = {
+        ...(next[index] || {}),
+        url: meta.secure_url,
+        public_id: meta.public_id,
+      };
+      setImages(next);
+    } catch (e) {
+      console.error(e);
+      alert("Загрузка не удалась");
+    } finally {
+      setUploadingIdx(null);
+      setProgressMap((p) => ({ ...p, [index]: 0 }));
+    }
+  };
+
+  const updateAlt = (i, alt) => {
+    const next = [...images];
+    next[i] = { ...next[i], alt };
+    setImages(next);
+  };
+
+  const updateUrl = (i, url) => {
+    const next = [...images];
+    next[i] = { ...next[i], url };
+    setImages(next);
+  };
+
+  const removeAt = (i) => setImages(images.filter((_, k) => k !== i));
+
+  const move = (from, to) => {
+    if (to < 0 || to >= images.length) return;
+    const next = [...images];
+    const [it] = next.splice(from, 1);
+    next.splice(to, 0, it);
+    setImages(next);
+  };
+
+  return (
+    <div className="blk-body">
+      <label className="adm-label">Слайдер: изображения</label>
+
+      {/* Массовая загрузка */}
+      <div className="img-row" style={{ alignItems: "center", gap: 12 }}>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => handleUploadMany(e.target.files)}
+        />
+        <span className="adm-muted">Можно выбрать несколько файлов сразу</span>
+        {/* Прогресс по пакетной загрузке (суммарно) */}
+        {Object.keys(progressMap).some((k) => k.startsWith("file_")) && (
+          <span className="adm-progress">
+            {Math.round(
+              Object.values(progressMap).reduce((a, b) => a + (b || 0), 0) /
+                Math.max(1, Object.keys(progressMap).length)
+            )}
+            %
+          </span>
+        )}
+      </div>
+
+      {/* Список изображений */}
+      {images.map((img, i) => (
+        <div className="img-row" key={i}>
+          {/* Превью */}
+          {img?.url ? (
+            <img
+              src={img.url}
+              alt=""
+              style={{ width: 80, height: 48, objectFit: "cover", borderRadius: 8 }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 80,
+                height: 48,
+                background: "#eee",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                color: "#666",
+              }}
+            >
+              нет
+            </div>
+          )}
+
+          {/* Поле URL (можно исправить вручную) */}
+          <input
+            className="adm-input"
+            style={{ flex: 1 }}
+            placeholder="Image URL"
+            value={img.url || ""}
+            onChange={(e) => updateUrl(i, e.target.value)}
+          />
+
+          {/* ALT */}
+          <input
+            className="adm-input"
+            style={{ width: 220 }}
+            placeholder="ALT"
+            value={img.alt || ""}
+            onChange={(e) => updateAlt(i, e.target.value)}
+          />
+
+          {/* Точечная загрузка в эту ячейку */}
+          <label className="adm-mini">
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUploadSingleToIndex(f, i);
+              }}
+            />
+            Загрузить
+          </label>
+
+          {/* Переместить */}
+          <button className="adm-mini" onClick={() => move(i, i - 1)}>
+            ↑
+          </button>
+          <button className="adm-mini" onClick={() => move(i, i + 1)}>
+            ↓
+          </button>
+
+          {/* Удалить */}
+          <button className="adm-mini danger" onClick={() => removeAt(i)}>
+            Удалить
+          </button>
+
+          {/* Прогресс для точечной загрузки */}
+          {progressMap[i] > 0 && progressMap[i] < 100 && (
+            <span className="adm-progress">{progressMap[i]}%</span>
+          )}
+
+          {/* Показать public_id (если есть) */}
+          {img.public_id ? (
+            <span className="adm-muted small" style={{ marginLeft: 8 }}>
+              {img.public_id}
+            </span>
+          ) : null}
+        </div>
+      ))}
+
+      <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button className="adm-mini" onClick={handleAddEmpty}>
+          + Добавить пустую строку
+        </button>
+        <span className="adm-muted small">
+          Поддерживается перезалив конкретного кадра и массовая загрузка.
+        </span>
+      </div>
     </div>
   );
 }
