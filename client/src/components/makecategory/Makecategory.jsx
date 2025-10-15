@@ -150,11 +150,21 @@ export default function Makecategory() {
       setUploadProgress(0);
 
       // 1) получаем подпись от нашего API
-      const sigRes = await fetch(API.cloudinarySignature, {
-        headers: { ...authHeaders() },
-      });
-      if (!sigRes.ok) throw new Error("signature_failed");
-      const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
+      // 1) получаем подпись от нашего API (POST, под админ-токеном)
+const sigRes = await fetch(API.cloudinarySignature, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...authHeaders(), // <-- здесь Authorization: Bearer <token>
+  },
+  body: JSON.stringify({}) // можно пусто
+});
+if (!sigRes.ok) {
+  const t = await sigRes.text().catch(() => "");
+  throw new Error(`signature_failed (${sigRes.status}) ${t}`);
+}
+const { timestamp, signature, folder, api_key, cloud_name } = await sigRes.json();
+
 
       // 2) отправляем файл в Cloudinary
       const url = `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`;
