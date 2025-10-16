@@ -1,14 +1,15 @@
 @charset "UTF-8";
+/* ===== БАЗА СТРАНИЦЫ ===== */
 .p-wrap {
   max-width: 720px;
   margin: 0 auto;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
-  height: 100vh;
+  min-height: 100vh; /* чтобы не резать страницу */
 }
 
-/* hero */
+/* ===== HERO ===== */
 .p-hero {
   position: relative;
   min-height: 300px;
@@ -47,25 +48,25 @@
   font-weight: 500;
 }
 
-/* контент */
+/* ===== КОНТЕНТ-КАРТОЧКИ ===== */
 .p-body {
   border-radius: 24px;
-  background-color: white;
+  background-color: #fff;
   transform: translateY(-20px);
 }
 
 .p-card {
-  padding: 10px 0px;
+  padding: 10px 0;
 }
 
-/* текст */
+/* ===== ТЕКСТ ===== */
 .p-text {
   font-size: 15px;
   line-height: 1.5;
-  padding: 0px 10px;
+  padding: 0 10px;
 }
 
-/* одиночное изображение */
+/* ===== ОДИНОЧНОЕ ИЗОБРАЖЕНИЕ ===== */
 .p-image img {
   width: 100%;
   height: auto;
@@ -77,46 +78,61 @@
   font-size: 12px;
   color: #666;
   margin-top: 6px;
+  padding: 0 10px;
 }
 
-/* слайдер */
-/* Контейнер карточки слайдера */
+/* ===== СЛАЙДЕР (FULL-BLEED) ===== */
+/* Выносим карточку слайдера на всю ширину окна,
+   чтобы изображения могли иметь горизонтальный overlow
+   и быть шириной (viewport - 20px) с отступами по 10px. */
 .p-slider {
-  padding: 0 10px; /* отступы слева/справа */
-  box-sizing: border-box;
+  width: 100vw; /* вся ширина окна */
+  margin-left: 50%;
+  transform: translateX(-50%); /* выравниваем по центру окна */
 }
 
-/* Полоса со слайдами */
+/* Трек — горизонтальный скролл с "защёлками" */
 .p-slider__track {
   display: flex;
-  overflow-x: auto;
+  overflow-x: auto; /* горизонтальный оверфлоу */
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  gap: 10px; /* зазор между слайдами, если нужен */
-  scrollbar-width: none; /* скрыть скроллбар */
+  gap: 0;
+  scroll-padding: 0 10px; /* чтобы первая/последняя слайды красиво становились */
 }
 
+/* Слайды фиксируют ширину по контенту, снапятся по центру */
+.p-slider__slide {
+  width: 100vw; /* ключевой момент */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* Картинки внутри слайда — «экран минус 20px» и по 10px поля */
+.p-slider__slide img {
+  display: block;
+  width: calc(100vw - 20px);
+  height: 467px;
+  max-width: none;
+  margin: 0 10px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 12px;
+}
+
+/* Скрываем полосы прокрутки (не влияют на доступность) */
 .p-slider__track::-webkit-scrollbar {
   display: none;
 }
 
-/* Один слайд — на всю ширину видимой области (с учётом паддингов контейнера) */
-.p-slider__slide {
-  flex: 0 0 100%;
-  height: 467px; /* фиксированная высота */
-  border-radius: 18px;
-  overflow: hidden;
-  scroll-snap-align: center;
-  background: #f3f3f3;
-}
-
-/* Картинка внутри слайда */
-.p-slider__slide img {
-  width: 100%;
-  height: 100%;
-  -o-object-fit: cover;
-     object-fit: cover; /* обрезаем, чтобы заполнить 467px */
-  display: block;
+.p-slider__track {
+  scrollbar-width: none;
 }
 
 /* Точки навигации */
@@ -135,11 +151,11 @@
 }
 
 .p-slider__dots .dot.active {
-  width: 18px; /* активная шире — как на iOS-пейджере */
+  width: 18px; /* активная шире — как в iOS-пейджере */
   background: rgba(0, 0, 0, 0.6);
 }
 
-/* реклама */
+/* ===== РЕКЛАМА ===== */
 .p-ad {
   display: flex;
   gap: 10px;
@@ -160,8 +176,9 @@
   margin-bottom: 2px;
 }
 
-/* статусы */
-.p-skeleton, .p-error {
+/* ===== СТАТУСЫ ===== */
+.p-skeleton,
+.p-error {
   margin: 20px 12px;
   padding: 12px;
   border-radius: 10px;
@@ -172,4 +189,14 @@
 .p-error {
   background: #ffe3e3;
   color: #8a0000;
+}
+
+/* ===== МЕЛКИЕ ПРАВКИ ДЛЯ МОБИЛОК ===== */
+@media (max-width: 420px) {
+  .p-hero__text h1 {
+    font-size: 24px;
+  }
+  .p-hero__text p {
+    font-size: 15px;
+  }
 }/*# sourceMappingURL=Categorygenpage.css.map */

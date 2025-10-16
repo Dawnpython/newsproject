@@ -1,3 +1,4 @@
+// /src/pages/categorygenpage/Categorygenpage.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
@@ -5,172 +6,12 @@ import Pr from "/src/blocks/pr/Pr.jsx";
 
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
-/* ========= Универсальный слайдер ========== */
-function ImageSlider({
-  images = [],
-  aspectRatio = "16/9",
-  autoPlay = true,
-  autoPlayMs = 4000,
-}) {
-  const [idx, setIdx] = useState(0);
-  const wrapRef = useRef(null);
-  const pointerRef = useRef({ x: 0, active: false, moved: false });
-  const timerRef = useRef(null);
-  const count = images.length;
-
-  const clamp = (n) => Math.max(0, Math.min(n, count - 1));
-  const go = (n) => setIdx((i) => clamp(n ?? i));
-  const next = () => go(idx + 1);
-  const prev = () => go(idx - 1);
-
-  // autoplay
-  useEffect(() => {
-    if (!autoPlay || count <= 1) return;
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setIdx((i) => (i + 1) % count);
-    }, autoPlayMs);
-    return () => clearInterval(timerRef.current);
-  }, [autoPlay, autoPlayMs, count]);
-
-  // pause on hover
-  const pause = () => clearInterval(timerRef.current);
-  const resume = () => {
-    if (!autoPlay || count <= 1) return;
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setIdx((i) => (i + 1) % count);
-    }, autoPlayMs);
-  };
-
-  // keyboard
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!wrapRef.current) return;
-      if (!wrapRef.current.matches(":hover, :focus-within")) return;
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [idx, count]);
-
-  // swipe
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-
-    const onPointerDown = (e) => {
-      pointerRef.current = { x: e.clientX ?? e.touches?.[0]?.clientX ?? 0, active: true, moved: false };
-      pause();
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp, { once: true });
-    };
-    const onPointerMove = (e) => {
-      if (!pointerRef.current.active) return;
-      const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-      const dx = x - pointerRef.current.x;
-      if (Math.abs(dx) > 8) pointerRef.current.moved = true;
-    };
-    const onPointerUp = (e) => {
-      const x = e.clientX ?? e.changedTouches?.[0]?.clientX ?? 0;
-      const dx = x - pointerRef.current.x;
-      if (pointerRef.current.moved) {
-        if (dx < -40) next();
-        else if (dx > 40) prev();
-      }
-      pointerRef.current = { x: 0, active: false, moved: false };
-      resume();
-      window.removeEventListener("pointermove", onPointerMove);
-    };
-
-    el.addEventListener("pointerdown", onPointerDown, { passive: true });
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointermove", onPointerMove);
-    };
-  }, [idx, count]);
-
-  if (count === 0) return null;
-
-  return (
-    <div
-      className="p-slider"
-      ref={wrapRef}
-      onMouseEnter={pause}
-      onMouseLeave={resume}
-      role="region"
-      aria-roledescription="carousel"
-      aria-label="Галерея изображений"
-    >
-      <div
-        className="p-slider__viewport"
-        style={{
-          aspectRatio,
-        }}
-      >
-        <div
-          className="p-slider__track"
-          style={{
-            width: `${count * 100}%`,
-            transform: `translateX(-${(100 / count) * idx}%)`,
-          }}
-        >
-          {images.map((img, i) => (
-            <div className="p-slider__slide" key={i} aria-hidden={i !== idx}>
-              <img
-                src={img.url}
-                alt={img.alt || ""}
-                loading={i === 0 ? "eager" : "lazy"}
-                decoding="async"
-                draggable={false}
-              />
-              {img.alt ? <div className="p-slider__caption">{img.alt}</div> : null}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {count > 1 && (
-        <>
-          <button
-            className="p-slider__nav prev"
-            aria-label="Предыдущее"
-            onClick={prev}
-          >
-            ‹
-          </button>
-          <button
-            className="p-slider__nav next"
-            aria-label="Следующее"
-            onClick={next}
-          >
-            ›
-          </button>
-
-          <div className="p-slider__dots" aria-hidden>
-            {images.map((_, i) => (
-              <button
-                key={i}
-                className={`dot ${i === idx ? "active" : ""}`}
-                onClick={() => go(i)}
-                tabIndex={-1}
-                aria-label={`К слайду ${i + 1}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-/* ========= конец слайдера ========== */
-
 export default function Categorygenpage(props) {
   const params = useParams();
   const location = useLocation();
   const fromStateSlug = location?.state?.slug;
   const fromPropSlug = props?.slug;
+
   const slug = (params?.slug || fromStateSlug || fromPropSlug || "").trim();
 
   const [page, setPage] = useState(null);
@@ -179,6 +20,7 @@ export default function Categorygenpage(props) {
 
   useEffect(() => {
     if (!slug) return;
+    let alive = true;
     (async () => {
       try {
         setLoading(true);
@@ -186,14 +28,17 @@ export default function Categorygenpage(props) {
         const res = await fetch(`${API_BASE}/page/${slug}`);
         if (!res.ok) throw new Error(`fetch_failed_${slug}`);
         const data = await res.json();
-        setPage(data);
+        if (alive) setPage(data);
       } catch (e) {
         console.error(e);
-        setErr("Не удалось загрузить страницу");
+        if (alive) setErr("Не удалось загрузить страницу");
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     })();
+    return () => {
+      alive = false;
+    };
   }, [slug]);
 
   if (!slug)
@@ -243,7 +88,7 @@ export default function Categorygenpage(props) {
       {/* Блоки */}
       <section className="p-body">
         {blocks.map((b, i) => (
-          <BlockRenderer key={i} block={b} />
+          <BlockRenderer key={`${b.type}-${i}`} block={b} />
         ))}
         {blocks.length === 0 && (
           <div className="p-card">
@@ -261,7 +106,7 @@ function BlockRenderer({ block }) {
   const type = block?.type;
   const data = block?.data || {};
 
-  /** === Текстовый блок (text_block) === */
+  // text_block
   if (type === "text_block" || type === "text") {
     const text = data.text || "";
     return (
@@ -276,30 +121,26 @@ function BlockRenderer({ block }) {
     );
   }
 
-  /** === Изображение === */
+  // image
   if (type === "image") {
-    const { url, alt } = data;
+    const { url, alt } = data || {};
     if (!url) return null;
     return (
       <div className="p-card p-image">
-        <img src={url} alt={alt || ""} loading="lazy" decoding="async" />
+        <img src={url} alt={alt || ""} />
         {alt ? <div className="p-imgcap">{alt}</div> : null}
       </div>
     );
   }
 
-  /** === Слайдер изображений === */
+  // image_slider — теперь отдельный компонент с хуками
   if (type === "image_slider") {
-    const images = Array.isArray(data.images) ? data.images.filter(Boolean) : [];
+    const images = Array.isArray(data.images) ? data.images.filter((x) => x?.url) : [];
     if (!images.length) return null;
-    return (
-      <div className="p-card">
-        <ImageSlider images={images} aspectRatio="16/9" />
-      </div>
-    );
+    return <ImageSlider images={images} />;
   }
 
-  /** === Рекламный блок === */
+  // ad_block
   if (type === "ad_block") {
     return (
       <div className="p-card p-ad">
@@ -308,7 +149,7 @@ function BlockRenderer({ block }) {
     );
   }
 
-  /** === Шаблонный блок === */
+  // template_block
   if (type === "template_block") {
     return (
       <div className="p-card">
@@ -322,10 +163,55 @@ function BlockRenderer({ block }) {
     );
   }
 
-  /** === fallback === */
+  // fallback
   return (
     <div className="p-card">
       <p>Неизвестный блок: {type}</p>
+    </div>
+  );
+}
+
+/* ===== СЛАЙДЕР ===== */
+function ImageSlider({ images }) {
+  const [active, setActive] = useState(0);
+  const trackRef = useRef(null);
+
+  // активная точка — по положению скролла на ширину окна
+  const onScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const w = el.clientWidth; // = 100vw из CSS
+    // центр экрана: учитываем половину ширины, чтобы срабатывал ближний слайд
+    const idx = Math.round(el.scrollLeft / w);
+    const clamped = Math.max(0, Math.min(idx, images.length - 1));
+    if (clamped !== active) setActive(clamped);
+  };
+
+  // при ресайзе корректно пересчитать активный
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const handler = () => onScroll();
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="p-card p-slider">
+      <div className="p-slider__track" ref={trackRef} onScroll={onScroll}>
+        {images.map((img, i) => (
+          <div className="p-slider__slide" key={img.public_id || img.url || i}>
+            <img src={img.url} alt={img.alt || ""} loading="lazy" />
+          </div>
+        ))}
+      </div>
+
+      <div className="p-slider__dots" aria-hidden>
+        {images.map((_, i) => (
+          <span key={i} className={`dot ${i === active ? "active" : ""}`} />
+        ))}
+      </div>
     </div>
   );
 }

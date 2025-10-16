@@ -1,13 +1,14 @@
+/* ===== БАЗА СТРАНИЦЫ ===== */
 .p-wrap {
   max-width: 720px;
   margin: 0 auto;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
-  height: 100vh;
+  min-height: 100vh;           /* чтобы не резать страницу */
 }
 
-/* hero */
+/* ===== HERO ===== */
 .p-hero {
   position: relative;
   min-height: 300px;
@@ -28,62 +29,97 @@
   padding: 14px;
   color: #fff;
 }
-.p-hero__text h1 { margin: 0 0 6px; font-size: 29px; line-height: 1.2; font-weight: 700;  }
-.p-hero__text p  { margin: 0; opacity: 0.95; font-size: 16px; font-weight: 500; }
-
-/* контент */
-.p-body { border-radius: 24px; background-color: white; transform: translateY(-20px);}
-.p-card {
-  padding: 10px 0px;
+.p-hero__text h1 {
+  margin: 0 0 6px;
+  font-size: 29px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.p-hero__text p  {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 16px;
+  font-weight: 500;
 }
 
-/* текст */
-.p-text { font-size: 15px; line-height: 1.5; padding: 0px 10px; }
+/* ===== КОНТЕНТ-КАРТОЧКИ ===== */
+.p-body {
+  border-radius: 24px;
+  background-color: #fff;
+  transform: translateY(-20px);
+}
+.p-card {
+  padding: 10px 0;
+}
 
-/* одиночное изображение */
+/* ===== ТЕКСТ ===== */
+.p-text {
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 0 10px;
+}
+
+/* ===== ОДИНОЧНОЕ ИЗОБРАЖЕНИЕ ===== */
 .p-image img {
   width: 100%;
   height: auto;
   border-radius: 10px;
   display: block;
 }
-.p-imgcap { font-size: 12px; color: #666; margin-top: 6px; }
-
-/* слайдер */
-/* Контейнер карточки слайдера */
-.p-slider {
-  padding: 0 10px;            /* отступы слева/справа */
-  box-sizing: border-box;
+.p-imgcap {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  padding: 0 10px;
 }
 
-/* Полоса со слайдами */
+/* ===== СЛАЙДЕР (FULL-BLEED) ===== */
+/* Выносим карточку слайдера на всю ширину окна,
+   чтобы изображения могли иметь горизонтальный overlow
+   и быть шириной (viewport - 20px) с отступами по 10px. */
+.p-slider {
+  width: 100vw;                /* вся ширина окна */
+  margin-left: 50%;
+  transform: translateX(-50%); /* выравниваем по центру окна */
+}
+
+/* Трек — горизонтальный скролл с "защёлками" */
 .p-slider__track {
   display: flex;
-  overflow-x: auto;
+  overflow-x: auto;            /* горизонтальный оверфлоу */
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  gap: 10px;                  /* зазор между слайдами, если нужен */
-  scrollbar-width: none;      /* скрыть скроллбар */
+  gap: 0;
+  scroll-padding: 0 10px;      /* чтобы первая/последняя слайды красиво становились */
 }
-.p-slider__track::-webkit-scrollbar { display: none; }
 
-/* Один слайд — на всю ширину видимой области (с учётом паддингов контейнера) */
+/* Слайды фиксируют ширину по контенту, снапятся по центру */
 .p-slider__slide {
-  flex: 0 0 100%;
-  height: 467px;              /* фиксированная высота */
-  border-radius: 18px;
-  overflow: hidden;
+  width: 100vw;              /* ключевой момент */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
   scroll-snap-align: center;
-  background: #f3f3f3;
+  scroll-snap-stop: always;
 }
 
-/* Картинка внутри слайда */
+/* Картинки внутри слайда — «экран минус 20px» и по 10px поля */
 .p-slider__slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;          /* обрезаем, чтобы заполнить 467px */
   display: block;
+  width: calc(100vw - 20px);
+  height: 467px;
+  max-width: none;
+  margin: 0 10px;
+  object-fit: cover;
+  border-radius: 12px;
 }
+
+/* Скрываем полосы прокрутки (не влияют на доступность) */
+.p-slider__track::-webkit-scrollbar { display: none; }
+.p-slider__track { scrollbar-width: none; }
 
 /* Точки навигации */
 .p-slider__dots {
@@ -99,13 +135,16 @@
   background: rgba(0,0,0,0.2);
 }
 .p-slider__dots .dot.active {
-  width: 18px;                /* активная шире — как на iOS-пейджере */
+  width: 18px;                 /* активная шире — как в iOS-пейджере */
   background: rgba(0,0,0,0.6);
 }
 
-
-/* реклама */
-.p-ad { display: flex; gap: 10px; align-items: center; }
+/* ===== РЕКЛАМА ===== */
+.p-ad {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 .p-ad__badge {
   background: #ffe7a3;
   color: #7a4e00;
@@ -114,14 +153,27 @@
   padding: 4px 8px;
   flex-shrink: 0;
 }
-.p-ad__content strong { display: block; margin-bottom: 2px; }
+.p-ad__content strong {
+  display: block;
+  margin-bottom: 2px;
+}
 
-/* статусы */
-.p-skeleton, .p-error {
+/* ===== СТАТУСЫ ===== */
+.p-skeleton,
+.p-error {
   margin: 20px 12px;
   padding: 12px;
   border-radius: 10px;
   background: #f5f5f5;
   color: #555;
 }
-.p-error { background: #ffe3e3; color: #8a0000; }
+.p-error {
+  background: #ffe3e3;
+  color: #8a0000;
+}
+
+/* ===== МЕЛКИЕ ПРАВКИ ДЛЯ МОБИЛОК ===== */
+@media (max-width: 420px) {
+  .p-hero__text h1 { font-size: 24px; }
+  .p-hero__text p  { font-size: 15px; }
+}
