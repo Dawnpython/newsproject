@@ -1,6 +1,6 @@
 // /src/pages/categorygenpage/Categorygenpage.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
 import Pr from "/src/blocks/pr/Pr.jsx";
 
@@ -9,9 +9,10 @@ const API_BASE = "https://newsproject-tnkc.onrender.com";
 export default function Categorygenpage(props) {
   const params = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const fromStateSlug = location?.state?.slug;
   const fromPropSlug = props?.slug;
-
   const slug = (params?.slug || fromStateSlug || fromPropSlug || "").trim();
 
   const [page, setPage] = useState(null);
@@ -36,9 +37,7 @@ export default function Categorygenpage(props) {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [slug]);
 
   if (!slug)
@@ -79,6 +78,25 @@ export default function Categorygenpage(props) {
         }}
       >
         <div className="p-hero__overlay" />
+
+        {/* Кнопка «назад на главную» */}
+        <button
+          className="p-hero__back"
+          aria-label="Назад на главную"
+          onClick={() => navigate("/")}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
         <div className="p-hero__text">
           <h1>{category.title || category.label || slug}</h1>
           {category.subtitle ? <p>{category.subtitle}</p> : null}
@@ -106,22 +124,18 @@ function BlockRenderer({ block }) {
   const type = block?.type;
   const data = block?.data || {};
 
-  // text_block
   if (type === "text_block" || type === "text") {
     const text = data.text || "";
     return (
       <div className="p-card p-textblock">
         <div
           className="p-text"
-          dangerouslySetInnerHTML={{
-            __html: nl2br(escapeHtml(text)),
-          }}
+          dangerouslySetInnerHTML={{ __html: nl2br(escapeHtml(text)) }}
         />
       </div>
     );
   }
 
-  // image
   if (type === "image") {
     const { url, alt } = data || {};
     if (!url) return null;
@@ -133,14 +147,12 @@ function BlockRenderer({ block }) {
     );
   }
 
-  // image_slider — теперь отдельный компонент с хуками
   if (type === "image_slider") {
     const images = Array.isArray(data.images) ? data.images.filter((x) => x?.url) : [];
     if (!images.length) return null;
     return <ImageSlider images={images} />;
   }
 
-  // ad_block
   if (type === "ad_block") {
     return (
       <div className="p-card p-ad">
@@ -149,7 +161,6 @@ function BlockRenderer({ block }) {
     );
   }
 
-  // template_block
   if (type === "template_block") {
     return (
       <div className="p-card">
@@ -163,7 +174,6 @@ function BlockRenderer({ block }) {
     );
   }
 
-  // fallback
   return (
     <div className="p-card">
       <p>Неизвестный блок: {type}</p>
@@ -176,21 +186,16 @@ function ImageSlider({ images }) {
   const [active, setActive] = useState(0);
   const trackRef = useRef(null);
 
-  // активная точка — по положению скролла на ширину окна
   const onScroll = () => {
     const el = trackRef.current;
     if (!el) return;
-    const w = el.clientWidth; // = 100vw из CSS
-    // центр экрана: учитываем половину ширины, чтобы срабатывал ближний слайд
-    const idx = Math.round(el.scrollLeft / w);
+    const w = el.clientWidth;                 // равен 100vw
+    const idx = Math.round(el.scrollLeft / w); // целые ширины окна
     const clamped = Math.max(0, Math.min(idx, images.length - 1));
     if (clamped !== active) setActive(clamped);
   };
 
-  // при ресайзе корректно пересчитать активный
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
     const handler = () => onScroll();
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);

@@ -414,11 +414,7 @@ export default function Makecategory() {
           </select>
           {loading && <span className="adm-badge">Загрузка…</span>}
         </div>
-        {selectedCategory && (
-          <p className="adm-muted">
-            ID: {selectedCategory.id} • slug: {selectedCategory.slug}
-          </p>
-        )}
+       
       </section>
 
       {/* HERO */}
@@ -461,7 +457,7 @@ export default function Makecategory() {
             <div className="adm-cover-preview-wrap">
               <img className="adm-cover-preview" src={hero.cover_url} alt="cover" />
               <div className="adm-cover-meta">
-                <div className="adm-muted small">public_id: {hero.cover_public_id || "—"}</div>
+               
                 <div className="adm-cover-actions">
                   <button className="adm-mini" onClick={clearCover}>
                     Очистить

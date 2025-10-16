@@ -6,7 +6,7 @@
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
-  min-height: 100vh; /* чтобы не резать страницу */
+  min-height: 100vh;
 }
 
 /* ===== HERO ===== */
@@ -25,11 +25,13 @@
 .p-hero__overlay {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.45) 100%);
 }
 
 .p-hero__text {
   position: relative;
+  z-index: 1;
   padding: 14px;
   color: #fff;
 }
@@ -46,6 +48,45 @@
   opacity: 0.95;
   font-size: 16px;
   font-weight: 500;
+}
+
+/* — Кнопка «назад на главную» — */
+.p-hero__back {
+  position: absolute;
+  top: 12px;
+  left: 10px;
+  z-index: 2; /* выше оверлея */
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
+}
+
+.p-hero__back:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.p-hero__back:active {
+  transform: scale(0.98);
+}
+
+.p-hero__back:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 195, 255, 0.45);
+}
+
+.p-hero__back svg {
+  display: block;
+  pointer-events: none;
 }
 
 /* ===== КОНТЕНТ-КАРТОЧКИ ===== */
@@ -82,16 +123,13 @@
 }
 
 /* ===== СЛАЙДЕР (FULL-BLEED) ===== */
-/* Выносим карточку слайдера на всю ширину окна,
-   чтобы изображения могли иметь горизонтальный overlow
-   и быть шириной (viewport - 20px) с отступами по 10px. */
 .p-slider {
   width: 100vw; /* вся ширина окна */
   margin-left: 50%;
-  transform: translateX(-50%); /* выравниваем по центру окна */
+  transform: translateX(-50%); /* центрируем относительно окна */
 }
 
-/* Трек — горизонтальный скролл с "защёлками" */
+/* Трек — горизонтальный скролл со снапом */
 .p-slider__track {
   display: flex;
   overflow-x: auto; /* горизонтальный оверфлоу */
@@ -100,10 +138,10 @@
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   gap: 0;
-  scroll-padding: 0 10px; /* чтобы первая/последняя слайды красиво становились */
+  scroll-padding: 0 10px; /* красиво фиксируем крайние слайды */
 }
 
-/* Слайды фиксируют ширину по контенту, снапятся по центру */
+/* Каждый слайд = ширина окна */
 .p-slider__slide {
   width: 100vw; /* ключевой момент */
   display: flex;
@@ -114,19 +152,19 @@
   scroll-snap-stop: always;
 }
 
-/* Картинки внутри слайда — «экран минус 20px» и по 10px поля */
+/* Картинка = окно - 20px (по 10px слева/справа) */
 .p-slider__slide img {
   display: block;
   width: calc(100vw - 20px);
-  height: 467px;
   max-width: none;
+  height: 467px; /* твоя фиксированная высота; можно заменить на aspect-ratio */
   margin: 0 10px;
   -o-object-fit: cover;
      object-fit: cover;
   border-radius: 12px;
 }
 
-/* Скрываем полосы прокрутки (не влияют на доступность) */
+/* Скрыть полосу прокрутки */
 .p-slider__track::-webkit-scrollbar {
   display: none;
 }
@@ -151,7 +189,7 @@
 }
 
 .p-slider__dots .dot.active {
-  width: 18px; /* активная шире — как в iOS-пейджере */
+  width: 18px;
   background: rgba(0, 0, 0, 0.6);
 }
 
@@ -160,20 +198,6 @@
   display: flex;
   gap: 10px;
   align-items: center;
-}
-
-.p-ad__badge {
-  background: #ffe7a3;
-  color: #7a4e00;
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 4px 8px;
-  flex-shrink: 0;
-}
-
-.p-ad__content strong {
-  display: block;
-  margin-bottom: 2px;
 }
 
 /* ===== СТАТУСЫ ===== */

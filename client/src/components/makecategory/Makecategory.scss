@@ -250,3 +250,9 @@
 @media (max-width: 420px) {
   .img-row { grid-template-columns: 1fr; }
 }
+
+
+.adm-cover-actions{
+  display: flex;
+  gap:  5px;
+}

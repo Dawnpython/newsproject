@@ -326,4 +326,8 @@
   .img-row {
     grid-template-columns: 1fr;
   }
+}
+.adm-cover-actions {
+  display: flex;
+  gap: 5px;
 }/*# sourceMappingURL=Makecategory.css.map */
