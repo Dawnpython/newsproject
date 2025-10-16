@@ -3,7 +3,7 @@
 .adm-wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 12px 12px 72px; /* отступ под фиксированный футер */
+  padding-bottom: 50px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
