@@ -1,4 +1,22 @@
 @charset "UTF-8";
+/* Глобально: не даём ничего вылезти и корректно считаем ширины */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
+/* Медиа не выходят за контейнер */
+img, video, canvas, iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* Контейнер */
 .adm-wrap {
   max-width: 720px;
@@ -7,6 +25,7 @@
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fff;
+  width: 100%;
 }
 
 /* Шапка */
@@ -52,6 +71,7 @@
   box-sizing: border-box;
   font-size: 14px;
   outline: none;
+  min-width: 0; /* чтобы в гриде не распирало */
 }
 
 .adm-input:focus, .adm-select:focus, .adm-textarea:focus {
@@ -184,11 +204,17 @@
   margin-top: 10px;
 }
 
+/* Ряд редактирования изображений */
 .img-row {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 8px;
   margin-bottom: 8px;
+  width: 100%;
+}
+
+.img-row > * {
+  min-width: 0;
 }
 
 /* Превью */
@@ -255,7 +281,7 @@
   display: grid;
   grid-auto-flow: column;
   gap: 8px;
-  overflow-x: auto;
+  overflow-x: auto; /* скролл только внутри слайдера */
 }
 
 .preview-slider img {
@@ -288,20 +314,24 @@
   margin-top: 8px;
 }
 
-/* Нижняя панель действий (фикс) */
+/* Нижняя панель действий (прилипает внизу контейнера и не вылазит) */
 .adm-footer {
+  position: sticky;
   bottom: 10px;
-  left: 0;
-  right: 0;
-  max-width: 720px;
+  left: auto;
+  right: auto;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px; /* те же 10px слева/справа */
   background: rgba(255, 255, 255, 0.9);
   -webkit-backdrop-filter: blur(6px);
           backdrop-filter: blur(6px);
+  border-radius: 12px;
+  border: 1px solid #eee;
 }
 
 /* Тосты */
@@ -321,9 +351,19 @@
   background: #666;
 }
 
+/* Дополнительно: текст и длинные ссылки не ломают вёрстку */
+.adm-input, .adm-select, .adm-textarea,
+.preview, .blk {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
 /* Мобильные правки */
 @media (max-width: 420px) {
   .img-row {
+    grid-template-columns: 1fr;
+  }
+  .adm-footer {
     grid-template-columns: 1fr;
   }
 }
