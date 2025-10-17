@@ -291,3 +291,16 @@ img, video, canvas, iframe {
   display: flex;
   gap: 5px;
 }
+
+
+.rte-wrap { border:1px solid #e0e0e0; border-radius:8px; }
+.rte-toolbar { display:flex; gap:6px; padding:6px; border-bottom:1px solid #eee; flex-wrap:wrap; }
+.rte-btn { padding:6px 8px; font-size:13px; border:1px solid #ddd; border-radius:6px; background:#fff; cursor:pointer; }
+.rte-btn.is-active { border-color:#00c3ff; box-shadow:0 0 0 1px rgba(0,195,255,.2) inset; }
+.rte-sep { width:1px; background:#eee; margin:0 2px; }
+.tiptap-editor { min-height:160px; padding:12px; outline:none; }
+.tiptap-editor h2 { font-size:22px; margin:12px 0 6px; }
+.tiptap-editor h3 { font-size:18px; margin:12px 0 6px; }
+.tiptap-editor h4 { font-size:16px; margin:10px 0 6px; }
+.tiptap-editor p { margin:8px 0; line-height:1.5; }
+.tiptap-editor a { text-decoration:underline; }

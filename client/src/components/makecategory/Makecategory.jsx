@@ -8,6 +8,13 @@ import React, {
 } from "react";
 import Pr from "/src/blocks/pr/Pr.jsx";
 import "/src/components/makecategory/Makecategory.css";
+import DOMPurify from "dompurify";
+
+// ---------- tiptap (rich-text) ----------
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Heading from "@tiptap/extension-heading";
 
 /** ===== API base ===== */
 const API_BASE = "https://newsproject-tnkc.onrender.com";
@@ -101,7 +108,8 @@ const initialBlock = (type) => {
         data: { images: [{ url: "", alt: "", public_id: "" }] },
       };
     case "text_block":
-      return { type: "text_block", data: { text: "" } };
+      // теперь используем html вместо text
+      return { type: "text_block", data: { html: "" } };
     case "ad_block":
       return { type: "ad_block", data: {} };
     case "template_block":
@@ -112,6 +120,144 @@ const initialBlock = (type) => {
       return { type, data: {} };
   }
 };
+
+/** ===== Фоллбек: конвертируем старый plain-text в HTML ===== */
+function fallbackFromPlain(txt) {
+  if (!txt) return "";
+  const paras = String(txt)
+    .split(/\n{2,}/)
+    .map((p) => {
+      const lines = p
+        .split(/\n/)
+        .map((line) => line.replace(/</g, "&lt;"))
+        .join("<br/>");
+      return `<p>${lines}</p>`;
+    });
+  return paras.join("");
+}
+
+/** ===== Компонент редактора rich-text на tiptap ===== */
+function RichTextEditor({ value, onChange }) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: false }),
+      Heading.configure({ levels: [2, 3, 4] }),
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        HTMLAttributes: { rel: "noopener nofollow", target: "_blank" },
+      }),
+    ],
+    content: value || "",
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      onChange?.(html);
+    },
+    editorProps: {
+      attributes: { class: "tiptap-editor" },
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if ((value || "") !== current) {
+      editor.commands.setContent(value || "", false);
+    }
+  }, [value, editor]);
+
+  if (!editor) return null;
+
+  const setLink = () => {
+    const prev = editor.getAttributes("link")?.href || "";
+    const url = window.prompt("Вставь ссылку (пустая — убрать)", prev);
+    if (url === null) return; // cancel
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    }
+  };
+
+  return (
+    <div className="rte-wrap">
+      <div className="rte-toolbar">
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("bold") ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          title="Жирный"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("italic") ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          title="Курсив"
+        >
+          <i>I</i>
+        </button>
+
+        <span className="rte-sep" />
+
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("heading", { level: 2 }) ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          title="Заголовок H2"
+        >
+          H2
+        </button>
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("heading", { level: 3 }) ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          title="Заголовок H3"
+        >
+          H3
+        </button>
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("heading", { level: 4 }) ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+          title="Заголовок H4"
+        >
+          H4
+        </button>
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("paragraph") ? "is-active" : ""}`}
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          title="Обычный текст"
+        >
+          ¶
+        </button>
+
+        <span className="rte-sep" />
+
+        <button
+          type="button"
+          className={`rte-btn ${editor.isActive("link") ? "is-active" : ""}`}
+          onClick={setLink}
+          title="Ссылка"
+        >
+          🔗
+        </button>
+        <button
+          type="button"
+          className="rte-btn"
+          onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+          title="Очистить форматирование"
+        >
+          ⨯
+        </button>
+      </div>
+
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
 
 export default function Makecategory() {
   const [categories, setCategories] = useState([]);
@@ -307,7 +453,7 @@ export default function Makecategory() {
     }
   };
 
-  /** Drag&Drop для зоны предпросмотра cover (не обязательно, но приятно) */
+  /** Drag&Drop для зоны предпросмотра cover */
   const dropRef = useRef(null);
   const onDrop = useCallback(
     (e) => {
@@ -331,20 +477,6 @@ export default function Makecategory() {
 
   /** Локальный предпросмотр */
   const localPreview = useMemo(() => {
-    const renderText = (text = "") => {
-      const paragraphs = String(text).split(/\n{2,}/);
-      return paragraphs.map((p, i) => (
-        <p key={i}>
-          {p.split(/\n/).map((line, j) => (
-            <React.Fragment key={j}>
-              {line}
-              {j < p.split(/\n/).length - 1 && <br />}
-            </React.Fragment>
-          ))}
-        </p>
-      ));
-    };
-
     return (
       <div className="preview">
         <div
@@ -365,94 +497,100 @@ export default function Makecategory() {
         </div>
 
         <div className="preview-body">
-  {blocks.map((b, idx) => {
-    if (b.type === "image_slider") {
-      const imgs = Array.isArray(b.data?.images) ? b.data.images : [];
-      return (
-        <div key={idx} className="preview-block">
-          <h4>Слайдер</h4>
-          <div className="preview-slider">
-            {imgs.map((img, i) => (
-              <img key={i} src={img.url} alt={img.alt || ""} />
-            ))}
-          </div>
-        </div>
-      );
-    }
+          {blocks.map((b, idx) => {
+            if (b.type === "image_slider") {
+              const imgs = Array.isArray(b.data?.images) ? b.data.images : [];
+              return (
+                <div key={idx} className="preview-block">
+                  <h4>Слайдер</h4>
+                  <div className="preview-slider">
+                    {imgs.map((img, i) => (
+                      <img key={i} src={img.url} alt={img.alt || ""} />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
 
-    /* ★★★ НОВОЕ: превью одиночного изображения ★★★ */
-    if (b.type === "image") {
-      const { url, alt } = b.data || {};
-      if (!url) {
-        return (
-          <div key={idx} className="preview-block">
-            <h4>Изображение</h4>
-            <div className="adm-cover-skeleton">Нет изображения</div>
-          </div>
-        );
-      }
-      return (
-        <div key={idx} className="preview-block image">
-          <img
-            src={url}
-            alt={alt || ""}
-            style={{
-              width: "100%",
-              height: "auto",
-              display: "block",
-              borderRadius: 8,
-              border: "1px solid #eee",
-            }}
-          />
-          {alt ? (
-            <div
-              className="preview-caption"
-              style={{ marginTop: 6, fontSize: 12, color: "#666" }}
-            >
-              {alt}
-            </div>
-          ) : null}
-        </div>
-      );
-    }
+            // одиночное изображение
+            if (b.type === "image") {
+              const { url, alt } = b.data || {};
+              if (!url) {
+                return (
+                  <div key={idx} className="preview-block">
+                    <h4>Изображение</h4>
+                    <div className="adm-cover-skeleton">Нет изображения</div>
+                  </div>
+                );
+              }
+              return (
+                <div key={idx} className="preview-block image">
+                  <img
+                    src={url}
+                    alt={alt || ""}
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      display: "block",
+                      borderRadius: 8,
+                      border: "1px solid #eee",
+                    }}
+                  />
+                  {alt ? (
+                    <div
+                      className="preview-caption"
+                      style={{ marginTop: 6, fontSize: 12, color: "#666" }}
+                    >
+                      {alt}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            }
 
-    if (b.type === "text_block") {
-      return (
-        <div key={idx} className="preview-block text">
-          {renderText(b.data?.text || "")}
-        </div>
-      );
-    }
-    if (b.type === "ad_block") {
-      return (
-        <div key={idx} className="preview-block ad">
-          <Pr />
-        </div>
-      );
-    }
-    if (b.type === "template_block") {
-      return (
-        <div key={idx} className="preview-block template">
-          <div className="tpl-box">
-            <h4>Шаблонный блок</h4>
-            <ul>
-              <li>Пункт 1</li>
-              <li>Пункт 2</li>
-              <li>Пункт 3</li>
-            </ul>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div key={idx} className="preview-block">
-        <h4>{b.type}</h4>
-        <p>Нестандартный блок</p>
-      </div>
-    );
-  })}
-</div>
+            // Текстовый блок — рендерим безопасный HTML
+            if (b.type === "text_block") {
+              const html = b.data?.html || fallbackFromPlain(b.data?.text || "");
+              return (
+                <div
+                  key={idx}
+                  className="preview-block text"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(html),
+                  }}
+                />
+              );
+            }
 
+            if (b.type === "ad_block") {
+              return (
+                <div key={idx} className="preview-block ad">
+                  <Pr />
+                </div>
+              );
+            }
+            if (b.type === "template_block") {
+              return (
+                <div key={idx} className="preview-block template">
+                  <div className="tpl-box">
+                    <h4>Шаблонный блок</h4>
+                    <ul>
+                      <li>Пункт 1</li>
+                      <li>Пункт 2</li>
+                      <li>Пункт 3</li>
+                    </ul>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={idx} className="preview-block">
+                <h4>{b.type}</h4>
+                <p>Нестандартный блок</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }, [hero, blocks]);
@@ -489,7 +627,7 @@ export default function Makecategory() {
           <label className="adm-label">Заголовок</label>
           <input
             className="adm-input"
-            vąalue={hero.title}
+            value={hero.title}              
             onChange={(e) => updateHeroField("title", e.target.value)}
             placeholder="Например: Такси и трансферы"
           />
@@ -683,25 +821,21 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
         <ImageSliderEditor block={block} onChange={onChange} />
       )}
 
-      {block.type === "image" && <ImageBlockEditor block={block} onChange={onChange} />}
-
+      {block.type === "image" && (
+        <ImageBlockEditor block={block} onChange={onChange} />
+      )}
 
       {block.type === "text_block" && (
         <div className="blk-body">
-          <label className="adm-label">
-            Текст (абзацы разделяй пустой строкой)
-          </label>
-          <textarea
-            className="adm-textarea"
-            rows={8}
-            placeholder="Напиши контент..."
-            value={block.data?.text || ""}
-            onChange={(e) =>
-              onChange({ data: { ...block.data, text: e.target.value } })
-            }
+          <label className="adm-label">Текст (форматируемый)</label>
+          <RichTextEditor
+            value={block.data?.html || fallbackFromPlain(block.data?.text)}
+            onChange={(html) => onChange({ data: { ...block.data, html } })}
           />
           <div className="adm-muted" style={{ marginTop: 8 }}>
-            Символов: {(block.data?.text || "").length}
+            Символов: {(block.data?.html || "")
+              .replace(/<[^>]*>/g, "")
+              .length}
           </div>
         </div>
       )}
@@ -860,8 +994,7 @@ function ImageBlockEditor({ block, onChange }) {
   );
 }
 
-
-/** Редактор слайдера (мультизагрузка, точечная перезагрузка, ALT, перенос, удаление, drag&drop) */
+/** Редактор слайдера */
 function ImageSliderEditor({ block, onChange }) {
   const images = Array.isArray(block.data?.images) ? block.data.images : [];
   const [progressMap, setProgressMap] = React.useState({});
@@ -1128,8 +1261,8 @@ function labelByType(type) {
       return "Реклама (статичный)";
     case "template_block":
       return "Шаблон (статичный)";
-      case "image":
-  return "Изображение";
+    case "image":
+      return "Изображение";
     default:
       return type;
   }

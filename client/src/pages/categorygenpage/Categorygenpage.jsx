@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
 import Pr from "/src/blocks/pr/Pr.jsx";
+import DOMPurify from "dompurify";
 
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
@@ -124,13 +125,15 @@ function BlockRenderer({ block }) {
   const type = block?.type;
   const data = block?.data || {};
 
+  // --- ТЕКСТОВЫЙ БЛОК: сначала используем data.html, иначе фоллбек из data.text ---
   if (type === "text_block" || type === "text") {
-    const text = data.text || "";
+    const html = data.html || plainToHtml(data.text || "");
     return (
       <div className="p-card p-textblock">
         <div
           className="p-text"
-          dangerouslySetInnerHTML={{ __html: nl2br(escapeHtml(text)) }}
+          // обязательно санитизируем HTML
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
         />
       </div>
     );
@@ -189,8 +192,8 @@ function ImageSlider({ images }) {
   const onScroll = () => {
     const el = trackRef.current;
     if (!el) return;
-    const w = el.clientWidth;                 // равен 100vw
-    const idx = Math.round(el.scrollLeft / w); // целые ширины окна
+    const w = el.clientWidth;
+    const idx = Math.round(el.scrollLeft / w);
     const clamped = Math.max(0, Math.min(idx, images.length - 1));
     if (clamped !== active) setActive(clamped);
   };
@@ -232,4 +235,8 @@ function escapeHtml(str = "") {
 }
 function nl2br(str = "") {
   return str.replaceAll("\n", "<br/>");
+}
+// Фоллбек: преобразуем старый plain-text в простой HTML
+function plainToHtml(txt = "") {
+  return nl2br(escapeHtml(txt));
 }
