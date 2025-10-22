@@ -25,6 +25,7 @@
   flex-shrink: 0;
   cursor: pointer;
   transition: transform 0.2s ease;
+  border: none;
 }
 
 .carousel-label {

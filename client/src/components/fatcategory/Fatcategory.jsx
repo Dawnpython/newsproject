@@ -1,7 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import "/src/components/fatcategory/Fatcategory.css";
 
 import otelImg from "/src/assets/img-category-bg-3.png";
-// 👇 поправил пути: убрал пробел между "icons/" и "fatcategory"
 import firstIcon from "/src/assets/icons/fatcategory/img-category-1.png";
 import secondIcon from "/src/assets/icons/fatcategory/img-category-2.png";
 import thirdIcon from "/src/assets/icons/fatcategory/img-category-3.png";
@@ -13,24 +13,62 @@ import eightIcon from "/src/assets/icons/fatcategory/img-category-8.png";
 import nineIcon from "/src/assets/icons/fatcategory/img-category-9.png";
 import tenIcon from "/src/assets/icons/fatcategory/img-category-10.png";
 
+/** Явная карта соответствий label -> slug (совпадает с нашей БД) */
+const LABEL_TO_SLUG = {
+  "Лодки и паромы": "boats",
+  "Такси": "taxi",
+  "Отели и турбазы": "hotels",
+  "Где поесть": "food",
+  "Маркетплейс": "marketplace",
+  "Гиды": "guides",
+  "Экскурсии": "tours",
+  "Аренда жилья": "rent",
+  "Магазины и рынки": "shops",
+  "Скидки и акции города": "city-deals",
+};
+
+/** Нормализуем лейбл: убираем переносы и лишние пробелы */
+const normalizeLabel = (label = "") => label.replace(/\s+/g, " ").trim();
+
 /**
- * Для плиток с картинкой можно (необязательно) добавить bgImage2x/bgImage3x
+ * Для плиток с картинкой можно (необязательно) добавить bgImage2x/bgImage3x,
  * чтобы ретина брала более чёткие источники.
+ *
+ * Здесь сразу задаём slug для надёжности, но fallback есть через LABEL_TO_SLUG.
  */
 const DEFAULT_TILES = [
-  { label: "Лодки \nи паромы", color: "white", bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)", icon: firstIcon },
-  { label: "Такси", bg: "#F3F4F6", icon: secondIcon, color: "black" },
-  { label: "Отели \nи турбазы", bg: "#1DDA94", bgImage: otelImg, icon: thirdIcon },
-  { label: "Где поесть", bg: "#FFDC4C", icon: fourIcon, color: "black" },
-  { label: "Маркетплейс", bg: "#7952EB", icon: fiveIcon },
-  { label: "Гиды", bg: "#F3F4F6", color: "black", icon: sixIcon },
-  { label: "Экскурсии", bg: "#27D9FE", icon: sevenIcon },
-  { label: "Аренда \nжилья", bg: "linear-gradient(135deg,#FFC300,#FF8E00)", icon: eightIcon },
-  { label: "Магазины \nи рынки", bg: "#F3F4F6", color: "#222", icon: nineIcon },
-  { label: "Скидки и акции \nгорода", bg: "#FF0043", icon: tenIcon },
+  {
+    label: "Лодки \nи паромы",
+    slug: "boats",
+    color: "white",
+    bg: "linear-gradient(135deg,#0FB6FF,#00D586,#BEEF22)",
+    icon: firstIcon,
+  },
+  { label: "Такси", slug: "taxi", bg: "#F3F4F6", icon: secondIcon, color: "black" },
+  {
+    label: "Отели \nи турбазы",
+    slug: "hotels",
+    bg: "#1DDA94",
+    bgImage: otelImg,
+    icon: thirdIcon,
+  },
+  { label: "Где поесть", slug: "food", bg: "#FFDC4C", icon: fourIcon, color: "black" },
+  { label: "Маркетплейс", slug: "marketplace", bg: "#7952EB", icon: fiveIcon },
+  { label: "Гиды", slug: "guides", bg: "#F3F4F6", color: "black", icon: sixIcon },
+  { label: "Экскурсии", slug: "tours", bg: "#27D9FE", icon: sevenIcon },
+  {
+    label: "Аренда \nжилья",
+    slug: "rent",
+    bg: "linear-gradient(135deg,#FFC300,#FF8E00)",
+    icon: eightIcon,
+  },
+  { label: "Магазины \nи рынки", slug: "shops", bg: "#F3F4F6", color: "#222", icon: nineIcon },
+  { label: "Скидки и акции \nгорода", slug: "city-deals", bg: "#FF0043", icon: tenIcon },
 ];
 
 export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
+  const navigate = useNavigate();
+
   const firstRow = items.slice(0, 5);
   const secondRow = items.slice(5);
 
@@ -45,17 +83,33 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
     };
   };
 
+  const handleClick = (item) => {
+    const normalized = normalizeLabel(item.label);
+    const slug = item.slug || LABEL_TO_SLUG[normalized];
+    if (!slug) return;
+
+    if (onSelect) {
+      onSelect(slug, item);
+    } else {
+      navigate(`/c/${slug}`, { state: { slug } });
+    }
+  };
+
   const Tile = (it, i) => {
-    const isSmall = it.label === "Такси";
+    const isSmall = normalizeLabel(it.label) === "Такси";
     const style = makeBaseStyle(it);
+    const normalized = normalizeLabel(it.label);
+    const slug = it.slug || LABEL_TO_SLUG[normalized];
 
     return (
       <button
-        key={`${it.label}-${i}`}
+        key={`${normalized}-${slug ?? i}`}
         type="button"
         className={`tile ${isSmall ? "tile--small" : ""} ${it.bgImage ? "tile--has-img" : ""}`}
         style={style}
-        onClick={() => onSelect?.(it.label)}
+        onClick={() => handleClick(it)}
+        aria-label={normalized}
+        data-slug={slug}
       >
         {/* Фоновая картинка как <img> для чёткости + srcSet (если передадите) */}
         {it.bgImage && (
@@ -74,16 +128,21 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
           />
         )}
 
-        {/* Если нужно совместить ГРАДИЕНТ + картинку: добавляем полупрозрачный слой */}
-        {it.bgImage && style.backgroundImage && (
-          <span className="tile__gradient" aria-hidden="true" />
-        )}
+        {/* Если нужно совместить ГРАДИЕНТ + картинку: полупрозрачный слой */}
+        {it.bgImage && style.backgroundImage && <span className="tile__gradient" aria-hidden="true" />}
 
         {/* Иконка */}
         {it.icon && <img src={it.icon} alt="" className="tile__icon" />}
 
-        {/* Текст */}
-        <span className="tile__label">{it.label}</span>
+        {/* Текст (с сохранением переносов строк) */}
+        <span className="tile__label">
+          {String(it.label).split("\n").map((line, idx) => (
+            <span key={idx}>
+              {line}
+              {idx < String(it.label).split("\n").length - 1 ? <br /> : null}
+            </span>
+          ))}
+        </span>
       </button>
     );
   };

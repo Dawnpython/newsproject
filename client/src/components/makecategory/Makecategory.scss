@@ -1,15 +1,5 @@
-/* Глобально: не даём ничего вылезти и корректно считаем ширины */
-*,
-*::before,
-*::after { box-sizing: border-box; }
-html, body { overflow-x: hidden; }
 
-/* Медиа не выходят за контейнер */
-img, video, canvas, iframe {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+
 
 /* Контейнер */
 .adm-wrap {
