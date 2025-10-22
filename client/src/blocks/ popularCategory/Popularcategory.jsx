@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 
-// ✅ убран лишний пробел в пути
+
 import "/src/blocks/ popularCategory/Popularcategory.css";
 
 import firstcatImg from '/src/assets/icons/popularcategory/на воде 1.png';
@@ -46,7 +46,7 @@ const CONTENT = {
   ],
 };
 
-// поддержка цвета/градиента
+
 const chipStyle = (c) => ({
   ...(typeof c.bg === "string" && c.bg.trim().startsWith("linear-gradient")
     ? { background: c.bg }
@@ -58,7 +58,7 @@ export default function Popularcategory() {
   const [active, setActive] = useState(CATEGORIES[0].id);
   const items = useMemo(() => CONTENT[active] ?? [], [active]);
 
-  // небольшая нормализация, если где-то случайно остался '/n' или 'n/'
+  
   const normalizeTitle = (t) => (t || "").replace(/\\n|\/n|n\//g, "\n");
 
   return (

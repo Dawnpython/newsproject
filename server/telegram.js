@@ -638,7 +638,6 @@ async function handleNewRequestPush(requestId) {
   }
 }
 
-/* ======================= BACKUP POLLING (страховка) ======================= */
 /* ======================= BACKUP POLLING (страховка по времени) ======================= */
 let lastPollTs = null; // Date
 
