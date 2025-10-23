@@ -378,7 +378,7 @@ app.post("/api/admin/guides", authMiddleware, adminOnly, async (req, res) => {
 
 
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8314275448:AAG6bC-5ms-EsOZyaQ2LozKoyQkSS5gOQhs";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8359161383:AAHPVYlo3P-ypzl-4qAEhvmDkrtzkUZbwok";
 const BOT_PATH  = `/bot${BOT_TOKEN}`;
 
 // Telegram шлёт JSON — express.json() уже подключён выше, всё норм
