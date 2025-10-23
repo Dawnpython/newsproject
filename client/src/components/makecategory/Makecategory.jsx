@@ -7,6 +7,9 @@ import React, {
   useCallback,
 } from "react";
 import Pr from "/src/blocks/pr/Pr.jsx";
+import Subscribe from '/src/blocks/subscribe/Subscribe.jsx'
+import Social from '/src/blocks/social/Social.jsx'
+import Helper from "../../blocks/helper/Helper";
 import "/src/components/makecategory/Makecategory.css";
 import DOMPurify from "dompurify";
 
@@ -114,6 +117,10 @@ const initialBlock = (type) => {
       return { type: "ad_block", data: {} };
     case "template_block":
       return { type: "template_block", data: {} };
+      case "help_block":
+      return { type: "help_block", data: {} };
+      case "social_block":
+      return { type: "social_block", data: {} };
     case "image":
       return { type: "image", data: { url: "", alt: "", public_id: "" } };
     default:
@@ -573,12 +580,25 @@ export default function Makecategory() {
               return (
                 <div key={idx} className="preview-block template">
                   <div className="tpl-box">
-                    <h4>Шаблонный блок</h4>
-                    <ul>
-                      <li>Пункт 1</li>
-                      <li>Пункт 2</li>
-                      <li>Пункт 3</li>
-                    </ul>
+                   <Subscribe/>
+                  </div>
+                </div>
+              );
+            }
+            if (b.type === "help_block") {
+              return (
+                <div key={idx} className="preview-block template">
+                  <div className="tpl-box">
+                   <Helper/>
+                  </div>
+                </div>
+              );
+            }
+            if (b.type === "social_block") {
+              return (
+                <div key={idx} className="preview-block template">
+                  <div className="tpl-box">
+                   <Social/>
                   </div>
                 </div>
               );
@@ -715,11 +735,20 @@ export default function Makecategory() {
           <button className="adm-chip" onClick={() => addBlock("ad_block")}>
             + Реклама
           </button>
+          <button className="adm-chip" onClick={() => addBlock("help_block")}>
+            + Помощь местных
+          </button>
           <button
             className="adm-chip"
             onClick={() => addBlock("template_block")}
           >
-            + Шаблон
+            + Блок отзыва
+          </button>
+          <button
+            className="adm-chip"
+            onClick={() => addBlock("social_block")}
+          >
+            + Блок соц сети
           </button>
           <button className="adm-chip" onClick={() => addBlock("image")}>
             + Изображение
@@ -845,13 +874,14 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
       {block.type === "template_block" && (
         <div className="blk-body">
           <div className="tpl-box editor">
-            <h4>Шаблонный блок</h4>
-            <p>Готовый JSX. Настроек нет.</p>
-            <ul>
-              <li>Элемент 1</li>
-              <li>Элемент 2</li>
-              <li>Элемент 3</li>
-            </ul>
+            <Subscribe/>
+          </div>
+        </div>
+      )}
+      {block.type === "social_block" && (
+        <div className="blk-body">
+          <div className="tpl-box editor">
+            <Social/>
           </div>
         </div>
       )}
@@ -1260,7 +1290,11 @@ function labelByType(type) {
     case "ad_block":
       return "Реклама (статичный)";
     case "template_block":
-      return "Шаблон (статичный)";
+      return "Блок отзыва";
+      case "help_block":
+      return "Помощь местным";
+      case "social_block":
+      return "Блок соц сети"
     case "image":
       return "Изображение";
     default:

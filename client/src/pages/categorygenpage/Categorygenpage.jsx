@@ -3,7 +3,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
 import Pr from "/src/blocks/pr/Pr.jsx";
+import Subscribe from '/src/blocks/subscribe/Subscribe.jsx'
+import Social from "../../blocks/social/Social";
+import Helper from "../../blocks/helper/Helper";
 import DOMPurify from "dompurify";
+import Footer from '/src/blocks/footer/Footer.jsx'
 
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
@@ -116,6 +120,7 @@ export default function Categorygenpage(props) {
           </div>
         )}
       </section>
+      <Footer/>
     </div>
   );
 }
@@ -167,12 +172,23 @@ function BlockRenderer({ block }) {
   if (type === "template_block") {
     return (
       <div className="p-card">
-        <h3>Шаблонный блок</h3>
-        <ul className="p-list">
-          <li>Пункт 1</li>
-          <li>Пункт 2</li>
-          <li>Пункт 3</li>
-        </ul>
+        <Subscribe/>
+      </div>
+    );
+  }
+
+  if (type === "social_block") {
+    return (
+      <div className="p-card">
+        <Social/>
+      </div>
+    );
+  }
+
+if (type === "help_block") {
+    return (
+      <div className="p-card">
+       <Helper/>
       </div>
     );
   }

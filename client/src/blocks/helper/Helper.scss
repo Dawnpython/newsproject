@@ -1,0 +1,58 @@
+.help-container {
+    display: flex;
+    justify-content: center;
+    height: auto;
+    padding: 0px 10px;
+    box-sizing: border-box;
+  .help-block {
+    padding: 20px;
+    box-sizing: border-box;
+     background-image: url("/src/assets/img-localform.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    border-radius: 24px;
+    
+    .help-top {
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+      }
+    }
+    .help-mid{
+        display: flex;
+        gap:4px;
+        padding-top: 10px;
+        padding-bottom: 48px;
+        p{
+            font-size: 11px;
+            color: white;
+            font-weight: 500;
+        }
+        img{
+            width: 92px;
+            height: 44px;
+        }
+    }
+    .help-bottom{
+        display: flex;
+        gap: 60px;
+        p{
+            font-size: 15px;
+            font-weight: 600px;
+            color: white;
+        }
+        button{
+            width: 167px;
+            height: 52px;
+            border-radius: 100px;
+            background-color: rgba(124, 234, 0, 1);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+        }
+    }
+  }
+}
