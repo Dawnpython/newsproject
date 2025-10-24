@@ -2,6 +2,7 @@
 
 import "./telegram.js";
 import registerCategoryRoutes from "./category.js";
+import registerEconomyRoutes from "./economy.js";
 
 
 import "dotenv/config";
@@ -41,6 +42,7 @@ async function dbQuery(text, params) {
 
     // 👉 здесь регистрируем наши маршруты
     registerCategoryRoutes(app, pool);
+    registerEconomyRoutes(app, pool, authMiddleware, adminOnly);
 
     const port = process.env.PORT || 4000;
     app.listen(port, () => console.log(`API listening on :${port}`));

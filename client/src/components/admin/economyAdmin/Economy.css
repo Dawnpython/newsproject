@@ -1,0 +1,72 @@
+.eco-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eco-admin-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.eco-prev {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.eco-prev img {
+  width: 160px;
+  height: 90px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.eco-prev-empty {
+  width: 160px;
+  height: 90px;
+  background: #eee;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.eco-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eco-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.eco-row.smalls {
+  align-items: center;
+}
+
+.eco-row.actions {
+  justify-content: flex-end;
+}
+
+.eco-link-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1;
+}/*# sourceMappingURL=Economy.css.map */

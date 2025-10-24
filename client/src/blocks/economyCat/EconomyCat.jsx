@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "/src/blocks/economyCat/EconomyCat.css";
 
 // Иконки
@@ -9,12 +9,8 @@ import icoShops   from "/src/assets/icons/economy/economyicon4.svg";
 import icoHotels  from "/src/assets/icons/economy/economyicon5.svg";
 import icoOther   from "/src/assets/icons/economy/economyicon6.svg";
 
-// Фото
-import img1 from "/src/assets/economy/1.jpg";
-import img2 from "/src/assets/economy/2.jpg";
-import img3 from "/src/assets/economy/3.jpg";
+const API_BASE = "https://newsproject-tnkc.onrender.com";
 
-// Категории
 const CATEGORIES = [
   { id: "popular", label: "Популярные", icon: icoPopular },
   { id: "tours",   label: "Экскурсии",  icon: icoTours   },
@@ -24,43 +20,41 @@ const CATEGORIES = [
   { id: "other",   label: "Другое",     icon: icoOther   },
 ];
 
-// Контент (оставляем только картинки и ссылки)
-const CONTENT = {
-  popular: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-  tours: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-  food: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-  shops: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-  hotels: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-  other: [
-    { img: img1, link: "#" },
-    { img: img2, link: "#" },
-    { img: img3, link: "#" },
-  ],
-};
-
 export default function EconomyCat() {
-  const [active, setActive] = useState(CATEGORIES[1].id);
-  const items = useMemo(() => CONTENT[active] ?? [], [active]);
+  const [active, setActive] = useState(CATEGORIES[0].id);
+  const [data, setData] = useState({});     // { sectionId: [items] }
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const r = await fetch(`${API_BASE}/economy`);
+        if (!r.ok) throw new Error("economy_fetch_failed");
+        const json = await r.json();
+        if (alive) setData(json || {});
+      } catch (e) {
+        console.error(e);
+        if (alive) setData({});
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const items = useMemo(() => {
+    const raw = Array.isArray(data[active]) ? data[active] : [];
+    // маппинг под старую структуру (img+link) и срез до трёх
+    return raw.slice(0, 3).map((it) => ({
+      img: it.image_url,
+      link: it.link_type === "category"
+        ? `/c/${it.link_slug}`
+        : (it.link_url || "#"),
+      title: it.title || "",
+    }));
+  }, [data, active]);
 
   return (
     <section className="eco-section">
@@ -89,11 +83,23 @@ export default function EconomyCat() {
       </div>
 
       <div className="eco-stories" data-anim="slide" key={active}>
-        {items.slice(0, 3).map((it, i) => (
-          <a key={i} className="eco-story" href={it.link}>
-            <img src={it.img} alt="" className="eco-story__img" />
+        {loading && (!data[active] || data[active].length === 0) && (
+          <>
+            <div className="eco-story skeleton" />
+            <div className="eco-story skeleton" />
+            <div className="eco-story skeleton" />
+          </>
+        )}
+
+        {items.map((it, i) => (
+          <a key={i} className="eco-story" href={it.link} title={it.title}>
+            <img src={it.img} alt={it.title || ""} className="eco-story__img" />
           </a>
         ))}
+
+        {!loading && items.length === 0 && (
+          <div className="eco-empty">Скоро здесь появятся предложения</div>
+        )}
       </div>
     </section>
   );

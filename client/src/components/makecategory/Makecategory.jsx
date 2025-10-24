@@ -7,9 +7,10 @@ import React, {
   useCallback,
 } from "react";
 import Pr from "/src/blocks/pr/Pr.jsx";
-import Subscribe from '/src/blocks/subscribe/Subscribe.jsx'
-import Social from '/src/blocks/social/Social.jsx'
-import Helper from "../../blocks/helper/Helper";
+import Subscribe from "/src/blocks/subscribe/Subscribe.jsx";
+import Social from "/src/blocks/social/Social.jsx";
+import Helper from "/src/blocks/helper/Helper.jsx";
+import Economy from "/src/components/admin/economyAdmin/Economy.jsx";
 import "/src/components/makecategory/Makecategory.css";
 import DOMPurify from "dompurify";
 
@@ -30,7 +31,7 @@ const API = {
   cloudinarySignature: `${API_BASE}/api/uploads/signature`, // POST (auth + admin)
 };
 
-/** ===== Auth header helper (поправь под свой сторедж) ===== */
+/** ===== Auth header helper ===== */
 function authHeaders() {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -111,15 +112,14 @@ const initialBlock = (type) => {
         data: { images: [{ url: "", alt: "", public_id: "" }] },
       };
     case "text_block":
-      // теперь используем html вместо text
       return { type: "text_block", data: { html: "" } };
     case "ad_block":
       return { type: "ad_block", data: {} };
     case "template_block":
       return { type: "template_block", data: {} };
-      case "help_block":
+    case "help_block":
       return { type: "help_block", data: {} };
-      case "social_block":
+    case "social_block":
       return { type: "social_block", data: {} };
     case "image":
       return { type: "image", data: { url: "", alt: "", public_id: "" } };
@@ -267,6 +267,7 @@ function RichTextEditor({ value, onChange }) {
 }
 
 export default function Makecategory() {
+  const [tab, setTab] = useState("pages"); // "pages" | "economy"
   const [categories, setCategories] = useState([]);
   const [selectedSlug, setSelectedSlug] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -491,9 +492,7 @@ export default function Makecategory() {
           ref={dropRef}
           title="Перетащи сюда изображение для обложки"
           style={{
-            backgroundImage: hero.cover_url
-              ? `url(${hero.cover_url})`
-              : undefined,
+            backgroundImage: hero.cover_url ? `url(${hero.cover_url})` : undefined,
           }}
         >
           <div className="preview-hero-overlay" />
@@ -519,7 +518,6 @@ export default function Makecategory() {
               );
             }
 
-            // одиночное изображение
             if (b.type === "image") {
               const { url, alt } = b.data || {};
               if (!url) {
@@ -544,10 +542,7 @@ export default function Makecategory() {
                     }}
                   />
                   {alt ? (
-                    <div
-                      className="preview-caption"
-                      style={{ marginTop: 6, fontSize: 12, color: "#666" }}
-                    >
+                    <div className="preview-caption" style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
                       {alt}
                     </div>
                   ) : null}
@@ -555,16 +550,13 @@ export default function Makecategory() {
               );
             }
 
-            // Текстовый блок — рендерим безопасный HTML
             if (b.type === "text_block") {
               const html = b.data?.html || fallbackFromPlain(b.data?.text || "");
               return (
                 <div
                   key={idx}
                   className="preview-block text"
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(html),
-                  }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
                 />
               );
             }
@@ -580,7 +572,7 @@ export default function Makecategory() {
               return (
                 <div key={idx} className="preview-block template">
                   <div className="tpl-box">
-                   <Subscribe/>
+                    <Subscribe />
                   </div>
                 </div>
               );
@@ -589,7 +581,7 @@ export default function Makecategory() {
               return (
                 <div key={idx} className="preview-block template">
                   <div className="tpl-box">
-                   <Helper/>
+                    <Helper />
                   </div>
                 </div>
               );
@@ -598,7 +590,7 @@ export default function Makecategory() {
               return (
                 <div key={idx} className="preview-block template">
                   <div className="tpl-box">
-                   <Social/>
+                    <Social />
                   </div>
                 </div>
               );
@@ -618,193 +610,205 @@ export default function Makecategory() {
   return (
     <div className="adm-wrap">
       <header className="adm-header">
-        <h1>Контент страниц</h1>
+        <h1>Контент</h1>
+
+        {/* Простые табы */}
+        <div className="mkc-tabs">
+          <button
+            className={`adm-chip ${tab === "pages" ? "active" : ""}`}
+            onClick={() => setTab("pages")}
+          >
+            Страницы
+          </button>
+          <button
+            className={`adm-chip ${tab === "economy" ? "active" : ""}`}
+            onClick={() => setTab("economy")}
+          >
+            Экономия
+          </button>
+        </div>
       </header>
 
-      {/* Категория */}
-      <section className="adm-card">
-        <label className="adm-label">Категория</label>
-        <div className="adm-row">
-          <select
-            className="adm-select"
-            value={selectedSlug}
-            onChange={(e) => setSelectedSlug(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={c.slug}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          {loading && <span className="adm-badge">Загрузка…</span>}
-        </div>
-      </section>
+      {/* TAB: Страницы */}
+      {tab === "pages" && (
+        <>
+          {/* Категория */}
+          <section className="adm-card">
+            <label className="adm-label">Категория</label>
+            <div className="adm-row">
+              <select
+                className="adm-select"
+                value={selectedSlug}
+                onChange={(e) => setSelectedSlug(e.target.value)}
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              {loading && <span className="adm-badge">Загрузка…</span>}
+            </div>
+          </section>
 
-      {/* HERO */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">Hero-блок</h3>
-        <div className="adm-field">
-          <label className="adm-label">Заголовок</label>
-          <input
-            className="adm-input"
-            value={hero.title}              
-            onChange={(e) => updateHeroField("title", e.target.value)}
-            placeholder="Например: Такси и трансферы"
-          />
-        </div>
-        <div className="adm-field">
-          <label className="adm-label">Подзаголовок</label>
-          <input
-            className="adm-input"
-            value={hero.subtitle}
-            onChange={(e) => updateHeroField("subtitle", e.target.value)}
-            placeholder="Выбери лучший способ передвижения по городу"
-          />
-        </div>
-
-        {/* Загрузка обложки */}
-        <div className="adm-field">
-          <label className="adm-label">Cover</label>
-          <div className="adm-upload">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) uploadHeroToCloudinary(f);
-              }}
-            />
-            {uploadingHero && (
-              <div className="adm-progress">Загрузка: {heroProgress}%</div>
-            )}
-          </div>
-          {hero.cover_url ? (
-            <div className="adm-cover-preview-wrap">
-              <img
-                className="adm-cover-preview"
-                src={hero.cover_url}
-                alt="cover"
+          {/* HERO */}
+          <section className="adm-card">
+            <h3 className="adm-card-title">Hero-блок</h3>
+            <div className="adm-field">
+              <label className="adm-label">Заголовок</label>
+              <input
+                className="adm-input"
+                value={hero.title}
+                onChange={(e) => updateHeroField("title", e.target.value)}
+                placeholder="Например: Такси и трансферы"
               />
-              <div className="adm-cover-meta">
-                <div className="adm-cover-actions">
-                  <button className="adm-mini" onClick={clearCover}>
-                    Очистить
-                  </button>
-                  <button
-                    className="adm-mini"
-                    onClick={() => {
-                      const url = prompt(
-                        "Вставь URL обложки",
-                        hero.cover_url || ""
-                      );
-                      if (url !== null) {
-                        updateHeroField("cover_url", url.trim());
-                        if (!url.trim()) updateHeroField("cover_public_id", "");
-                      }
-                    }}
-                  >
-                    Вставить URL
-                  </button>
-                </div>
+            </div>
+            <div className="adm-field">
+              <label className="adm-label">Подзаголовок</label>
+              <input
+                className="adm-input"
+                value={hero.subtitle}
+                onChange={(e) => updateHeroField("subtitle", e.target.value)}
+                placeholder="Выбери лучший способ передвижения по городу"
+              />
+            </div>
+
+            {/* Загрузка обложки */}
+            <div className="adm-field">
+              <label className="adm-label">Cover</label>
+              <div className="adm-upload">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadHeroToCloudinary(f);
+                  }}
+                />
+                {uploadingHero && (
+                  <div className="adm-progress">Загрузка: {heroProgress}%</div>
+                )}
               </div>
+              {hero.cover_url ? (
+                <div className="adm-cover-preview-wrap">
+                  <img className="adm-cover-preview" src={hero.cover_url} alt="cover" />
+                  <div className="adm-cover-meta">
+                    <div className="adm-cover-actions">
+                      <button className="adm-mini" onClick={clearCover}>
+                        Очистить
+                      </button>
+                      <button
+                        className="adm-mini"
+                        onClick={() => {
+                          const url = prompt("Вставь URL обложки", hero.cover_url || "");
+                          if (url !== null) {
+                            updateHeroField("cover_url", url.trim());
+                            if (!url.trim()) updateHeroField("cover_public_id", "");
+                          }
+                        }}
+                      >
+                        Вставить URL
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="adm-cover-skeleton">
+                  Нет изображения (можно перетащить файл в предпросмотр)
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="adm-cover-skeleton">
-              Нет изображения (можно перетащить файл в предпросмотр)
+
+            <button className="adm-btn" onClick={saveHero} disabled={saving}>
+              Сохранить Hero
+            </button>
+          </section>
+
+          {/* CONTENT */}
+          <section className="adm-card">
+            <h3 className="adm-card-title">Контент (блоки)</h3>
+
+            {/* Палитра */}
+            <div className="adm-addrow">
+              <button className="adm-chip" onClick={() => addBlock("image_slider")}>
+                + Слайдер
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("text_block")}>
+                + Текст
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("ad_block")}>
+                + Реклама
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("help_block")}>
+                + Помощь местных
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("template_block")}>
+                + Блок отзыва
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("social_block")}>
+                + Блок соц сети
+              </button>
+              <button className="adm-chip" onClick={() => addBlock("image")}>
+                + Изображение
+              </button>
             </div>
+
+            {/* Список блоков */}
+            <div className="adm-blocks">
+              {blocks.map((b, idx) => (
+                <BlockEditor
+                  key={idx}
+                  index={idx}
+                  block={b}
+                  onChange={(upd) => updateBlock(idx, upd)}
+                  onUp={() => moveBlockUp(idx)}
+                  onDown={() => moveBlockDown(idx)}
+                  onRemove={() => removeBlock(idx)}
+                />
+              ))}
+              {blocks.length === 0 && (
+                <p className="adm-muted">Пока нет блоков. Добавь слайдер, текст, рекламу или шаблон.</p>
+              )}
+            </div>
+          </section>
+
+          {/* Превью */}
+          <section className="adm-card">
+            <h3 className="adm-card-title">Локальный предпросмотр</h3>
+            {localPreview}
+          </section>
+
+          {/* Нижняя панель */}
+          <div className="adm-footer">
+            <button
+              className="adm-btn ghost"
+              onClick={() => saveContent("draft")}
+              disabled={saving}
+            >
+              Сохранить черновик
+            </button>
+            <button
+              className="adm-btn primary"
+              onClick={() => saveContent("published")}
+              disabled={saving}
+            >
+              Опубликовать
+            </button>
+          </div>
+
+          {!!msg && <div className="adm-toast">{msg}</div>}
+          {!!lastSavedAt && (
+            <div className="adm-toast muted">Обновлено: {lastSavedAt.toLocaleTimeString()}</div>
           )}
-        </div>
+        </>
+      )}
 
-        <button className="adm-btn" onClick={saveHero} disabled={saving}>
-          Сохранить Hero
-        </button>
-      </section>
-
-      {/* CONTENT */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">Контент (блоки)</h3>
-
-        {/* Палитра */}
-        <div className="adm-addrow">
-          <button className="adm-chip" onClick={() => addBlock("image_slider")}>
-            + Слайдер
-          </button>
-          <button className="adm-chip" onClick={() => addBlock("text_block")}>
-            + Текст
-          </button>
-          <button className="adm-chip" onClick={() => addBlock("ad_block")}>
-            + Реклама
-          </button>
-          <button className="adm-chip" onClick={() => addBlock("help_block")}>
-            + Помощь местных
-          </button>
-          <button
-            className="adm-chip"
-            onClick={() => addBlock("template_block")}
-          >
-            + Блок отзыва
-          </button>
-          <button
-            className="adm-chip"
-            onClick={() => addBlock("social_block")}
-          >
-            + Блок соц сети
-          </button>
-          <button className="adm-chip" onClick={() => addBlock("image")}>
-            + Изображение
-          </button>
-        </div>
-
-        {/* Список блоков */}
-        <div className="adm-blocks">
-          {blocks.map((b, idx) => (
-            <BlockEditor
-              key={idx}
-              index={idx}
-              block={b}
-              onChange={(upd) => updateBlock(idx, upd)}
-              onUp={() => moveBlockUp(idx)}
-              onDown={() => moveBlockDown(idx)}
-              onRemove={() => removeBlock(idx)}
-            />
-          ))}
-          {blocks.length === 0 && (
-            <p className="adm-muted">
-              Пока нет блоков. Добавь слайдер, текст, рекламу или шаблон.
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* Превью */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">Локальный предпросмотр</h3>
-        {localPreview}
-      </section>
-
-      {/* Нижняя панель */}
-      <div className="adm-footer">
-        <button
-          className="adm-btn ghost"
-          onClick={() => saveContent("draft")}
-          disabled={saving}
-        >
-          Сохранить черновик
-        </button>
-        <button
-          className="adm-btn primary"
-          onClick={() => saveContent("published")}
-          disabled={saving}
-        >
-          Опубликовать
-        </button>
-      </div>
-
-      {!!msg && <div className="adm-toast">{msg}</div>}
-      {!!lastSavedAt && (
-        <div className="adm-toast muted">
-          Обновлено: {lastSavedAt.toLocaleTimeString()}
-        </div>
+      {/* TAB: Экономия */}
+      {tab === "economy" && (
+        <section className="adm-card">
+          <h3 className="adm-card-title">Экономия: редактор</h3>
+          <Economy />
+        </section>
       )}
     </div>
   );
@@ -819,40 +823,21 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
           {index + 1}. {labelByType(block.type)}
         </span>
         <div className="blk-actions">
-          <button
-            className="blk-ctrl"
-            onClick={onUp}
-            aria-label="Вверх"
-            title="Вверх"
-          >
+          <button className="blk-ctrl" onClick={onUp} aria-label="Вверх" title="Вверх">
             ▲
           </button>
-          <button
-            className="blk-ctrl"
-            onClick={onDown}
-            aria-label="Вниз"
-            title="Вниз"
-          >
+          <button className="blk-ctrl" onClick={onDown} aria-label="Вниз" title="Вниз">
             ▼
           </button>
-          <button
-            className="blk-ctrl danger"
-            onClick={onRemove}
-            aria-label="Удалить"
-            title="Удалить"
-          >
+          <button className="blk-ctrl danger" onClick={onRemove} aria-label="Удалить" title="Удалить">
             ✖
           </button>
         </div>
       </div>
 
-      {block.type === "image_slider" && (
-        <ImageSliderEditor block={block} onChange={onChange} />
-      )}
+      {block.type === "image_slider" && <ImageSliderEditor block={block} onChange={onChange} />}
 
-      {block.type === "image" && (
-        <ImageBlockEditor block={block} onChange={onChange} />
-      )}
+      {block.type === "image" && <ImageBlockEditor block={block} onChange={onChange} />}
 
       {block.type === "text_block" && (
         <div className="blk-body">
@@ -862,9 +847,7 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
             onChange={(html) => onChange({ data: { ...block.data, html } })}
           />
           <div className="adm-muted" style={{ marginTop: 8 }}>
-            Символов: {(block.data?.html || "")
-              .replace(/<[^>]*>/g, "")
-              .length}
+            Символов: {(block.data?.html || "").replace(/<[^>]*>/g, "").length}
           </div>
         </div>
       )}
@@ -874,14 +857,14 @@ function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
       {block.type === "template_block" && (
         <div className="blk-body">
           <div className="tpl-box editor">
-            <Subscribe/>
+            <Subscribe />
           </div>
         </div>
       )}
       {block.type === "social_block" && (
         <div className="blk-body">
           <div className="tpl-box editor">
-            <Social/>
+            <Social />
           </div>
         </div>
       )}
@@ -1139,9 +1122,7 @@ function ImageSliderEditor({ block, onChange }) {
           multiple
           onChange={(e) => handleUploadMany(e.target.files)}
         />
-        <span className="adm-muted">
-          Можно выбрать несколько файлов сразу или перетащить в область ниже
-        </span>
+        <span className="adm-muted">Можно выбрать несколько файлов сразу или перетащить в область ниже</span>
       </div>
 
       <div
@@ -1156,7 +1137,6 @@ function ImageSliderEditor({ block, onChange }) {
         }}
       >
         Перетащи сюда изображения для массовой загрузки
-        {/* прогресс по пакету */}
         {Object.keys(progressMap).some((k) => k.startsWith("file_")) && (
           <div className="adm-progress" style={{ marginTop: 8 }}>
             {Math.round(
@@ -1171,17 +1151,11 @@ function ImageSliderEditor({ block, onChange }) {
       {/* Список изображений */}
       {images.map((img, i) => (
         <div className="img-row" key={i}>
-          {/* Превью */}
           {img?.url ? (
             <img
               src={img.url}
               alt=""
-              style={{
-                width: 80,
-                height: 48,
-                objectFit: "cover",
-                borderRadius: 8,
-              }}
+              style={{ width: 80, height: 48, objectFit: "cover", borderRadius: 8 }}
             />
           ) : (
             <div
@@ -1201,7 +1175,6 @@ function ImageSliderEditor({ block, onChange }) {
             </div>
           )}
 
-          {/* Поле URL */}
           <input
             className="adm-input"
             style={{ flex: 1 }}
@@ -1210,7 +1183,6 @@ function ImageSliderEditor({ block, onChange }) {
             onChange={(e) => updateUrl(i, e.target.value)}
           />
 
-          {/* ALT */}
           <input
             className="adm-input"
             style={{ width: 220 }}
@@ -1219,7 +1191,6 @@ function ImageSliderEditor({ block, onChange }) {
             onChange={(e) => updateAlt(i, e.target.value)}
           />
 
-          {/* Точечная загрузка */}
           <label className="adm-mini">
             <input
               type="file"
@@ -1233,33 +1204,17 @@ function ImageSliderEditor({ block, onChange }) {
             Загрузить
           </label>
 
-          {/* Переместить */}
-          <button
-            className="adm-mini"
-            onClick={() => move(i, i - 1)}
-            title="Вверх"
-          >
-            ↑
-          </button>
-          <button
-            className="adm-mini"
-            onClick={() => move(i, i + 1)}
-            title="Вниз"
-          >
-            ↓
-          </button>
+          <button className="adm-mini" onClick={() => move(i, i - 1)} title="Вверх">↑</button>
+          <button className="adm-mini" onClick={() => move(i, i + 1)} title="Вниз">↓</button>
 
-          {/* Удалить */}
           <button className="adm-mini danger" onClick={() => removeAt(i)}>
             Удалить
           </button>
 
-          {/* Прогресс для точечной загрузки */}
           {progressMap[i] > 0 && progressMap[i] < 100 && (
             <span className="adm-progress">{progressMap[i]}%</span>
           )}
 
-          {/* Показать public_id (если есть) */}
           {img.public_id ? (
             <span className="adm-muted small" style={{ marginLeft: 8 }}>
               {img.public_id}
@@ -1273,8 +1228,7 @@ function ImageSliderEditor({ block, onChange }) {
           + Добавить пустую строку
         </button>
         <span className="adm-muted small">
-          Поддерживается перезалив конкретного кадра, массовая загрузка и
-          drag&drop.
+          Поддерживается перезалив конкретного кадра, массовая загрузка и drag&drop.
         </span>
       </div>
     </div>
@@ -1291,10 +1245,10 @@ function labelByType(type) {
       return "Реклама (статичный)";
     case "template_block":
       return "Блок отзыва";
-      case "help_block":
+    case "help_block":
       return "Помощь местным";
-      case "social_block":
-      return "Блок соц сети"
+    case "social_block":
+      return "Блок соц сети";
     case "image":
       return "Изображение";
     default:
