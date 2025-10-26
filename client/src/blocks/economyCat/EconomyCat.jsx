@@ -30,7 +30,7 @@ export default function EconomyCat() {
     (async () => {
       try {
         setLoading(true);
-        const r = await fetch(`${API_BASE}/economy`);
+        const r = await fetch(`${API_BASE}/api/economy`);
         if (!r.ok) throw new Error("economy_fetch_failed");
         const json = await r.json();
         if (alive) setData(json || {});
