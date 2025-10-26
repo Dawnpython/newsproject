@@ -6,8 +6,8 @@ const API = {
   categories: `${API_BASE}/categories`,
   createCategory: `${API_BASE}/categories`,             // POST
   upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`, // PUT
-  economy: `${API_BASE}/api/economy`,                   // важно: с /api
-  reorder: (section) => `${API_BASE}/api/economy/reorder/${section}`,
+  economy: `${API_BASE}/economy`,                   // важно: с /api
+  reorder: (section) => `${API_BASE}/economy/reorder/${section}`,
   cloudinarySignature: `${API_BASE}/api/uploads/signature`,
 };
 
