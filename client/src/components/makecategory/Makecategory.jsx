@@ -806,7 +806,7 @@ export default function Makecategory() {
      
       {tab === "economy" && (
         <section className="adm-card">
-          <h3 className="adm-card-title">Экономия: редактор</h3>
+          
           <Economy />
         </section>
       )}

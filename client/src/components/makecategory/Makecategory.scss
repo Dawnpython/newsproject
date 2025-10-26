@@ -12,6 +12,8 @@
   width: 100%;
 }
 
+
+
 /* Шапка */
 .adm-header h1 {
   font-size: 18px;
@@ -227,6 +229,12 @@
   color: #888;
   font-size: 13px;
   margin-top: 8px;
+}
+
+.mkc-tabs{
+  display: flex;
+  gap:10px;
+  padding-bottom: 20px;
 }
 
 /* Нижняя панель действий (прилипает внизу контейнера и не вылазит) */

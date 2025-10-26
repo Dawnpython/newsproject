@@ -18,6 +18,35 @@ export default function registerCategoryRoutes(app, pool) {
     }
   });
 
+  // POST /categories — создать категорию
+router.post("/categories", async (req, res) => {
+  try {
+    let { label, slug, title = null, subtitle = null, cover_url = null, order_index = 0, is_active = true } = req.body || {};
+    label = (label || "").trim();
+    slug  = (slug  || "").trim().toLowerCase();
+
+    if (!label) return res.status(400).json({ error: "LABEL_REQUIRED" });
+    if (!slug)  return res.status(400).json({ error: "SLUG_REQUIRED" });
+
+    // уникальность slug
+    const exists = await pool.query(`SELECT 1 FROM categories WHERE slug=$1`, [slug]);
+    if (exists.rowCount > 0) return res.status(409).json({ error: "SLUG_EXISTS" });
+
+    const ins = await pool.query(
+      `INSERT INTO categories (slug, label, title, subtitle, cover_url, order_index, is_active, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, now(), now())
+       RETURNING id, slug, label, title, subtitle, cover_url, order_index, is_active`,
+      [slug, label, title || label, subtitle, cover_url, order_index, !!is_active]
+    );
+
+    return res.status(201).json(ins.rows[0]);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "failed_to_create_category" });
+  }
+});
+
+
   // GET /page/:slug — hero + контент статьи (published)
   router.get("/page/:slug", async (req, res) => {
     try {

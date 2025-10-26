@@ -4,8 +4,10 @@ import "/src/components/admin/economyAdmin/Economy.css";
 const API_BASE = "https://newsproject-dx8n.onrender.com";
 const API = {
   categories: `${API_BASE}/categories`,
-  economy: `${API_BASE}/economy`,
-  reorder: (section) => `${API_BASE}/economy/reorder/${section}`,
+  createCategory: `${API_BASE}/categories`,             // POST
+  upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`, // PUT
+  economy: `${API_BASE}/api/economy`,                   // важно: с /api
+  reorder: (section) => `${API_BASE}/api/economy/reorder/${section}`,
   cloudinarySignature: `${API_BASE}/api/uploads/signature`,
 };
 
@@ -14,7 +16,7 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// ----- Cloudinary helpers (копия из Makecategory) -----
+// ----- Cloudinary helpers -----
 async function getSignature({ folder } = {}) {
   const res = await fetch(API.cloudinarySignature, {
     method: "POST",
@@ -60,6 +62,15 @@ const SECTIONS = [
   { id: "other",   label: "Другое"     },
 ];
 
+function slugify(s="") {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")    // убрать всё, кроме букв/цифр/пробела/дефиса/_
+    .replace(/\s+/g, "-")        // пробелы -> "-"
+    .replace(/-+/g, "-");        // сдвоенные дефисы -> один
+}
+
 export default function EconomyAdmin() {
   const [tab, setTab] = useState(SECTIONS[0].id);
   const [items, setItems] = useState([]);
@@ -86,7 +97,7 @@ export default function EconomyAdmin() {
       try {
         setLoading(true);
         setMsg("");
-        const r = await fetch(`${API.economy}?section=${tab}`);
+        const r = await fetch(`${API.economy}?section=${tab}`, { headers: { ...authHeaders() }});
         if (!r.ok) throw new Error("load_failed");
         const data = await r.json();
         if (!alive) return;
@@ -110,12 +121,18 @@ export default function EconomyAdmin() {
         title: "",
         image_url: "",
         image_public_id: "",
-        link_type: "category",
+        link_type: "category",     // по умолчанию ведём на категорию
         link_slug: categories[0]?.slug || "",
         link_url: "",
         sort_order: prev.length,
         is_active: true,
         _isNew: true,
+
+        // расширение: режим создания новой категории/страницы
+        _new_cat_mode: false,
+        _new_label: "",
+        _new_slug: "",
+        _create_page: true, // создавать пустую страницу по-умолчанию
       },
     ]);
   };
@@ -123,18 +140,90 @@ export default function EconomyAdmin() {
   const saveItem = async (it) => {
     try {
       setMsg("");
+
+      let payload = { ...it };
+      delete payload._isNew;
+      // вспомогательные поля UI
+      const {
+        _new_cat_mode,
+        _new_label,
+        _new_slug,
+        _create_page,
+        ...clean
+      } = payload;
+
+      // 1) Если включён режим "Создать новую категорию"
+      if (_new_cat_mode) {
+        const label = (_new_label || "").trim();
+        const slug  = (_new_slug || slugify(label)).trim();
+        if (!label || !slug) {
+          setMsg("Укажи Label и Slug для новой категории");
+          return;
+        }
+
+        // 1.1 Создаём категорию
+        const cRes = await fetch(API.createCategory, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({
+            label,
+            slug,
+            title: label,
+            is_active: true,
+          }),
+        });
+        if (!cRes.ok) {
+          const t = await cRes.text().catch(()=> "");
+          throw new Error(`create_category_failed ${t}`);
+        }
+        const createdCategory = await cRes.json();
+
+        // 1.2 По желанию — создаём пустую страницу (черновик или опубликованную — выбери)
+        if (_create_page) {
+          const pRes = await fetch(API.upsertCategoryPage(slug), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({
+              status: "draft",
+              content_json: [],
+              title: label,
+              seo_meta_title: label,
+              seo_meta_description: null,
+              cover_image_url: null,
+              excerpt: null,
+            }),
+          });
+          if (!pRes.ok) {
+            const t = await pRes.text().catch(()=> "");
+            throw new Error(`create_page_failed ${t}`);
+          }
+          await pRes.json();
+        }
+
+        // 1.3 Обновляем локальный список категорий (чтобы появилось в селекте)
+        setCategories((list) => {
+          if (Array.isArray(list)) return [createdCategory, ...list];
+          return [createdCategory];
+        });
+
+        // 1.4 Привязываем элемент экономики к новосозданной категории
+        clean.link_type = "category";
+        clean.link_slug = slug;
+      }
+
+      // 2) Сохраняем/обновляем сам элемент экономики
       const isNew = it._isNew || String(it.id).startsWith("local_");
       const method = isNew ? "POST" : "PATCH";
       const url = isNew ? API.economy : `${API.economy}/${it.id}`;
-      const body = { ...it };
-      delete body._isNew;
+
       const r = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify(body),
+        body: JSON.stringify(clean),
       });
       if (!r.ok) throw new Error("save_failed");
       const saved = await r.json();
+
       setItems((arr) => arr.map((x) => (x.id === it.id ? saved : x)));
       setMsg("Сохранено");
     } catch (e) {
@@ -196,7 +285,7 @@ export default function EconomyAdmin() {
   return (
     <div className="adm-wrap">
       <header className="adm-header">
-        <h1>Экономия: постеры</h1>
+        <h1>Категории</h1>
       </header>
 
       {/* Таб-секции */}
@@ -271,6 +360,13 @@ function EconomyItemRow({ item, categories, onChange, onSave, onDelete, onUp, on
     }
   };
 
+  // генерация slug по вводу label
+  const autoSlug = () => {
+    if (!item._new_slug && item._new_label) {
+      onChange({ _new_slug: slugify(item._new_label) });
+    }
+  };
+
   return (
     <div className="eco-admin-row">
       {/* preview */}
@@ -319,16 +415,57 @@ function EconomyItemRow({ item, categories, onChange, onSave, onDelete, onUp, on
               Свой URL
             </label>
           </div>
+
+          {/* режим выбора существующей категории или создание новой */}
           {item.link_type === "category" ? (
-            <select
-              className="adm-select"
-              value={item.link_slug || ""}
-              onChange={(e)=>onChange({ link_slug: e.target.value })}
-            >
-              {categories.map(c => (
-                <option key={c.id} value={c.slug}>{c.label}</option>
-              ))}
-            </select>
+            <>
+              <div className="eco-row smalls">
+                <label className="adm-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!item._new_cat_mode}
+                    onChange={(e)=>onChange({ _new_cat_mode: e.target.checked })}
+                  />
+                  Создать новую категорию
+                </label>
+              </div>
+
+              {!item._new_cat_mode ? (
+                <select
+                  className="adm-select"
+                  value={item.link_slug || ""}
+                  onChange={(e)=>onChange({ link_slug: e.target.value })}
+                >
+                  {categories.map(c => (
+                    <option key={c.id} value={c.slug}>{c.label} ({c.slug})</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="eco-newcat">
+                  <input
+                    className="adm-input"
+                    placeholder="Label категории"
+                    value={item._new_label || ""}
+                    onChange={(e)=>onChange({ _new_label: e.target.value })}
+                    onBlur={autoSlug}
+                  />
+                  <input
+                    className="adm-input"
+                    placeholder="Slug (lat, например taxi)"
+                    value={item._new_slug || ""}
+                    onChange={(e)=>onChange({ _new_slug: e.target.value.toLowerCase() })}
+                  />
+                  <label className="adm-checkbox" style={{marginTop:8}}>
+                    <input
+                      type="checkbox"
+                      checked={!!item._create_page}
+                      onChange={(e)=>onChange({ _create_page: e.target.checked })}
+                    />
+                    Сразу создать пустую страницу
+                  </label>
+                </div>
+              )}
+            </>
           ) : (
             <input
               className="adm-input"
@@ -346,9 +483,7 @@ function EconomyItemRow({ item, categories, onChange, onSave, onDelete, onUp, on
             checked={!!item.is_active}
             onChange={(e)=>onChange({ is_active: e.target.checked })}
           />
-
           <span className="spacer" />
-
           <label className="adm-label">Порядок</label>
           <button className="adm-mini" onClick={onUp}>↑</button>
           <button className="adm-mini" onClick={onDown}>↓</button>

@@ -295,6 +295,12 @@
   margin-top: 8px;
 }
 
+.mkc-tabs {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
 /* Нижняя панель действий (прилипает внизу контейнера и не вылазит) */
 .adm-footer {
   position: sticky;
