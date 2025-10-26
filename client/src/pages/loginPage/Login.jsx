@@ -14,13 +14,12 @@ export default function Login() {
 
   const [isRegister, setIsRegister] = useState(false);
 
-  // если уже авторизованы — сразу уводим на главную (WelcomeAuth сам проверит токен)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) navigate("/", { replace: true });
   }, [navigate]);
 
-  // --- стейт полей регистрации ---
+ 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,20 +39,20 @@ export default function Login() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // --- стейт полей логина ---
+ 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginTouched, setLoginTouched] = useState({ email: false, password: false });
   const [loginSubmitted, setLoginSubmitted] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // режим из URL
+
   useEffect(() => {
     if (modeFromUrl === "register") setIsRegister(true);
     if (modeFromUrl === "login") setIsRegister(false);
   }, [modeFromUrl]);
 
-  // --- валидация регистрации ---
+  
   const errors = useMemo(() => {
     const e = {};
     if (!name.trim()) e.name = true;
@@ -67,7 +66,7 @@ export default function Login() {
 
   const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
-  // --- валидация логина ---
+
   const loginErrors = useMemo(() => {
     const e = {};
     if (!loginEmail.trim() || !loginEmail.includes("@") || /\s/.test(loginEmail)) e.email = true;
@@ -80,7 +79,7 @@ export default function Login() {
   const markAllTouched = () =>
     setTouched({ name: true, email: true, phone: true, password: true, password2: true });
 
-  // === РЕГИСТРАЦИЯ ===
+
   const handleRegisterClick = async () => {
     setSubmitted(true);
     markAllTouched();
@@ -112,7 +111,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); // WelcomeAuth сам подтянет профиль
+      navigate("/", { replace: true }); 
     } catch (e) {
       console.error("Register error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -121,7 +120,7 @@ export default function Login() {
     }
   };
 
-  // === ЛОГИН ===
+  
   const handleLoginClick = async () => {
     setLoginSubmitted(true);
     setLoginTouched({ email: true, password: true });
@@ -152,7 +151,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); // WelcomeAuth проверит токен и покажет профиль
+      navigate("/", { replace: true }); 
     } catch (e) {
       console.error("Login error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -161,7 +160,7 @@ export default function Login() {
     }
   };
 
-  // ======= РЕНДЕР =======
+
   return (
     <div className="login-container">
       <div className="title" onClick={() => navigate("/")}>

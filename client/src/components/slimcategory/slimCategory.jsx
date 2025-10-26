@@ -10,9 +10,9 @@ import iconBank from '/src/assets/icons/slimcategory/icon-money.png'
 import iconFarm from '/src/assets/icons/slimcategory/icon-pharm.png'
 import iconChuch from '/src/assets/icons/slimcategory/icon-church.png'
 
-/** Явная карта соответствий label -> slug, чтобы точно совпало с БД */
+
 const LABEL_TO_SLUG = {
-  "Новости": "news",                // если нет страницы — можно убрать/поменять
+  "Новости": "news",                
   "Погода": "weather",
   "Скидки города": "city-deals",
   "Авторемонт": "auto-repair",
@@ -21,7 +21,7 @@ const LABEL_TO_SLUG = {
   "Церкви и храмы": "churches",
 };
 
-/** Значения по умолчанию (сразу со slug’ами) */
+
 const DEFAULT_CATEGORIES = [
   { label: "Новости",        icon: iconNews,  slug: LABEL_TO_SLUG["Новости"] },
   { label: "Погода",         icon: iconCloud, slug: LABEL_TO_SLUG["Погода"] },
@@ -43,7 +43,7 @@ export default function SlimCategory({ items = DEFAULT_CATEGORIES, onSelect }) {
     if (onSelect) {
       onSelect(slug, item);
     } else {
-      // по умолчанию — идём на универсальную страницу генератора
+     
       navigate(`/c/${slug}`, { state: { slug } });
     }
   };

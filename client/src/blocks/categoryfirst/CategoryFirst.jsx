@@ -10,9 +10,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function CategoryFirst(){
 
-    
-
-
     const navigate = useNavigate();
     return(
         <div className="category-first">

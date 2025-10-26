@@ -9,7 +9,7 @@ import fourStory from "/src/assets/recomendation/image-4.png";
 import fiveStory from "/src/assets/recomendation/image-5.png";
 import sixStory from "/src/assets/recomendation/image-6.png";
 
-/** label -> slug (как в БД) */
+
 const LABEL_TO_SLUG = {
   "Если проездом": "passing-through",
   "За 1 день": "one-day",
@@ -21,7 +21,7 @@ const LABEL_TO_SLUG = {
 
 const normalizeLabel = (label = "") => label.replace(/\s+/g, " ").trim();
 
-/** По умолчанию сразу кладём корректные slug’и */
+
 const DEFAULT_STORIES = [
   { title: "Если проездом", image: firstStory, slug: "passing-through" },
   { title: "За 1 день",     image: secondStory, slug: "one-day" },

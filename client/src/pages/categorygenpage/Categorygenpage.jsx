@@ -1,4 +1,4 @@
-// /src/pages/categorygenpage/Categorygenpage.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "/src/pages/categorygenpage/Categorygenpage.css";
@@ -75,7 +75,7 @@ export default function Categorygenpage(props) {
 
   return (
     <div className="p-wrap">
-      {/* HERO */}
+   
       <section
         className="p-hero"
         style={{
@@ -84,7 +84,7 @@ export default function Categorygenpage(props) {
       >
         <div className="p-hero__overlay" />
 
-        {/* Кнопка «назад на главную» */}
+    
         <button
           className="p-hero__back"
           aria-label="Назад на главную"
@@ -125,19 +125,19 @@ export default function Categorygenpage(props) {
   );
 }
 
-/* ===== РЕНДЕР БЛОКОВ ===== */
+
 function BlockRenderer({ block }) {
   const type = block?.type;
   const data = block?.data || {};
 
-  // --- ТЕКСТОВЫЙ БЛОК: сначала используем data.html, иначе фоллбек из data.text ---
+
   if (type === "text_block" || type === "text") {
     const html = data.html || plainToHtml(data.text || "");
     return (
       <div className="p-card p-textblock">
         <div
           className="p-text"
-          // обязательно санитизируем HTML
+         
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
         />
       </div>
@@ -200,7 +200,7 @@ if (type === "help_block") {
   );
 }
 
-/* ===== СЛАЙДЕР ===== */
+
 function ImageSlider({ images }) {
   const [active, setActive] = useState(0);
   const trackRef = useRef(null);

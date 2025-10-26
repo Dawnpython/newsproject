@@ -13,7 +13,7 @@ import eightIcon from "/src/assets/icons/fatcategory/img-category-8.png";
 import nineIcon from "/src/assets/icons/fatcategory/img-category-9.png";
 import tenIcon from "/src/assets/icons/fatcategory/img-category-10.png";
 
-/** Явная карта соответствий label -> slug (совпадает с нашей БД) */
+
 const LABEL_TO_SLUG = {
   "Лодки и паромы": "boats",
   "Такси": "taxi",
@@ -27,15 +27,10 @@ const LABEL_TO_SLUG = {
   "Скидки и акции города": "city-deals",
 };
 
-/** Нормализуем лейбл: убираем переносы и лишние пробелы */
+
 const normalizeLabel = (label = "") => label.replace(/\s+/g, " ").trim();
 
-/**
- * Для плиток с картинкой можно (необязательно) добавить bgImage2x/bgImage3x,
- * чтобы ретина брала более чёткие источники.
- *
- * Здесь сразу задаём slug для надёжности, но fallback есть через LABEL_TO_SLUG.
- */
+
 const DEFAULT_TILES = [
   {
     label: "Лодки \nи паромы",
@@ -111,7 +106,7 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
         aria-label={normalized}
         data-slug={slug}
       >
-        {/* Фоновая картинка как <img> для чёткости + srcSet (если передадите) */}
+        
         {it.bgImage && (
           <img
             className="tile__bg"
@@ -128,13 +123,13 @@ export default function Fatcategory({ items = DEFAULT_TILES, onSelect }) {
           />
         )}
 
-        {/* Если нужно совместить ГРАДИЕНТ + картинку: полупрозрачный слой */}
+        
         {it.bgImage && style.backgroundImage && <span className="tile__gradient" aria-hidden="true" />}
 
-        {/* Иконка */}
+       
         {it.icon && <img src={it.icon} alt="" className="tile__icon" />}
 
-        {/* Текст (с сохранением переносов строк) */}
+       
         <span className="tile__label">
           {String(it.label).split("\n").map((line, idx) => (
             <span key={idx}>

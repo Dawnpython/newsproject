@@ -1,4 +1,4 @@
-// /src/components/makecategory/Makecategory.jsx
+
 import React, {
   useEffect,
   useMemo,
@@ -14,13 +14,13 @@ import Economy from "/src/components/admin/economyAdmin/Economy.jsx";
 import "/src/components/makecategory/Makecategory.css";
 import DOMPurify from "dompurify";
 
-// ---------- tiptap (rich-text) ----------
+
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Heading from "@tiptap/extension-heading";
 
-/** ===== API base ===== */
+
 const API_BASE = "https://newsproject-tnkc.onrender.com";
 
 const API = {
@@ -31,13 +31,13 @@ const API = {
   cloudinarySignature: `${API_BASE}/api/uploads/signature`, // POST (auth + admin)
 };
 
-/** ===== Auth header helper ===== */
+
 function authHeaders() {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/** ===== Cloudinary helpers ===== */
+
 async function getSignature({ folder } = {}) {
   const res = await fetch(API.cloudinarySignature, {
     method: "POST",
@@ -48,7 +48,7 @@ async function getSignature({ folder } = {}) {
     const t = await res.text().catch(() => "");
     throw new Error(`signature_failed (${res.status}) ${t}`);
   }
-  return res.json(); // { timestamp, signature, folder, api_key, cloud_name }
+  return res.json(); 
 }
 
 function uploadFileToCloudinary(file, sig, onProgress) {
@@ -103,7 +103,7 @@ async function uploadManyToCloudinary(files, { folder }, onFileProgress) {
   return results;
 }
 
-/** ===== Стартовые структуры блоков ===== */
+
 const initialBlock = (type) => {
   switch (type) {
     case "image_slider":
@@ -128,7 +128,7 @@ const initialBlock = (type) => {
   }
 };
 
-/** ===== Фоллбек: конвертируем старый plain-text в HTML ===== */
+
 function fallbackFromPlain(txt) {
   if (!txt) return "";
   const paras = String(txt)
@@ -143,7 +143,7 @@ function fallbackFromPlain(txt) {
   return paras.join("");
 }
 
-/** ===== Компонент редактора rich-text на tiptap ===== */
+
 function RichTextEditor({ value, onChange }) {
   const editor = useEditor({
     extensions: [
@@ -267,12 +267,12 @@ function RichTextEditor({ value, onChange }) {
 }
 
 export default function Makecategory() {
-  const [tab, setTab] = useState("pages"); // "pages" | "economy"
+  const [tab, setTab] = useState("pages"); 
   const [categories, setCategories] = useState([]);
   const [selectedSlug, setSelectedSlug] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // HERO
+  
   const [hero, setHero] = useState({
     title: "",
     subtitle: "",
@@ -283,14 +283,14 @@ export default function Makecategory() {
   const [uploadingHero, setUploadingHero] = useState(false);
   const [heroProgress, setHeroProgress] = useState(0);
 
-  // CONTENT
+  
   const [blocks, setBlocks] = useState([]);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
-  /** Загрузка категорий */
+  
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -315,7 +315,7 @@ export default function Makecategory() {
     };
   }, []);
 
-  /** Загрузка статьи/страницы при смене slug или списков категорий */
+
   useEffect(() => {
     if (!selectedSlug) return;
     let alive = true;
@@ -354,9 +354,9 @@ export default function Makecategory() {
     return () => {
       alive = false;
     };
-  }, [selectedSlug, categories]); // важно: следим за списком целиком
+  }, [selectedSlug, categories]); 
 
-  /** Hero handlers */
+
   const updateHeroField = (key, value) =>
     setHero((h) => ({ ...h, [key]: value }));
 
@@ -418,7 +418,7 @@ export default function Makecategory() {
     }
   }
 
-  /** Content handlers */
+
   const addBlock = (type) => setBlocks((b) => [...b, initialBlock(type)]);
   const updateBlock = (index, updater) =>
     setBlocks((prev) =>
@@ -461,7 +461,7 @@ export default function Makecategory() {
     }
   };
 
-  /** Drag&Drop для зоны предпросмотра cover */
+  
   const dropRef = useRef(null);
   const onDrop = useCallback(
     (e) => {
@@ -483,7 +483,7 @@ export default function Makecategory() {
     };
   }, [onDrop]);
 
-  /** Локальный предпросмотр */
+
   const localPreview = useMemo(() => {
     return (
       <div className="preview">
@@ -612,7 +612,7 @@ export default function Makecategory() {
       <header className="adm-header">
         <h1>Контент</h1>
 
-        {/* Простые табы */}
+    
         <div className="mkc-tabs">
           <button
             className={`adm-chip ${tab === "pages" ? "active" : ""}`}
@@ -629,10 +629,10 @@ export default function Makecategory() {
         </div>
       </header>
 
-      {/* TAB: Страницы */}
+     
       {tab === "pages" && (
         <>
-          {/* Категория */}
+       
           <section className="adm-card">
             <label className="adm-label">Категория</label>
             <div className="adm-row">
@@ -651,7 +651,7 @@ export default function Makecategory() {
             </div>
           </section>
 
-          {/* HERO */}
+          
           <section className="adm-card">
             <h3 className="adm-card-title">Hero-блок</h3>
             <div className="adm-field">
@@ -673,7 +673,7 @@ export default function Makecategory() {
               />
             </div>
 
-            {/* Загрузка обложки */}
+           
             <div className="adm-field">
               <label className="adm-label">Cover</label>
               <div className="adm-upload">
@@ -724,11 +724,11 @@ export default function Makecategory() {
             </button>
           </section>
 
-          {/* CONTENT */}
+          
           <section className="adm-card">
             <h3 className="adm-card-title">Контент (блоки)</h3>
 
-            {/* Палитра */}
+           
             <div className="adm-addrow">
               <button className="adm-chip" onClick={() => addBlock("image_slider")}>
                 + Слайдер
@@ -753,7 +753,7 @@ export default function Makecategory() {
               </button>
             </div>
 
-            {/* Список блоков */}
+            
             <div className="adm-blocks">
               {blocks.map((b, idx) => (
                 <BlockEditor
@@ -772,13 +772,13 @@ export default function Makecategory() {
             </div>
           </section>
 
-          {/* Превью */}
+          
           <section className="adm-card">
             <h3 className="adm-card-title">Локальный предпросмотр</h3>
             {localPreview}
           </section>
 
-          {/* Нижняя панель */}
+          
           <div className="adm-footer">
             <button
               className="adm-btn ghost"
@@ -803,7 +803,7 @@ export default function Makecategory() {
         </>
       )}
 
-      {/* TAB: Экономия */}
+     
       {tab === "economy" && (
         <section className="adm-card">
           <h3 className="adm-card-title">Экономия: редактор</h3>
@@ -814,7 +814,7 @@ export default function Makecategory() {
   );
 }
 
-/* --- Редактор отдельного блока --- */
+
 function BlockEditor({ block, index, onChange, onUp, onDown, onRemove }) {
   return (
     <div className="blk">
@@ -942,7 +942,7 @@ function ImageBlockEditor({ block, onChange }) {
         }}
         title="Перетащи сюда файл или используй кнопку загрузки"
       >
-        {/* Превью */}
+        
         {img?.url ? (
           <img
             src={img.url}
@@ -1007,7 +1007,7 @@ function ImageBlockEditor({ block, onChange }) {
   );
 }
 
-/** Редактор слайдера */
+
 function ImageSliderEditor({ block, onChange }) {
   const images = Array.isArray(block.data?.images) ? block.data.images : [];
   const [progressMap, setProgressMap] = React.useState({});
@@ -1091,7 +1091,7 @@ function ImageSliderEditor({ block, onChange }) {
     setImages(next);
   };
 
-  /** drag&drop зона для массовой загрузки */
+  
   const dropRef = useRef(null);
   useEffect(() => {
     const el = dropRef.current;
@@ -1114,7 +1114,7 @@ function ImageSliderEditor({ block, onChange }) {
     <div className="blk-body">
       <label className="adm-label">Слайдер: изображения</label>
 
-      {/* Массовая загрузка + dnd */}
+     
       <div className="img-row" style={{ alignItems: "center", gap: 12 }}>
         <input
           type="file"
@@ -1148,7 +1148,7 @@ function ImageSliderEditor({ block, onChange }) {
         )}
       </div>
 
-      {/* Список изображений */}
+      
       {images.map((img, i) => (
         <div className="img-row" key={i}>
           {img?.url ? (

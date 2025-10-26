@@ -130,5 +130,5 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
     }
   });
 
-  app.use("/api/economy", r);
+  app.use("/economy", r);
 }

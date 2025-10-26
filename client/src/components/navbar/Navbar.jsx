@@ -12,7 +12,7 @@ export default function Navbar() {
         <span>Главная</span>
       </NavLink>
 
-      {/* ПОМОЩЬ -> SOS */}
+     
       <NavLink
         to="/c/sos"
         state={{ slug: "sos" }}

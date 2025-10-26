@@ -17,7 +17,7 @@ export default function WelcomeAuth() {
   const [user, setUser] = useState(null);
   const [checkedAuth, setCheckedAuth] = useState(false);
 
-  // проверяем токен сразу на этом экране
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -32,7 +32,7 @@ export default function WelcomeAuth() {
         if (data?.user) {
           setUser(data.user);
 
-          // ⬅️ добавлено: если админ — сразу в админку
+          
           const isAdmin = data.user?.is_admin === true || data.user?.role === "admin";
           if (isAdmin) {
             navigate("/admin", { replace: true });
@@ -49,15 +49,15 @@ export default function WelcomeAuth() {
 
   const logout = () => {
     localStorage.removeItem("token");
-    setUser(null); // вернёмся к экрану приветствия
+    setUser(null); 
   };
 
-  // пока проверяем токен — можно вернуть null/скелетон
+
   if (!checkedAuth) return null;
 
-  // если авторизованы — показываем профиль (вместо кнопок)
+
   if (user) {
-    // ⬅️ добавлено: защита, если попали сюда админом (редирект)
+  
     if (user?.is_admin === true || user?.role === "admin") {
       navigate("/admin", { replace: true });
       return null;
@@ -71,7 +71,7 @@ export default function WelcomeAuth() {
     );
   }
 
-  // не авторизованы — обычный экран приветствия
+
   return (
     <div className="welcome-auth">
       <h1>

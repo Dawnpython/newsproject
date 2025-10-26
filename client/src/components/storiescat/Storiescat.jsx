@@ -7,7 +7,7 @@ import thirdIcon from "/src/assets/icons/storiescat/storycat-3.png";
 import fourIcon from "/src/assets/icons/storiescat/storycat-4.png";
 import fiveIcon from "/src/assets/icons/storiescat/storycat-5.png";
 
-/** label -> slug (строго по БД) */
+
 const LABEL_TO_SLUG = {
   "Любимые места туристов": "tourist-favorites",
   "Без гидов и программ": "no-guides",
@@ -15,15 +15,15 @@ const LABEL_TO_SLUG = {
   "Где поесть": "food",
 };
 
-/** Можно для особых карточек указать прямую ссылку */
+
 const LABEL_TO_HREF = {
-  "Маркетплейс": "/marketplace", // если всё же это категория — замени на /c/shops или нужный путь
+  "Маркетплейс": "/marketplace", 
 };
 
-/** Нормализация: схлопываем пробелы и переносы */
+
 const normalizeLabel = (s = "") => s.replace(/\s+/g, " ").trim();
 
-/** Значения по умолчанию с корректными slug’ами/ссылкой */
+
 const DEFAULT_ITEMS = [
   { label: "Любимые места  \nтуристов", bg: "#00D6FF", icon: firstIcon, slug: "tourist-favorites" },
   { label: "Без гидов \nи программ", bg: "linear-gradient(135deg,#0072FF,#7810D3)", icon: secondIcon, color: "white", slug: "no-guides" },
@@ -52,7 +52,7 @@ export default function Storiescat({ items = DEFAULT_ITEMS, onSelect }) {
     const href = it.href || LABEL_TO_HREF[normalized];
 
     if (onSelect) {
-      onSelect(slug ?? href, it); // вернём то, что есть
+      onSelect(slug ?? href, it); 
       return;
     }
 
@@ -95,7 +95,7 @@ export default function Storiescat({ items = DEFAULT_ITEMS, onSelect }) {
             </button>
           );
         })}
-        {/* отступ справа, чтобы не прилипало */}
+       
         <div className="storiescat-spacer" />
       </div>
     </div>

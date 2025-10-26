@@ -22,7 +22,7 @@ const CATEGORIES = [
 
 export default function EconomyCat() {
   const [active, setActive] = useState(CATEGORIES[0].id);
-  const [data, setData] = useState({});     // { sectionId: [items] }
+  const [data, setData] = useState({});     
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function EconomyCat() {
 
   const items = useMemo(() => {
     const raw = Array.isArray(data[active]) ? data[active] : [];
-    // маппинг под старую структуру (img+link) и срез до трёх
+    
     return raw.slice(0, 3).map((it) => ({
       img: it.image_url,
       link: it.link_type === "category"
