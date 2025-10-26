@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "/src/components/admin/economyAdmin/Economy.css";
 
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 const API = {
   categories: `${API_BASE}/categories`,
   economy: `${API_BASE}/economy`,
