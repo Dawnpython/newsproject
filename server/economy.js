@@ -92,16 +92,59 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
   });
 
   // DELETE /api/economy/:id  (admin)
-  r.delete("/:id", authMiddleware, adminOnly, async (req, res) => {
-    try {
-      const { id } = req.params;
-      await pool.query(`DELETE FROM economy_items WHERE id=$1`, [id]);
-      res.json({ ok: true });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "economy_delete_failed" });
+ // DELETE /api/economy/:id  (admin) — удаляет постер + связанную категорию/страницу, если постер ссылался на категорию
+r.delete("/:id", authMiddleware, adminOnly, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { id } = req.params;
+
+    await client.query("BEGIN");
+
+    // 1) читаем элемент (и лочим его строку)
+    const cur = await client.query(
+      `SELECT link_type, link_slug
+         FROM economy_items
+        WHERE id=$1
+        FOR UPDATE`,
+      [id]
+    );
+    if (cur.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "not_found" });
     }
-  });
+
+    const { link_type, link_slug } = cur.rows[0];
+
+    // 2) если постер вёл на категорию — удаляем её страницу и саму категорию
+    if (link_type === "category" && link_slug) {
+      // сначала статьи этой категории
+      await client.query(
+        `DELETE FROM articles
+          WHERE type='category_page' AND category_slug=$1`,
+        [link_slug]
+      );
+      // затем категорию
+      await client.query(
+        `DELETE FROM categories
+          WHERE slug=$1`,
+        [link_slug]
+      );
+    }
+
+    // 3) сам элемент экономики
+    await client.query(`DELETE FROM economy_items WHERE id=$1`, [id]);
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    try { await client.query("ROLLBACK"); } catch {}
+    res.status(500).json({ error: "economy_delete_failed" });
+  } finally {
+    client.release();
+  }
+});
+
 
   // PATCH /api/economy/reorder/:section  (admin)
   r.patch("/reorder/:section", authMiddleware, adminOnly, async (req, res) => {
