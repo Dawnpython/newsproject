@@ -9,7 +9,7 @@ import icoShops   from "/src/assets/icons/economy/economyicon4.svg";
 import icoHotels  from "/src/assets/icons/economy/economyicon5.svg";
 import icoOther   from "/src/assets/icons/economy/economyicon6.svg";
 
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 
 const CATEGORIES = [
   { id: "popular", label: "Популярные", icon: icoPopular },
