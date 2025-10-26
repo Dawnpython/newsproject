@@ -21,7 +21,7 @@ import Link from "@tiptap/extension-link";
 import Heading from "@tiptap/extension-heading";
 
 
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 
 const API = {
   categories: `${API_BASE}/categories`,
