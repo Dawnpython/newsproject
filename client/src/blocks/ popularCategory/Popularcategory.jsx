@@ -99,7 +99,7 @@ export default function Popularcategory() {
               }
             />
             <div className="card__overlay">
-              <h3 className="card__title">{normalizeMultiline(it.title)}</h3>
+              
               {it.description && (
                 <p className="card__desc">
                   {normalizeMultiline(it.description)}
