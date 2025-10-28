@@ -3,7 +3,7 @@
 import "./telegram.js";
 import registerCategoryRoutes from "./category.js";
 import registerEconomyRoutes from "./economy.js";
-import registerPopularRoutes from "./routes/popular.js";
+import registerPopularRoutes from "./popular.js";
 
 
 import "dotenv/config";
