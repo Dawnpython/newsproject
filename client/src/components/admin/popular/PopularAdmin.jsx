@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import "/src/components/admin/economyAdmin/Economy.css";
+import "/src/components/admin/economyAdmin/Economy.css"; // реиспользуем стили
 
+// === API ===
 const API_BASE = "https://newsproject-dx8n.onrender.com";
 const API = {
   createCategory: `${API_BASE}/categories`, // POST
   upsertCategoryPage: (slug) => `${API_BASE}/category-page/${slug}`, // PUT
-  economy: `${API_BASE}/economy`,
-  reorder: (section) => `${API_BASE}/economy/reorder/${section}`,
+  popular: `${API_BASE}/popular`, // CRUD для популярного
+  reorder: (section) => `${API_BASE}/popular/reorder/${section}`,
   cloudinarySignature: `${API_BASE}/api/uploads/signature`,
 };
 
@@ -15,7 +16,31 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// ----- Cloudinary helpers -----
+// === Helpers ===
+function slugify(s = "") {
+  // Транслит кириллицы → латиница + нормализация
+  const map = {
+    а:"a", б:"b", в:"v", г:"g", д:"d", е:"e", ё:"yo", ж:"zh", з:"z", и:"i", й:"y",
+    к:"k", л:"l", м:"m", н:"n", о:"o", п:"p", р:"r", с:"s", т:"t", у:"u", ф:"f",
+    х:"h", ц:"ts", ч:"ch", ш:"sh", щ:"shch", ъ:"", ы:"y", ь:"", э:"e", ю:"yu", я:"ya",
+    ґ:"g", є:"ye", і:"i", ї:"yi",
+  };
+  const latin = s
+    .toLowerCase()
+    .replace(/[\u0400-\u04FF]/g, (ch) => map[ch] ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  let slug = latin
+    .replace(/[^a-z0-9\s-_]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!slug) slug = "item-" + Date.now();
+  return slug;
+}
+
 async function getSignature({ folder } = {}) {
   const res = await fetch(API.cloudinarySignature, {
     method: "POST",
@@ -51,26 +76,17 @@ function uploadFileToCloudinary(file, sig, onProgress) {
   });
 }
 
-// ----- UI -----
+// === UI ===
 const SECTIONS = [
-  { id: "popular", label: "Популярные" },
-  { id: "tours",   label: "Экскурсии"  },
-  { id: "food",    label: "Еда"        },
-  { id: "shops",   label: "Магазины"   },
-  { id: "hotels",  label: "Отели"      },
-  { id: "other",   label: "Другое"     },
+  { id: "water",   label: "На воде" },
+  { id: "premium", label: "Premium" },
+  { id: "extreme", label: "Экстрим" },
+  { id: "walk",    label: "Пешком" },
+  { id: "kids",    label: "С детьми" },
+  { id: "fun",     label: "Развлечения" },
 ];
 
-function slugify(s = "") {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-export default function EconomyAdmin() {
+export default function PopularAdmin() {
   const [tab, setTab] = useState(SECTIONS[0].id);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +100,7 @@ export default function EconomyAdmin() {
       try {
         setLoading(true);
         setMsg("");
-        const r = await fetch(`${API.economy}?section=${tab}`, { headers: { ...authHeaders() }});
+        const r = await fetch(`${API.popular}?section=${tab}`, { headers: { ...authHeaders() }});
         if (!r.ok) throw new Error("load_failed");
         const data = await r.json();
         if (!alive) return;
@@ -100,51 +116,44 @@ export default function EconomyAdmin() {
   }, [tab]);
 
   const addEmpty = () => {
-    setItems(prev => [
+    setItems(prev => ([
       ...prev,
       {
         id: `local_${Date.now()}`,
         section: tab,
         title: "",
-        _slug: "", // генерим из title, можно поправить вручную
+        description: "", // <— новое поле для карточки
+        _slug: "",
         image_url: "",
         image_public_id: "",
         sort_order: prev.length,
         _isNew: true,
-      },
-    ]);
+      }
+    ]));
   };
 
   const saveItem = async (it) => {
     try {
       setMsg("");
-
       const title = (it.title || "").trim();
       const slug = (it._slug || slugify(title)).trim();
       if (!title) {
-        setMsg("Укажи название постера/страницы");
+        setMsg("Укажи название карточки/страницы");
         return;
       }
 
-      // 1) Всегда создаём (или подтверждаем существование) категории
+      // 1) Создаём/подтверждаем категорию
       const cRes = await fetch(API.createCategory, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          label: title,
-          slug,
-          title,
-          is_active: true,
-        }),
+        body: JSON.stringify({ label: title, slug, title, is_active: true }),
       });
-
-      if (!cRes.ok) {
+      if (!cRes.ok && cRes.status !== 409) {
         const t = await cRes.text().catch(()=>"");
-        // Если категория уже существует, сервер может вернуть 409 — пропускаем
-        if (cRes.status !== 409) throw new Error(`create_category_failed ${t}`);
+        throw new Error(`create_category_failed ${t}`);
       }
 
-      // 2) Всегда создаём/обновляем пустую страницу (черновик)
+      // 2) Создаём/обновляем черновик страницы
       const pRes = await fetch(API.upsertCategoryPage(slug), {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -164,11 +173,12 @@ export default function EconomyAdmin() {
       }
       await pRes.json();
 
-      // 3) Сохраняем/обновляем сам элемент экономики
+      // 3) Сохраняем сам элемент популярного
       const clean = {
         id: it.id,
         section: it.section,
         title,
+        description: it.description ?? null,
         image_url: it.image_url,
         image_public_id: it.image_public_id,
         sort_order: it.sort_order,
@@ -178,7 +188,7 @@ export default function EconomyAdmin() {
 
       const isNew = it._isNew || String(it.id).startsWith("local_");
       const method = isNew ? "POST" : "PATCH";
-      const url = isNew ? API.economy : `${API.economy}/${it.id}`;
+      const url = isNew ? API.popular : `${API.popular}/${it.id}`;
 
       const r = await fetch(url, {
         method,
@@ -204,7 +214,7 @@ export default function EconomyAdmin() {
     try {
       const ok = confirm("Удалить элемент?");
       if (!ok) return;
-      const r = await fetch(`${API.economy}/${id}`, {
+      const r = await fetch(`${API.popular}/${id}`, {
         method: "DELETE",
         headers: { ...authHeaders() },
       });
@@ -249,15 +259,14 @@ export default function EconomyAdmin() {
   return (
     <div className="adm-wrap">
       <header className="adm-header">
-        <h1>Постеры</h1>
+        <h1>Популярное</h1>
       </header>
 
-      {/* Таб-секции */}
       <div className="adm-tabs">
-        {SECTIONS.map(s => (
+        {SECTIONS.map((s) => (
           <button
             key={s.id}
-            className={`adm-chip ${s.id===tab ? "active":""}`}
+            className={`adm-chip ${s.id === tab ? "active" : ""}`}
             onClick={() => setTab(s.id)}
           >
             {s.label}
@@ -266,28 +275,31 @@ export default function EconomyAdmin() {
         {loading && <span className="adm-badge">Загрузка…</span>}
       </div>
 
-      {/* Список карточек */}
       <section className="adm-card">
         <div className="adm-card-head">
-          <h3 className="adm-card-title">Элементы секции «{SECTIONS.find(s=>s.id===tab)?.label}»</h3>
+          <h3 className="adm-card-title">
+            Элементы секции «{SECTIONS.find((s) => s.id === tab)?.label}»
+          </h3>
           <div className="adm-row">
             <button className="adm-mini" onClick={addEmpty}>+ Добавить</button>
-            <button className="adm-mini ghost" onClick={saveOrder} disabled={reordering}>Сохранить порядок</button>
+            <button className="adm-mini ghost" onClick={saveOrder} disabled={reordering}>
+              Сохранить порядок
+            </button>
           </div>
         </div>
 
         <div className="eco-admin-list">
           {items.map((it, i) => (
-            <EconomyItemRow
+            <ItemRow
               key={it.id}
               item={it}
               onChange={(patch) =>
-                setItems(arr => arr.map(x => x.id === it.id ? { ...x, ...patch } : x))
+                setItems((arr) => arr.map((x) => (x.id === it.id ? { ...x, ...patch } : x)))
               }
               onSave={() => saveItem(it)}
               onDelete={() => deleteItem(it.id)}
-              onUp={() => move(i, i-1)}
-              onDown={() => move(i, i+1)}
+              onUp={() => move(i, i - 1)}
+              onDown={() => move(i, i + 1)}
             />
           ))}
           {items.length === 0 && (
@@ -301,32 +313,29 @@ export default function EconomyAdmin() {
   );
 }
 
-function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
+function ItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const handleUpload = async (file) => {
     if (!file) return;
     try {
-      setUploading(true); setProgress(0);
-      const sig = await getSignature({ folder: "economy" }).catch(() => getSignature({}));
+      setUploading(true);
+      setProgress(0);
+      const sig = await getSignature({ folder: "popular" }).catch(() => getSignature({}));
       const meta = await uploadFileToCloudinary(file, sig, (p) => setProgress(p));
-      onChange({
-        image_url: meta.secure_url,
-        image_public_id: meta.public_id,
-      });
+      onChange({ image_url: meta.secure_url, image_public_id: meta.public_id });
     } catch (e) {
       console.error(e);
       alert("Не удалось загрузить изображение");
     } finally {
-      setUploading(false); setProgress(0);
+      setUploading(false);
+      setProgress(0);
     }
   };
 
-  // авто-генерация slug по title
-  const updateTitle = (val) => {
-    onChange({ title: val, _slug: slugify(val) });
-  };
+  const updateTitle = (val) => onChange({ title: val, _slug: slugify(val) });
+  const normalizeMultiline = (t) => (t || "").replace(/\\n|\/n|n\//g, "\n");
 
   return (
     <div className="eco-admin-row">
@@ -338,8 +347,12 @@ function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
           <div className="eco-prev-empty">нет</div>
         )}
         <label className="adm-mini">
-          <input type="file" accept="image/*" style={{display:"none"}}
-                 onChange={(e)=>handleUpload(e.target.files?.[0])} />
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => handleUpload(e.target.files?.[0])}
+          />
           Загрузить
         </label>
         {uploading && <span className="adm-progress">{progress}%</span>}
@@ -350,16 +363,30 @@ function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
         <div className="eco-row">
           <input
             className="adm-input"
-            placeholder="Название постера / страницы"
+            placeholder="Название карточки / страницы"
             value={item.title || ""}
-            onChange={(e)=>updateTitle(e.target.value)}
+            onChange={(e) => updateTitle(e.target.value)}
           />
           {!!item.title && (
-            <div className="adm-hint">Ссылка страницы: /c/{item._slug || slugify(item.title)}</div>
+            <div className="adm-hint">Ссылка страницы: /c/{item._slug}</div>
           )}
         </div>
 
-        {/* управление порядком */}
+        <div className="eco-row">
+          <textarea
+            className="adm-textarea"
+            placeholder="Короткое описание для карточки (необязательно)"
+            rows={3}
+            value={item.description || ""}
+            onChange={(e) => onChange({ description: e.target.value })}
+          />
+          {!!item.description && (
+            <div className="adm-hint" style={{ whiteSpace: "pre-line" }}>
+              Превью описания:\n{normalizeMultiline(item.description)}
+            </div>
+          )}
+        </div>
+
         <div className="eco-row smalls">
           <label className="adm-label">Порядок</label>
           <button className="adm-mini" onClick={onUp}>↑</button>

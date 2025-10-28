@@ -1,49 +1,43 @@
-.help-container {
-  display: flex;
-  justify-content: center;
-  height: auto;
-  padding: 0px 10px;
-  box-sizing: border-box;
-}
-.help-container .help-block {
+.help-block {
   padding: 20px;
+  margin: 0px 10px;
   box-sizing: border-box;
   background-image: url("/src/assets/img-localform.png");
   background-repeat: no-repeat;
   background-position: center center;
-  background-size: contain;
+  background-size: cover;
   border-radius: 24px;
 }
-.help-container .help-block .help-top h1 {
+.help-block .help-top h1 {
   font-size: 22px;
   font-weight: 700;
   color: white;
 }
-.help-container .help-block .help-mid {
+.help-block .help-mid {
   display: flex;
   gap: 4px;
   padding-top: 10px;
   padding-bottom: 48px;
 }
-.help-container .help-block .help-mid p {
+.help-block .help-mid p {
   font-size: 11px;
   color: white;
   font-weight: 500;
 }
-.help-container .help-block .help-mid img {
+.help-block .help-mid img {
   width: 92px;
   height: 44px;
 }
-.help-container .help-block .help-bottom {
+.help-block .help-bottom {
   display: flex;
   gap: 60px;
 }
-.help-container .help-block .help-bottom p {
+.help-block .help-bottom p {
   font-size: 15px;
   font-weight: 600px;
   color: white;
 }
-.help-container .help-block .help-bottom button {
+.help-block .help-bottom button {
   width: 167px;
   height: 52px;
   border-radius: 100px;

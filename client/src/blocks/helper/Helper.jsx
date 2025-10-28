@@ -1,8 +1,9 @@
 import '/src/blocks/helper/Helper.css'
-
+import { useNavigate } from "react-router-dom";
 import Peoples from "/src/assets/People.png";
 
 export default function Helper() {
+   const navigate = useNavigate();
   return (
     <div className="help-container">
     <div className="help-block">
@@ -27,7 +28,7 @@ export default function Helper() {
           <br />
           бесплатный
         </p>
-        <button>Написать</button>
+        <button onClick={() => navigate("/application")}>Написать</button>
       </div>
     </div>
     </div>

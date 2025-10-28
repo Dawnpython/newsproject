@@ -1,16 +1,12 @@
-.help-container {
-    display: flex;
-    justify-content: center;
-    height: auto;
-    padding: 0px 10px;
-    box-sizing: border-box;
+
   .help-block {
     padding: 20px;
+    margin: 0px 10px;
     box-sizing: border-box;
      background-image: url("/src/assets/img-localform.png");
     background-repeat: no-repeat;
     background-position: center center;
-    background-size: contain;
+    background-size: cover;
     border-radius: 24px;
     
     .help-top {
@@ -55,4 +51,3 @@
         }
     }
   }
-}

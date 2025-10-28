@@ -11,6 +11,7 @@ import Subscribe from "/src/blocks/subscribe/Subscribe.jsx";
 import Social from "/src/blocks/social/Social.jsx";
 import Helper from "/src/blocks/helper/Helper.jsx";
 import Economy from "/src/components/admin/economyAdmin/Economy.jsx";
+import PopularAdmin from "../admin/popular/PopularAdmin";
 import "/src/components/makecategory/Makecategory.css";
 import DOMPurify from "dompurify";
 
@@ -626,6 +627,12 @@ export default function Makecategory() {
           >
             Экономия
           </button>
+          <button
+            className={`adm-chip ${tab === "popularadm" ? "active" : ""}`}
+            onClick={() => setTab("popularadm")}
+          >
+            Популярное
+          </button>
         </div>
       </header>
 
@@ -808,6 +815,12 @@ export default function Makecategory() {
         <section className="adm-card">
           
           <Economy />
+        </section>
+      )}
+      {tab === "popularadm" && (
+        <section className="adm-card">
+          
+          <PopularAdmin />
         </section>
       )}
     </div>
