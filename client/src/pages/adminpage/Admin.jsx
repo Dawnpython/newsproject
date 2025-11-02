@@ -49,7 +49,7 @@ function AdminCategoryPicker({ value = [], onChange }) {
 }
 
 export default function Adminpage() {
-  const API_BASE = "https://newsproject-tnkc.onrender.com";
+  const API_BASE = "https://newsproject-dx8n.onrender.com";
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
