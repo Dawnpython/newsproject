@@ -12,31 +12,50 @@
   bottom: 10px;
   gap: 35px;
 
-
   .nav-item {
+    position: relative; /* для позиционирования бейджа */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-decoration: none;
     font-size: 8px;
-    color: rgba(255, 255, 255, 0.6); /* серый по умолчанию */
+    color: rgba(255, 255, 255, 0.6);
     transition: color 0.2s ease;
 
     svg {
       width: 24px;
       height: 24px;
-      color: rgba(255, 255, 255, 0.6); /* серый по умолчанию */
+      color: rgba(255, 255, 255, 0.6);
       transition: color 0.2s ease;
+    }
+
+    /* бейдж справа-сверху от иконки */
+    .nav-badge {
+      position: absolute;
+      /* подгон под твой размер/высоту: при необходимости чуть подкорректируй */
+      top: -8px;
+      right: -8px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 2px;
+      border-radius: 999px;
+      background: rgba(255, 134, 0, 1);                 /* контраст с голубой шапкой */
+      color: white;                   /* ваш фирменный акцент */
+      font-size: 12px;
+      line-height: 18px;
+      font-weight: 800;
+      text-align: center;
+      pointer-events: none;             /* не мешает клику по иконке */
+      box-shadow: 0 2px 6px rgba(0,0,0,.15); /* мягкая тень как в UI */
     }
   }
 }
 
-/* ✅ Активное состояние — белый цвет */
+/* активное — белым */
 .nav-item.active {
   color: #ffffff;
 }
-
 .nav-item.active svg {
   color: #ffffff;
 }

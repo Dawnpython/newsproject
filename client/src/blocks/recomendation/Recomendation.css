@@ -119,4 +119,12 @@
 html, body {
   margin: 0;
   padding: 0;
+}
+
+.best-place {
+  position: absolute;
+  top: 45%;
+  left: 21% !important;
+  color: white !important;
+  font-size: 9px !important;
 }/*# sourceMappingURL=Recomendation.css.map */

@@ -6,6 +6,8 @@ import {FaRegEnvelope} from "react-icons/fa";
 import SlimCategory from '../../components/slimcategory/slimCategory';
 import Fatcategory from "../../components/fatcategory/Fatcategory";
 
+import Arrow from '/src/assets/Arrow.svg'
+
 import { useNavigate } from "react-router-dom"; 
 
 export default function CategoryFirst(){
@@ -19,6 +21,7 @@ export default function CategoryFirst(){
 <h1>Обращайтесь к местным<br/>
 с любым запросом!</h1>
 <button onClick={() => navigate("/application")}><FaRegEnvelope />Написать</button>
+<img className='arrow-img' src={Arrow}></img>
             </div>
         </div>
     )

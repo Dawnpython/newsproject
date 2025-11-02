@@ -78,4 +78,10 @@
   white-space: pre-line; /* перенос по \n */
   text-align: left;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* только для плитки "Без гидов и программ" */
+.storiescat-tile[data-slug=no-guides] .storiescat-icon {
+  bottom: 10px; /* поднимаем на 10px */
+  right: 10px;
 }/*# sourceMappingURL=Storiescat.css.map */

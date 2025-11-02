@@ -18,6 +18,7 @@ export default function Recomendation() {
       <div className="insta-banner">
         <img className="instalogo" style={{width:96}}  src={bannerlogo}></img>
         <img style={{width:370}} src={instabanner}></img>
+        <p className="best-place">Лучшие места для фото</p>
         <p>Все статьи</p>
         <button>Смотреть всё</button>
       </div>

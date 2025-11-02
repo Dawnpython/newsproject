@@ -70,7 +70,7 @@
       width: 180px;
       height: 58px;
       border-radius: 10px;
-      transform: rotate(-10deg) translateX(-10px) translateY(15px);
+      transform: rotate(-7deg) translateX(-10px) translateY(10px);
     }
   }
   .formkeyBackground{
@@ -78,4 +78,10 @@
     bottom: 0;
   }
   }
+}
+
+.key-yellow{
+  color:yellow;
+  font-family: "MyFont";
+  letter-spacing: 0.1em;
 }

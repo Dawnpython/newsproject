@@ -60,15 +60,7 @@ function MultiSelect({ value, onChange }) {
 
   return (
     <>
-      {/* ⬇️ Оверлей над всей страницей, ловит клики и закрывает список */}
-      {open && (
-        <div
-          className="ms-overlay"
-          onClick={() => setOpen(false)}
-          aria-hidden
-        />
-      )}
-
+      {open && <div className="ms-overlay" onClick={() => setOpen(false)} aria-hidden />}
       <div className="ms" ref={boxRef}>
         <button
           type="button"
@@ -141,8 +133,6 @@ function MultiSelect({ value, onChange }) {
   );
 }
 
-
-
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleString("ru-RU", {
@@ -154,7 +144,15 @@ function formatDate(iso) {
   });
 }
 
-// в Application.jsx — заменяем оболочку RequestCard на кликабельную
+/** безопасно берём первое числовое значение */
+function firstNumber(...vals) {
+  for (const v of vals) {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+  }
+  return 0;
+}
+
+// Карточка заявки: сама дотягивает количество откликов
 function RequestCard({ req, onAskCancel }) {
   const navigate = useNavigate();
   const goResponses = () => navigate(`/applications/${req.id}/responses`);
@@ -163,11 +161,47 @@ function RequestCard({ req, onAskCancel }) {
   const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
   const Icon = catMeta?.Icon || FaUsers;
 
+  // стартовое значение из любых доступных полей
+  const initialCount = firstNumber(
+    req.messages_cnt,
+    req.responses_cnt,
+    req.responses_count,
+    Array.isArray(req.responses) ? req.responses.length : undefined
+  );
+  const [count, setCount] = useState(initialCount);
+
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const r = await fetch(`${API_BASE}/api/requests/${req.id}/responses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) return;
+        const data = await r.json();
+        const arr = Array.isArray(data?.responses) ? data.responses : [];
+        if (!abort) setCount(arr.length);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { abort = true; };
+  }, [req.id]);
+
   return (
-    <div className="rq-card rq-card-click" onClick={goResponses} role="button" tabIndex={0}>
-      <div className="rq-mail">
-        <span className="rq-mail-icon">✉️</span>
-        {!!req.messages_cnt && <span className="rq-mail-count">{req.messages_cnt}</span>}
+    <div
+      className="rq-card rq-card-click"
+      onClick={goResponses}
+      role="button"
+      tabIndex={0}
+      aria-label={`Открыть отклики по заявке #${String(req.short_code).padStart(5, "0")}`}
+    >
+      {/* ✉️ Иконка + число откликов рядом */}
+      <div className="rq-mail" aria-label={`Откликов: ${count}`}>
+        <span className="rq-mail-icon" aria-hidden>✉️</span>
+        <span className="rq-mail-num">{count}</span>
       </div>
 
       <div className="rq-head">
@@ -182,7 +216,6 @@ function RequestCard({ req, onAskCancel }) {
 
       <div className="rq-text">{req.text}</div>
 
-      {/* отдельная кнопка отмены — останавливаем всплытие */}
       <button
         className="rq-cancel"
         onClick={(e) => { e.stopPropagation(); onAskCancel(req); }}
@@ -193,10 +226,8 @@ function RequestCard({ req, onAskCancel }) {
   );
 }
 
-
 /* ---------- Bottom Sheet ---------- */
 function CancelSheet({ open, request, onClose, onConfirm }) {
-  // блокируем скролл фона, пока открыт шит
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -204,7 +235,12 @@ function CancelSheet({ open, request, onClose, onConfirm }) {
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  const count = request?.messages_cnt || 0;
+  const count = firstNumber(
+    request?.messages_cnt,
+    request?.responses_cnt,
+    request?.responses_count,
+    Array.isArray(request?.responses) ? request.responses.length : undefined
+  );
 
   return (
     <>
@@ -217,10 +253,9 @@ function CancelSheet({ open, request, onClose, onConfirm }) {
         className={`sheet ${open ? "is-open" : ""}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="sheet-title"
       >
         <div className="sheet-handle" />
-        <h3 id="sheet-title" className="sheet-title">Вы точно хотите<br/>отменить заявку?</h3>
+        <h3 className="sheet-title">Вы точно хотите<br/>отменить заявку?</h3>
         <p className="sheet-sub">
           На вашу заявку уже откликнулось <b>{count} человек</b>.<br/>
           Возможно там есть то, что вас заинтересует!
@@ -259,7 +294,7 @@ export default function Application() {
 
   const MAX = 150;
 
-  // загрузка моих заявок
+  // грузим мои заявки
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -271,9 +306,10 @@ export default function Application() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await r.json();
-        setRequests(data.requests || []);
+        setRequests(Array.isArray(data?.requests) ? data.requests : []);
       } catch (e) {
         console.error(e);
+        setRequests([]);
       } finally {
         setLoading(false);
       }
@@ -300,7 +336,7 @@ export default function Application() {
       });
       if (!r.ok) throw new Error("create_failed");
       const { request } = await r.json();
-      setRequests((prev) => [request, ...prev]);
+      setRequests((prev) => [request, ...prev]); // у новой 0 откликов до первого дотяга
       setCategories([]);
       setText("");
     } catch (e) {
@@ -312,13 +348,11 @@ export default function Application() {
 
   const disabled = categories.length === 0 || text.trim() === "";
 
-  // открыть подтверждение
   const askCancel = (req) => {
     setSheetReq(req);
     setSheetOpen(true);
   };
 
-  // подтвердить отмену
   const confirmCancel = async () => {
     if (!sheetReq) return;
     const token = localStorage.getItem("token");
@@ -395,7 +429,6 @@ export default function Application() {
         )}
       </div>
 
-      {/* Bottom Sheet подтверждения */}
       <CancelSheet
         open={sheetOpen}
         request={sheetReq}

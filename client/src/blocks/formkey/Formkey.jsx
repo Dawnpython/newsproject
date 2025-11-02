@@ -26,7 +26,7 @@ export default function Formkey() {
           </p>
         </div>
         <div className="middle-form">
-          <h1>Хотите, чтобы местные<br/> организовали Ваш<br/> отдых <span>«под ключ»?</span> </h1>
+          <h1>Хотите, чтобы местные<br/> организовали Ваш<br/> отдых <span className="key-yellow">«ПОД КЛЮЧ»?</span> </h1>
           <p>Напишите свой запрос в свободной форме</p>
         </div>
         <div className="low-form">

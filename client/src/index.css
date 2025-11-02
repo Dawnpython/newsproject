@@ -10,3 +10,11 @@ body{
   background-color: rgba(224, 238, 248, 1);
 }
 
+@font-face {
+  font-family: "MyFont";
+  src:
+    url("/public/sunless day.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap; /* важно для скорости отрисовки */
+}
