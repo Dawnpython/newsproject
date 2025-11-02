@@ -19,7 +19,6 @@ export default function Login() {
     if (token) navigate("/", { replace: true });
   }, [navigate]);
 
- 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,20 +38,23 @@ export default function Login() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
- 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginTouched, setLoginTouched] = useState({ email: false, password: false });
   const [loginSubmitted, setLoginSubmitted] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
+  // Forgot password modal
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   useEffect(() => {
     if (modeFromUrl === "register") setIsRegister(true);
     if (modeFromUrl === "login") setIsRegister(false);
   }, [modeFromUrl]);
 
-  
   const errors = useMemo(() => {
     const e = {};
     if (!name.trim()) e.name = true;
@@ -66,7 +68,6 @@ export default function Login() {
 
   const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
-
   const loginErrors = useMemo(() => {
     const e = {};
     if (!loginEmail.trim() || !loginEmail.includes("@") || /\s/.test(loginEmail)) e.email = true;
@@ -78,7 +79,6 @@ export default function Login() {
 
   const markAllTouched = () =>
     setTouched({ name: true, email: true, phone: true, password: true, password2: true });
-
 
   const handleRegisterClick = async () => {
     setSubmitted(true);
@@ -111,7 +111,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); 
+      navigate("/", { replace: true });
     } catch (e) {
       console.error("Register error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -120,7 +120,6 @@ export default function Login() {
     }
   };
 
-  
   const handleLoginClick = async () => {
     setLoginSubmitted(true);
     setLoginTouched({ email: true, password: true });
@@ -151,7 +150,7 @@ export default function Login() {
       }
 
       if (data?.token) localStorage.setItem("token", data.token);
-      navigate("/", { replace: true }); 
+      navigate("/", { replace: true });
     } catch (e) {
       console.error("Login error:", e);
       alert("Сеть/сервер недоступен. Попробуйте ещё раз.");
@@ -160,6 +159,23 @@ export default function Login() {
     }
   };
 
+  const handleForgot = async () => {
+    if (!forgotEmail || !forgotEmail.includes("@")) { alert("Введите корректную почту"); return; }
+    try {
+      setForgotLoading(true);
+      await fetch(`${API_BASE}/api/auth/password/forgot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      setForgotSent(true); // всегда успех — не палим наличие почты
+    } catch (e) {
+      console.error(e);
+      setForgotSent(true);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   return (
     <div className="login-container">
@@ -274,7 +290,27 @@ export default function Login() {
             <button onClick={handleLoginClick} disabled={!isLoginValid || loginLoading}>
               {loginLoading ? "Входим..." : "Войти"}
             </button>
-            <a>Забыли пароль?</a>
+
+            {/* anchor, чтобы не ловить глобальный .login-content button{...} */}
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); setForgotOpen(true); setForgotSent(false); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setForgotOpen(true);
+                  setForgotSent(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              className="link-like" /* доп. класс; внешний вид останется по твоему .login-content a */
+              aria-haspopup="dialog"
+              aria-expanded={forgotOpen}
+            >
+              Забыли пароль?
+            </a>
+
             <a className="no-acc">
               Нет аккаунта?
               <span onClick={() => setIsRegister(true)}> Зарегистрируйтесь</span>
@@ -282,6 +318,47 @@ export default function Login() {
           </>
         )}
       </div>
+
+      {/* Модалка с бэкдропом — отдельные классы, чтобы не конфликтовать */}
+      {forgotOpen && (
+        <div
+          className="forgot-backdrop"
+          onClick={() => setForgotOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="forgot-modal"
+            onClick={(e) => e.stopPropagation()} // не закрывать при клике по контенту
+          >
+            {!forgotSent ? (
+              <>
+                <h3>Сброс пароля</h3>
+                <p>Укажите почту, мы отправим ссылку для восстановления.</p>
+                <input
+                  type="email"
+                  placeholder="example@mail.ru"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  autoFocus
+                />
+                <div className="forgot-row">
+                  <button onClick={handleForgot} disabled={forgotLoading}>
+                    {forgotLoading ? 'Отправляем…' : 'Отправить'}
+                  </button>
+                  <button className="btn-ghost" onClick={() => setForgotOpen(false)}>Отмена</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Письмо отправлено</h3>
+                <p>Если такая почта зарегистрирована, вы получите письмо с инструкцией.</p>
+                <button onClick={() => setForgotOpen(false)}>Ок</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

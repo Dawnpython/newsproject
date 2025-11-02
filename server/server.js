@@ -13,6 +13,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pg from "pg";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 const { Pool } = pg;
 
@@ -22,6 +23,17 @@ if (!process.env.DATABASE_URL) {
 }
 
 const app = express();
+const MAIL_FROM = process.env.MAIL_FROM; // напр. no-reply@yourdomain.com (домен должен быть верифицирован в MailerSend)
+if (!process.env.MAILERSEND_SMTP_KEY || !MAIL_FROM) {
+  console.warn("⚠️ MAILERSEND_SMTP_KEY или MAIL_FROM не заданы — письма не уйдут");
+}
+
+const mailer = nodemailer.createTransport({
+  host: "smtp.mailersend.net",
+  port: 587,
+  secure: false,
+  auth: { user: "apikey", pass: process.env.MAILERSEND_SMTP_KEY },
+});
 const allowedOrigin = process.env.FRONTEND_ORIGIN || "*";
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
@@ -69,6 +81,22 @@ async function initDb() {
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users ((lower(email)));`);
   await dbQuery(`CREATE INDEX IF NOT EXISTS idx_users_phone ON users (phone);`);
   await dbQuery(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;`);
+
+// ⬅️ ВСТАВИТЬ (внутрь initDb, после существующих CREATE/ALTER)
+await dbQuery(`
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    used_at TIMESTAMPTZ
+  );
+`);
+await dbQuery(`CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens (token_hash);`);
+await dbQuery(`CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens (user_id);`);
+
 
   // guides: добавляем отсутствующие поля безопасно
   await dbQuery(`DO $$
@@ -183,6 +211,94 @@ app.post("/api/auth/login", async (req, res) => {
     return res.status(500).json({ error: "SERVER_ERROR" });
   }
 });
+
+// ========== PASSWORD RESET ==========
+const RESET_TTL_MIN = Number(process.env.RESET_TTL_MIN || 15);
+const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/+$/, "");
+
+// Запрос письма для сброса пароля
+app.post("/api/auth/password/forgot", async (req, res) => {
+  const { email } = req.body || {};
+  // Всегда возвращаем ok, чтобы не палить наличие аккаунта
+  if (!email || !isEmailValid(email)) return res.json({ ok: true });
+
+  try {
+    const normEmail = String(email).trim().toLowerCase();
+    const r = await dbQuery(`SELECT id, email FROM users WHERE lower(email)=lower($1) LIMIT 1`, [normEmail]);
+    const user = r.rows[0];
+
+    // генерим токен всегда; в БД пишем только если юзер найден
+    const raw = crypto.randomBytes(32).toString("hex");
+    const hash = crypto.createHash("sha256").update(raw).digest("hex");
+    const expiresAt = new Date(Date.now() + RESET_TTL_MIN * 60 * 1000);
+
+    if (user) {
+      await dbQuery(
+        `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+        [user.id, hash, expiresAt]
+      );
+
+      const link = `${FRONTEND_URL}/reset-password?token=${raw}`;
+      const html = `
+        <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;color:#111">
+          <p>Вы запросили сброс пароля.</p>
+          <p>Ссылка действует ${RESET_TTL_MIN} минут:</p>
+          <p><a href="${link}" target="_blank">${link}</a></p>
+          <p style="color:#666">Если это были не вы — просто проигнорируйте письмо.</p>
+        </div>
+      `;
+
+      await mailer.sendMail({
+        to: user.email,
+        from: MAIL_FROM,
+        subject: "Сброс пароля",
+        html,
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("forgot error:", e);
+    return res.json({ ok: true });
+  }
+});
+
+// Установка нового пароля по токену
+app.post("/api/auth/password/reset", async (req, res) => {
+  const { token, password, password2 } = req.body || {};
+  if (!token || !password || password !== password2) {
+    return res.status(400).json({ error: "INVALID_INPUT" });
+  }
+
+  try {
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
+    const r = await dbQuery(
+      `SELECT id, user_id, expires_at, used
+         FROM password_reset_tokens
+        WHERE token_hash = $1
+        LIMIT 1`,
+      [hash]
+    );
+    const rec = r.rows[0];
+    if (!rec || rec.used || new Date(rec.expires_at) < new Date()) {
+      return res.status(400).json({ error: "TOKEN_INVALID_OR_EXPIRED" });
+    }
+
+    const newHash = await bcrypt.hash(password, 10);
+    await dbQuery("BEGIN");
+    await dbQuery(`UPDATE users SET password_hash=$1 WHERE id=$2`, [newHash, rec.user_id]);
+    await dbQuery(`UPDATE password_reset_tokens SET used=TRUE, used_at=now() WHERE id=$1`, [rec.id]);
+    await dbQuery("COMMIT");
+
+    return res.json({ ok: true });
+  } catch (e) {
+    await dbQuery("ROLLBACK").catch(() => {});
+    console.error("reset error:", e);
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+});
+// ========== /PASSWORD RESET ==========
+
 
 // текущий пользователь
 app.get("/api/auth/me", authMiddleware, async (req, res) => {

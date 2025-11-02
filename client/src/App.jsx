@@ -11,6 +11,7 @@ import Adminpage from '/src/pages/adminpage/Admin.jsx'
 import { IMAGES_TO_PRELOAD } from "/src/utils/Imagestack.jsx";
 import { preloadImages } from "/src/utils/usePreloadImages.jsx";
 import Categorygenpage from "./pages/categorygenpage/Categorygenpage.jsx";
+import ResetPassword from "./pages/resetpass/Resetpass.jsx";
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -35,6 +36,7 @@ export default function App() {
              <Route path="/admin" element={<Adminpage/>} />
              <Route path="/applications/:requestId/responses" element={<ResponsesPage />} />
              <Route path="/c/:slug" element={<Categorygenpage />} />
+             <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       ) : (
         <Preloader />
