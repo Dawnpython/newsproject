@@ -4,7 +4,7 @@ import Navbar from "/src/components/navbar/Navbar.jsx";
 import { FiArrowLeft } from "react-icons/fi";
 
 import "/src/pages/applications/ResponsesPage.css";
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 
 function GuideProfileModal({ open, guide, onClose }) {
   if (!open || !guide) return null;

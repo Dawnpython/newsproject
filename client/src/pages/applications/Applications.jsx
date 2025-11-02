@@ -16,7 +16,7 @@ import People from "/src/assets/People.png";
 import emptyBox from "/src/assets/icons/application/empty.png";
 
 /** адрес API */
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 
 /** список категорий с иконками */
 const CATEGORY_OPTIONS = [

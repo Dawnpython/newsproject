@@ -12,7 +12,7 @@ import thirdStep from "/src/assets/auth/3.png";
 
 export default function WelcomeAuth() {
   const navigate = useNavigate();
-  const API_BASE = "https://newsproject-tnkc.onrender.com";
+  const API_BASE = "https://newsproject-dx8n.onrender.com";
 
   const [user, setUser] = useState(null);
   const [checkedAuth, setCheckedAuth] = useState(false);

@@ -7,7 +7,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const API_BASE = "https://newsproject-tnkc.onrender.com";
+  const API_BASE = "https://newsproject-dx8n.onrender.com";
 
   const queryParams = new URLSearchParams(location.search);
   const modeFromUrl = queryParams.get("mode");

@@ -9,7 +9,7 @@ import Helper from "../../blocks/helper/Helper";
 import DOMPurify from "dompurify";
 import Footer from '/src/blocks/footer/Footer.jsx'
 
-const API_BASE = "https://newsproject-tnkc.onrender.com";
+const API_BASE = "https://newsproject-dx8n.onrender.com";
 
 export default function Categorygenpage(props) {
   const params = useParams();
