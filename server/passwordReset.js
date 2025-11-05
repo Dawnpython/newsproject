@@ -50,7 +50,7 @@ export function registerPasswordReset(app, pool) {
           <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;color:#111">
             <p>Вы запросили сброс пароля.</p>
             <p>Перейдите по ссылке в течение ${RESET_TTL_MIN} минут:</p>
-            <p><a href="${resetLink}" target="_blank">${resetLink}</a></p>
+            <p><a href="${resetLink}" >${resetLink}</a></p>
             <p style="color:#666">Если это были не вы — просто проигнорируйте письмо.</p>
           </div>
         `;

@@ -49,7 +49,6 @@ function GuideProfileModal({ open, guide, onClose }) {
             <a
               className="btn btn-primary"
               href={tgHref}
-              target="_blank"
               rel="noreferrer"
             >
               Написать в Telegram
