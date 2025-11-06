@@ -67,13 +67,13 @@
   border-radius: 99px;
   border: none;
   color: white;
-  transform: translateY(10px);
+  transform: translateY(5px);
 }
 .formkeycon .formkey .low-form img {
   width: 180px;
   height: 58px;
   border-radius: 10px;
-  transform: rotate(356deg) translateX(-10px) translateY(10px);
+  transform: rotate(-5deg) translateX(-10px) translateY(10px);
 }
 .formkeycon .formkey .formkeyBackground {
   position: absolute;
