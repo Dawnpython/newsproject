@@ -424,9 +424,15 @@ function EconomyItemRow({
     }
   };
 
-  const currentSlug = item._slug || item.link_slug || "";
+  // ВАЖНО: не использовать "||", чтобы пустая строка не подменялась старым slug
+  const currentSlug =
+    typeof item._slug === "string"
+      ? item._slug
+      : (item.link_slug || "");
+
   const slugForHint =
-    item._slug || item.link_slug || (item.title ? slugify(item.title) : "");
+    currentSlug ||
+    (item.link_slug || (item.title ? slugify(item.title) : ""));
 
   return (
     <div className="eco-admin-row">
@@ -502,3 +508,4 @@ function EconomyItemRow({
     </div>
   );
 }
+
