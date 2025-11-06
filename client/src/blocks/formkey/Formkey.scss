@@ -8,7 +8,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    height: 240px;
+    height: 250px;
     background: linear-gradient(to bottom, #00c4ff, #005be3);
     width: 100%;
   margin: 0px 10px;
@@ -64,13 +64,14 @@
       border-radius: 99px;
       border: none;
       color: white;
+      transform: translateY(10px);
     }
 
     img{
       width: 180px;
       height: 58px;
       border-radius: 10px;
-      transform: rotate(-7deg) translateX(-10px) translateY(10px);
+      transform: rotate(356deg) translateX(-10px) translateY(10px);
     }
   }
   .formkeyBackground{
