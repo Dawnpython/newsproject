@@ -481,7 +481,7 @@ function EconomyItemRow({
 
         {!!slugForHint && (
           <div className="adm-hint">
-            Ссылка страницы: /c/{slugForHint}
+            Ссылка страницы: {slugForHint}
           </div>
         )}
 
