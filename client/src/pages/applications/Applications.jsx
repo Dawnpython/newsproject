@@ -3,29 +3,29 @@ import Navbar from "/src/components/navbar/Navbar.jsx";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiSearch, FiX, FiCheck } from "react-icons/fi";
-import {
-  FaSailboat,
-  FaTaxi,
-  FaUserTie,
-  FaHotel,
-  FaKey,
-  FaUsers,
-} from "react-icons/fa6";
+
+import boatsImg from "/src/assets/icons/application/boat.png";
+import guidesImg from "/src/assets/icons/application/guides.png";
+import hotelsImg from "/src/assets/icons/application/hotels.png";
+import rentImg from "/src/assets/icons/application/rent.png";
+import taxiImg from "/src/assets/icons/application/taxi.png";
+import localsImg from "/src/assets/icons/application/peoples.png";
 
 import People from "/src/assets/People.png";
 import emptyBox from "/src/assets/icons/application/empty.png";
+import convert from "/src/assets/convert.png";
 
 /** адрес API */
 const API_BASE = "https://newsproject-dx8n.onrender.com";
 
-/** список категорий с иконками */
+/** список категорий с картинками */
 const CATEGORY_OPTIONS = [
-  { id: "boats", label: "Лодки и экскурсии на воде", Icon: FaSailboat },
-  { id: "taxi", label: "Заказать такси", Icon: FaTaxi },
-  { id: "guides", label: "Частные гиды", Icon: FaUserTie },
-  { id: "hotels", label: "Отели и турбазы", Icon: FaHotel },
-  { id: "rent", label: "Аренда жилья", Icon: FaKey },
-  { id: "locals", label: "Местные жители", Icon: FaUsers },
+  { id: "boats", label: "Лодки и экскурсии на воде", img: boatsImg },
+  { id: "taxi", label: "Заказать такси", img: taxiImg },
+  { id: "guides", label: "Частные гиды", img: guidesImg },
+  { id: "hotels", label: "Отели и турбазы", img: hotelsImg },
+  { id: "rent", label: "Аренда жилья", img: rentImg },
+  { id: "locals", label: "Местные жители", img: localsImg },
 ];
 
 function useClickOutside(ref, handler) {
@@ -76,7 +76,7 @@ function MultiSelect({ value, onChange }) {
             ) : (
               selected.map((c, i) => (
                 <span key={c.id} className={`ms-chip ${i % 2 ? "alt" : ""}`}>
-                  <c.Icon className="ms-chip-ico" />
+                  <img src={c.img} alt="" className="ms-chip-ico" />
                   {c.label}
                 </span>
               ))
@@ -102,9 +102,8 @@ function MultiSelect({ value, onChange }) {
         {open && (
           <div className="ms-card" role="listbox" tabIndex={-1}>
             <ul className="ms-list">
-              {CATEGORY_OPTIONS.map(({ id, label, Icon }) => {
+              {CATEGORY_OPTIONS.map(({ id, label, img }) => {
                 const checked = value.includes(id);
-                const SafeIcon = Icon || FaUsers;
                 return (
                   <li
                     key={id}
@@ -114,7 +113,11 @@ function MultiSelect({ value, onChange }) {
                     aria-selected={checked}
                   >
                     <span className="ms-left">
-                      <SafeIcon className={`ms-row-ico ${checked ? "is-active" : ""}`} />
+                      <img
+                        src={img}
+                        alt=""
+                        className={`ms-row-ico ${checked ? "is-active" : ""}`}
+                      />
                       <span className={`ms-row-title ${checked ? "is-active" : ""}`}>
                         {label}
                       </span>
@@ -159,7 +162,7 @@ function RequestCard({ req, onAskCancel }) {
 
   const firstCat = req.categories?.[0];
   const catMeta = CATEGORY_OPTIONS.find((c) => c.id === firstCat);
-  const Icon = catMeta?.Icon || FaUsers;
+  const iconSrc = catMeta?.img || localsImg;
 
   // стартовое значение из любых доступных полей
   const initialCount = firstNumber(
@@ -187,7 +190,9 @@ function RequestCard({ req, onAskCancel }) {
         /* ignore */
       }
     })();
-    return () => { abort = true; };
+    return () => {
+      abort = true;
+    };
   }, [req.id]);
 
   return (
@@ -200,7 +205,9 @@ function RequestCard({ req, onAskCancel }) {
     >
       {/* ✉️ Иконка + число откликов рядом */}
       <div className="rq-mail" aria-label={`Откликов: ${count}`}>
-        <span className="rq-mail-icon" aria-hidden>✉️</span>
+        <span className="rq-mail-icon" aria-hidden>
+          <img src={convert} alt="" />
+        </span>
         <span className="rq-mail-num">{count}</span>
       </div>
 
@@ -210,7 +217,7 @@ function RequestCard({ req, onAskCancel }) {
       </div>
 
       <div className={`rq-badge cat-${firstCat || "default"}`}>
-        <Icon className="rq-badge-ico" />
+        <img src={iconSrc} alt="" className="rq-badge-ico" />
         <span>{catMeta?.label || "Запрос"}</span>
       </div>
 
@@ -218,7 +225,10 @@ function RequestCard({ req, onAskCancel }) {
 
       <button
         className="rq-cancel"
-        onClick={(e) => { e.stopPropagation(); onAskCancel(req); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onAskCancel(req, count); // передаём реальный count в bottom-sheet
+        }}
       >
         Отменить
       </button>
@@ -227,20 +237,15 @@ function RequestCard({ req, onAskCancel }) {
 }
 
 /* ---------- Bottom Sheet ---------- */
-function CancelSheet({ open, request, onClose, onConfirm }) {
+function CancelSheet({ open, request, count, onClose, onConfirm }) {
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
-
-  const count = firstNumber(
-    request?.messages_cnt,
-    request?.responses_cnt,
-    request?.responses_count,
-    Array.isArray(request?.responses) ? request.responses.length : undefined
-  );
 
   return (
     <>
@@ -249,15 +254,16 @@ function CancelSheet({ open, request, onClose, onConfirm }) {
         onClick={onClose}
         aria-hidden={!open}
       />
-      <aside
-        className={`sheet ${open ? "is-open" : ""}`}
-        role="dialog"
-        aria-modal="true"
-      >
+      <aside className={`sheet ${open ? "is-open" : ""}`} role="dialog" aria-modal="true">
         <div className="sheet-handle" />
-        <h3 className="sheet-title">Вы точно хотите<br/>отменить заявку?</h3>
+        <h3 className="sheet-title">
+          Вы точно хотите
+          <br />
+          отменить заявку?
+        </h3>
         <p className="sheet-sub">
-          На вашу заявку уже откликнулось <b>{count} человек</b>.<br/>
+          На вашу заявку уже откликнулось <b>{count}</b> человек.
+          <br />
           Возможно там есть то, что вас заинтересует!
         </p>
 
@@ -291,6 +297,7 @@ export default function Application() {
   // состояние для bottom-sheet
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetReq, setSheetReq] = useState(null);
+  const [sheetCount, setSheetCount] = useState(0);
 
   const MAX = 150;
 
@@ -348,8 +355,9 @@ export default function Application() {
 
   const disabled = categories.length === 0 || text.trim() === "";
 
-  const askCancel = (req) => {
+  const askCancel = (req, count) => {
     setSheetReq(req);
+    setSheetCount(count ?? 0);
     setSheetOpen(true);
   };
 
@@ -369,6 +377,7 @@ export default function Application() {
     } finally {
       setSheetOpen(false);
       setSheetReq(null);
+      setSheetCount(0);
     }
   };
 
@@ -376,7 +385,11 @@ export default function Application() {
     <div className="application">
       <div className="application-top">
         <form className="app-card" onSubmit={submit}>
-          <h1 className="app-title">МЕСТНЫЕ<br/>ПОМОГУТ</h1>
+          <h1 className="app-title">
+            МЕСТНЫЕ
+            <br />
+            ПОМОГУТ
+          </h1>
 
           <MultiSelect value={categories} onChange={setCategories} />
 
@@ -390,7 +403,9 @@ export default function Application() {
               onChange={(e) => setText(e.target.value)}
               rows={4}
             />
-            <span className="app-counter">{text.length}/{MAX}</span>
+            <span className="app-counter">
+              {text.length}/{MAX}
+            </span>
           </div>
 
           <button
@@ -402,10 +417,12 @@ export default function Application() {
           </button>
 
           <div className="app-footer">
-            <div className="app-avatars"><img src={People} /></div>
+            <div className="app-avatars">
+              <img src={People} alt="" />
+            </div>
             <p className="app-note">
-              В нашем сервисе — более 300 местных жителей и предпринимателей,
-              готовых прямо сейчас откликнуться на ваш запрос
+              В нашем сервисе — более 300 местных жителей и предпринимателей, готовых прямо
+              сейчас откликнуться на ваш запрос
             </p>
           </div>
         </form>
@@ -416,9 +433,17 @@ export default function Application() {
           <div className="empty-apps">Загрузка…</div>
         ) : requests.length === 0 ? (
           <div className="empty-apps">
-            <img width={100} height={100} src={emptyBox} />
-            <h1>Вы еще не сделали<br/>ни одного запроса</h1>
-            <p>Оставьте заявку и получайте<br/>предложения — местные помогут!</p>
+            <img width={100} height={100} src={emptyBox} alt="" />
+            <h1>
+              Вы еще не сделали
+              <br />
+              ни одного запроса
+            </h1>
+            <p>
+              Оставьте заявку и получайте
+              <br />
+              предложения — местные помогут!
+            </p>
           </div>
         ) : (
           <div className="rq-list">
@@ -432,7 +457,12 @@ export default function Application() {
       <CancelSheet
         open={sheetOpen}
         request={sheetReq}
-        onClose={() => { setSheetOpen(false); setSheetReq(null); }}
+        count={sheetCount}
+        onClose={() => {
+          setSheetOpen(false);
+          setSheetReq(null);
+          setSheetCount(0);
+        }}
         onConfirm={confirmCancel}
       />
 

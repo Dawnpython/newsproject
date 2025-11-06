@@ -146,6 +146,7 @@
 .application .ms-row-ico {
   font-size: 20px;
   color: #6aa6e6;
+  width: 20px;
 }
 .application .ms-row-title {
   font-size: 16px;
@@ -306,7 +307,8 @@
   right: 14px;
   background: #ff8c3a;
   color: #fff;
-  padding: 10px 20px;
+  width: 43px;
+  height: 24px;
   border-radius: 18px;
   display: flex;
   align-items: center;
@@ -319,9 +321,17 @@
   font-size: 16px;
   line-height: 1;
 }
+.application .rq-mail-icon img {
+  width: 13px;
+  height: 11px;
+}
 
 .application .rq-mail-count {
   font-weight: 800;
+}
+
+.rq-mail-num {
+  font-size: 14px;
 }
 
 /* шапка */
@@ -360,6 +370,7 @@
 
 .application .rq-badge-ico {
   font-size: 18px;
+  width: 20px;
 }
 
 .application .rq-badge.cat-taxi {

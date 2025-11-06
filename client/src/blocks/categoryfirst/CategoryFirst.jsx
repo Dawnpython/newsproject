@@ -6,7 +6,7 @@ import {FaRegEnvelope} from "react-icons/fa";
 import SlimCategory from '../../components/slimcategory/slimCategory';
 import Fatcategory from "../../components/fatcategory/Fatcategory";
 
-import Arrow from '/src/assets/Arrow.svg'
+import Arrow from '/src/assets/Arrow-2.png'
 
 import { useNavigate } from "react-router-dom"; 
 
