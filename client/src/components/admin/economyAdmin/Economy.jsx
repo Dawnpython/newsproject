@@ -39,11 +39,17 @@ function uploadFileToCloudinary(file, sig, onProgress) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
     xhr.upload.onprogress = (e) => {
-      if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      if (onProgress && e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); } catch (err) { reject(err); }
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch (err) {
+          reject(err);
+        }
       } else reject(new Error("upload_failed"));
     };
     xhr.onerror = () => reject(new Error("xhr_error"));
@@ -54,11 +60,11 @@ function uploadFileToCloudinary(file, sig, onProgress) {
 // ----- UI -----
 const SECTIONS = [
   { id: "popular", label: "Популярные" },
-  { id: "tours",   label: "Экскурсии"  },
-  { id: "food",    label: "Еда"        },
-  { id: "shops",   label: "Магазины"   },
-  { id: "hotels",  label: "Отели"      },
-  { id: "other",   label: "Другое"     },
+  { id: "tours", label: "Экскурсии" },
+  { id: "food", label: "Еда" },
+  { id: "shops", label: "Магазины" },
+  { id: "hotels", label: "Отели" },
+  { id: "other", label: "Другое" },
 ];
 
 function slugify(s = "") {
@@ -84,11 +90,20 @@ export default function EconomyAdmin() {
       try {
         setLoading(true);
         setMsg("");
-        const r = await fetch(`${API.economy}?section=${tab}`, { headers: { ...authHeaders() }});
+        const r = await fetch(`${API.economy}?section=${tab}`, {
+          headers: { ...authHeaders() },
+        });
         if (!r.ok) throw new Error("load_failed");
         const data = await r.json();
         if (!alive) return;
-        setItems(Array.isArray(data?.[tab]) ? data[tab] : []);
+
+        const raw = Array.isArray(data?.[tab]) ? data[tab] : [];
+        // подтягиваем link_slug из бэка и кладём в _slug как редактируемое поле
+        const withSlug = raw.map((it) => ({
+          ...it,
+          _slug: it.link_slug || "",
+        }));
+        setItems(withSlug);
       } catch (e) {
         console.error(e);
         if (alive) setMsg("Не удалось загрузить элементы");
@@ -96,21 +111,25 @@ export default function EconomyAdmin() {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [tab]);
 
   const addEmpty = () => {
-    setItems(prev => [
+    setItems((prev) => [
       ...prev,
       {
         id: `local_${Date.now()}`,
         section: tab,
         title: "",
-        _slug: "", // генерим из title, можно поправить вручную
+        _slug: "",
         image_url: "",
         image_public_id: "",
         sort_order: prev.length,
         _isNew: true,
+        link_type: "category",
+        link_slug: null,
       },
     ]);
   };
@@ -120,53 +139,69 @@ export default function EconomyAdmin() {
       setMsg("");
 
       const title = (it.title || "").trim();
-      const slug = (it._slug || slugify(title)).trim();
       if (!title) {
         setMsg("Укажи название постера/страницы");
         return;
       }
 
-      // 1) Всегда создаём (или подтверждаем существование) категории
-      const cRes = await fetch(API.createCategory, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          label: title,
-          slug,
-          title,
-          is_active: true,
-        }),
-      });
+      const isNew = it._isNew || String(it.id).startsWith("local_");
 
-      if (!cRes.ok) {
-        const t = await cRes.text().catch(()=>"");
-        // Если категория уже существует, сервер может вернуть 409 — пропускаем
-        if (cRes.status !== 409) throw new Error(`create_category_failed ${t}`);
+      const originalSlug = (it.link_slug || "").trim();
+      const editedSlug = (it._slug || "").trim();
+      const slug = (editedSlug || originalSlug || slugify(title)).trim();
+
+      // --- 1. Для новых элементов: создаём категорию + черновик страницы ---
+      if (isNew) {
+        // Категория
+        const cRes = await fetch(API.createCategory, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify({
+            label: title,
+            slug,
+            title,
+            is_active: true,
+          }),
+        });
+
+        if (!cRes.ok) {
+          const t = await cRes.text().catch(() => "");
+          // если категория уже существует, сервер может вернуть 409
+          if (cRes.status !== 409) {
+            throw new Error(`create_category_failed ${t}`);
+          }
+        }
+
+        // Пустая страница категории (черновик)
+        const pRes = await fetch(API.upsertCategoryPage(slug), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify({
+            status: "draft",
+            content_json: [],
+            title,
+            seo_meta_title: title,
+            seo_meta_description: null,
+            cover_image_url: null,
+            excerpt: null,
+          }),
+        });
+        if (!pRes.ok) {
+          const t = await pRes.text().catch(() => "");
+          throw new Error(`create_page_failed ${t}`);
+        }
+        await pRes.json();
       }
 
-      // 2) Всегда создаём/обновляем пустую страницу (черновик)
-      const pRes = await fetch(API.upsertCategoryPage(slug), {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          status: "draft",
-          content_json: [],
-          title,
-          seo_meta_title: title,
-          seo_meta_description: null,
-          cover_image_url: null,
-          excerpt: null,
-        }),
-      });
-      if (!pRes.ok) {
-        const t = await pRes.text().catch(()=>"");
-        throw new Error(`create_page_failed ${t}`);
-      }
-      await pRes.json();
-
-      // 3) Сохраняем/обновляем сам элемент экономики
+      // --- 2. Сохраняем/обновляем сам элемент экономики ---
       const clean = {
-        id: it.id,
+        id: isNew ? undefined : it.id,
         section: it.section,
         title,
         image_url: it.image_url,
@@ -176,19 +211,41 @@ export default function EconomyAdmin() {
         link_slug: slug,
       };
 
-      const isNew = it._isNew || String(it.id).startsWith("local_");
       const method = isNew ? "POST" : "PATCH";
       const url = isNew ? API.economy : `${API.economy}/${it.id}`;
 
       const r = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+        },
         body: JSON.stringify(clean),
       });
-      if (!r.ok) throw new Error("save_failed");
+
+      if (!r.ok) {
+        if (r.status === 409) {
+          const t = await r.text().catch(() => "");
+          console.error("slug_taken", t);
+          setMsg("Такой slug уже используется. Попробуй другой.");
+          return;
+        }
+        throw new Error("save_failed");
+      }
+
       const saved = await r.json();
 
-      setItems((arr) => arr.map((x) => (x.id === it.id ? saved : x)));
+      setItems((arr) =>
+        arr.map((x) =>
+          x.id === it.id
+            ? {
+                ...saved,
+                _slug: saved.link_slug || slug,
+                _isNew: false,
+              }
+            : x
+        )
+      );
       setMsg("Сохранено");
     } catch (e) {
       console.error(e);
@@ -202,7 +259,7 @@ export default function EconomyAdmin() {
       return;
     }
     try {
-      const ok = confirm("Удалить элемент?");
+      const ok = window.confirm("Удалить элемент?");
       if (!ok) return;
       const r = await fetch(`${API.economy}/${id}`, {
         method: "DELETE",
@@ -230,10 +287,15 @@ export default function EconomyAdmin() {
   const saveOrder = async () => {
     try {
       setReordering(true);
-      const idsInOrder = items.map((x) => x.id).filter((id) => !String(id).startsWith("local_"));
+      const idsInOrder = items
+        .map((x) => x.id)
+        .filter((id) => !String(id).startsWith("local_"));
       const r = await fetch(API.reorder(tab), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+        },
         body: JSON.stringify({ idsInOrder }),
       });
       if (!r.ok) throw new Error("reorder_failed");
@@ -254,10 +316,10 @@ export default function EconomyAdmin() {
 
       {/* Таб-секции */}
       <div className="adm-tabs">
-        {SECTIONS.map(s => (
+        {SECTIONS.map((s) => (
           <button
             key={s.id}
-            className={`adm-chip ${s.id===tab ? "active":""}`}
+            className={`adm-chip ${s.id === tab ? "active" : ""}`}
             onClick={() => setTab(s.id)}
           >
             {s.label}
@@ -269,10 +331,20 @@ export default function EconomyAdmin() {
       {/* Список карточек */}
       <section className="adm-card">
         <div className="adm-card-head">
-          <h3 className="adm-card-title">Элементы секции «{SECTIONS.find(s=>s.id===tab)?.label}»</h3>
+          <h3 className="adm-card-title">
+            Элементы секции «{SECTIONS.find((s) => s.id === tab)?.label}»
+          </h3>
           <div className="adm-row">
-            <button className="adm-mini" onClick={addEmpty}>+ Добавить</button>
-            <button className="adm-mini ghost" onClick={saveOrder} disabled={reordering}>Сохранить порядок</button>
+            <button className="adm-mini" onClick={addEmpty}>
+              + Добавить
+            </button>
+            <button
+              className="adm-mini ghost"
+              onClick={saveOrder}
+              disabled={reordering}
+            >
+              Сохранить порядок
+            </button>
           </div>
         </div>
 
@@ -282,12 +354,16 @@ export default function EconomyAdmin() {
               key={it.id}
               item={it}
               onChange={(patch) =>
-                setItems(arr => arr.map(x => x.id === it.id ? { ...x, ...patch } : x))
+                setItems((arr) =>
+                  arr.map((x) =>
+                    x.id === it.id ? { ...x, ...patch } : x
+                  )
+                )
               }
               onSave={() => saveItem(it)}
               onDelete={() => deleteItem(it.id)}
-              onUp={() => move(i, i-1)}
-              onDown={() => move(i, i+1)}
+              onUp={() => move(i, i - 1)}
+              onDown={() => move(i, i + 1)}
             />
           ))}
           {items.length === 0 && (
@@ -301,16 +377,31 @@ export default function EconomyAdmin() {
   );
 }
 
-function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
+function EconomyItemRow({
+  item,
+  onChange,
+  onSave,
+  onDelete,
+  onUp,
+  onDown,
+}) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const isNew = item._isNew || String(item.id).startsWith("local_");
 
   const handleUpload = async (file) => {
     if (!file) return;
     try {
-      setUploading(true); setProgress(0);
-      const sig = await getSignature({ folder: "economy" }).catch(() => getSignature({}));
-      const meta = await uploadFileToCloudinary(file, sig, (p) => setProgress(p));
+      setUploading(true);
+      setProgress(0);
+      const sig =
+        (await getSignature({ folder: "economy" }).catch(() =>
+          getSignature({})
+        )) || {};
+      const meta = await uploadFileToCloudinary(file, sig, (p) =>
+        setProgress(p)
+      );
       onChange({
         image_url: meta.secure_url,
         image_public_id: meta.public_id,
@@ -319,14 +410,23 @@ function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
       console.error(e);
       alert("Не удалось загрузить изображение");
     } finally {
-      setUploading(false); setProgress(0);
+      setUploading(false);
+      setProgress(0);
     }
   };
 
-  // авто-генерация slug по title
+  // авто-генерация slug по title только для новых элементов
   const updateTitle = (val) => {
-    onChange({ title: val, _slug: slugify(val) });
+    if (isNew) {
+      onChange({ title: val, _slug: slugify(val) });
+    } else {
+      onChange({ title: val });
+    }
   };
+
+  const currentSlug = item._slug || item.link_slug || "";
+  const slugForHint =
+    item._slug || item.link_slug || (item.title ? slugify(item.title) : "");
 
   return (
     <div className="eco-admin-row">
@@ -338,11 +438,17 @@ function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
           <div className="eco-prev-empty">нет</div>
         )}
         <label className="adm-mini">
-          <input type="file" accept="image/*" style={{display:"none"}}
-                 onChange={(e)=>handleUpload(e.target.files?.[0])} />
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => handleUpload(e.target.files?.[0])}
+          />
           Загрузить
         </label>
-        {uploading && <span className="adm-progress">{progress}%</span>}
+        {uploading && (
+          <span className="adm-progress">{progress}%</span>
+        )}
       </div>
 
       {/* form */}
@@ -352,23 +458,45 @@ function EconomyItemRow({ item, onChange, onSave, onDelete, onUp, onDown }) {
             className="adm-input"
             placeholder="Название постера / страницы"
             value={item.title || ""}
-            onChange={(e)=>updateTitle(e.target.value)}
+            onChange={(e) => updateTitle(e.target.value)}
           />
-          {!!item.title && (
-            <div className="adm-hint">Ссылка страницы: /c/{item._slug || slugify(item.title)}</div>
-          )}
         </div>
+
+        <div className="eco-row">
+          <input
+            className="adm-input"
+            placeholder="slug для /c/..."
+            value={currentSlug}
+            onChange={(e) =>
+              onChange({ _slug: slugify(e.target.value) })
+            }
+          />
+        </div>
+
+        {!!slugForHint && (
+          <div className="adm-hint">
+            Ссылка страницы: /c/{slugForHint}
+          </div>
+        )}
 
         {/* управление порядком */}
         <div className="eco-row smalls">
           <label className="adm-label">Порядок</label>
-          <button className="adm-mini" onClick={onUp}>↑</button>
-          <button className="adm-mini" onClick={onDown}>↓</button>
+          <button className="adm-mini" onClick={onUp}>
+            ↑
+          </button>
+          <button className="adm-mini" onClick={onDown}>
+            ↓
+          </button>
         </div>
 
         <div className="eco-row actions">
-          <button className="adm-mini primary" onClick={onSave}>Сохранить</button>
-          <button className="adm-mini danger" onClick={onDelete}>Удалить</button>
+          <button className="adm-mini primary" onClick={onSave}>
+            Сохранить
+          </button>
+          <button className="adm-mini danger" onClick={onDelete}>
+            Удалить
+          </button>
         </div>
       </div>
     </div>
