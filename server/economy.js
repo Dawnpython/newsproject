@@ -55,7 +55,7 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
       if (link_type === "url" && !link_url)
         return res.status(400).json({ error: "missing_link_url" });
 
-      // Можно дополнительно проверять уникальность slug для safety
+      // проверяем, что нет другого economy_item с таким slug
       if (link_type === "category" && link_slug) {
         const check = await pool.query(
           `SELECT id FROM economy_items
@@ -91,12 +91,12 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
     }
   });
 
-  // PATCH /economy/:id  (admin)
-  // умеет менять slug категории и связанных сущностей
+  // PATCH /economy/:id  (admin) — умеет безопасно переименовывать slug категории
   r.patch("/:id", authMiddleware, adminOnly, async (req, res) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
+      const body = req.body || {};
 
       await client.query("BEGIN");
 
@@ -115,74 +115,99 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
 
       const current = cur.rows[0];
 
-      const {
-        section,
-        title,
-        image_url,
-        image_public_id,
-        link_type,
-        link_slug,
-        link_url,
-        sort_order,
-        is_active,
-      } = req.body || {};
-
       const newLinkType =
-        typeof link_type !== "undefined" ? link_type : current.link_type;
+        Object.prototype.hasOwnProperty.call(body, "link_type")
+          ? body.link_type
+          : current.link_type;
+
       const newLinkSlugRaw =
-        typeof link_slug !== "undefined" ? link_slug : current.link_slug;
+        Object.prototype.hasOwnProperty.call(body, "link_slug")
+          ? body.link_slug
+          : current.link_slug;
+
       const newLinkSlug =
         typeof newLinkSlugRaw === "string"
           ? newLinkSlugRaw.trim()
           : newLinkSlugRaw;
-      const oldSlug = current.link_slug;
 
+      const oldSlug = current.link_slug;
       const newTitle =
-        typeof title !== "undefined" && title !== null
-          ? title
+        Object.prototype.hasOwnProperty.call(body, "title") &&
+        body.title !== null
+          ? body.title
           : current.title;
 
-      // 2) если нужно — переименовываем slug категории/страницы
+      // 2) если меняем slug категории: переносим ссылки, чтобы не нарушить FK
       if (
         newLinkType === "category" &&
         newLinkSlug &&
         oldSlug &&
         newLinkSlug !== oldSlug
       ) {
-        // Проверка, что slug не занят другим economy_item
-        const dup = await client.query(
+        // проверяем дубли среди economy_items
+        const dupEconomy = await client.query(
           `SELECT id FROM economy_items
             WHERE link_type='category'
               AND link_slug=$1
               AND id<>$2`,
           [newLinkSlug, id]
         );
-        if (dup.rowCount > 0) {
+        if (dupEconomy.rowCount > 0) {
           await client.query("ROLLBACK");
           return res.status(409).json({ error: "slug_taken" });
         }
 
-        // Обновляем slug в categories (если такая категория есть)
-        await client.query(
-          `UPDATE categories
-              SET slug=$1,
-                  title=COALESCE($2, title),
-                  label=COALESCE($2, label),
-                  updated_at=now()
-            WHERE slug=$3`,
-          [newLinkSlug, newTitle, oldSlug]
+        // проверяем дубли среди categories
+        const dupCat = await client.query(
+          `SELECT id FROM categories
+            WHERE slug=$1 AND slug<>$2`,
+          [newLinkSlug, oldSlug]
+        );
+        if (dupCat.rowCount > 0) {
+          await client.query("ROLLBACK");
+          return res.status(409).json({ error: "slug_taken" });
+        }
+
+        // читаем старую категорию (если есть)
+        const catRes = await client.query(
+          `SELECT *
+             FROM categories
+            WHERE slug=$1
+            FOR UPDATE`,
+          [oldSlug]
         );
 
-        // Обновляем slug в articles (страницы категории)
+        // если категория существует — создаём новую строку с новым slug
+        if (catRes.rowCount > 0) {
+          const cat = catRes.rows[0];
+
+          // ВАЖНО: копируем только базовые поля, которые точно есть.
+          // Остальные (hero и т.д.) можно перенастроить в админке при желании.
+          await client.query(
+            `INSERT INTO categories (slug, title, label, is_active)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              newLinkSlug,
+              newTitle || cat.title,
+              newTitle || cat.label,
+              cat.is_active ?? true,
+            ]
+          );
+        }
+
+        // переносим ВСЕ статьи с oldSlug на newSlug
         await client.query(
           `UPDATE articles
-              SET category_slug=$1,
-                  title=COALESCE($2, title),
-                  seo_meta_title=COALESCE($2, seo_meta_title),
-                  updated_at=now()
-            WHERE category_slug=$3
-              AND type='category_page'`,
-          [newLinkSlug, newTitle, oldSlug]
+              SET category_slug=$1
+            WHERE category_slug=$2`,
+          [newLinkSlug, oldSlug]
+        );
+
+        // удаляем старую категорию (теперь на неё никто не ссылается)
+        await client.query(
+          `DELETE FROM categories
+            WHERE slug=$1`,
+          [oldSlug]
         );
       }
 
@@ -201,9 +226,9 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
       const sets = [];
       const values = [];
       for (const f of fields) {
-        if (f in req.body) {
+        if (Object.prototype.hasOwnProperty.call(body, f)) {
           sets.push(`${f} = $${values.length + 1}`);
-          values.push(req.body[f]);
+          values.push(body[f]);
         }
       }
 
@@ -227,7 +252,7 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
       }
       res.json(rows[0]);
     } catch (e) {
-      console.error(e);
+      console.error("economy_update_failed", e);
       try {
         await client.query("ROLLBACK");
       } catch {}
@@ -237,7 +262,7 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
     }
   });
 
-  // DELETE /economy/:id  (admin) — удаляет постер + связанную категорию/страницу, если постер ссылался на категорию
+  // DELETE /economy/:id  (admin) — удаляет постер + ВСЕ статьи категории + саму категорию
   r.delete("/:id", authMiddleware, adminOnly, async (req, res) => {
     const client = await pool.connect();
     try {
@@ -260,15 +285,13 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
 
       const { link_type, link_slug } = cur.rows[0];
 
-      // 2) если постер вёл на категорию — удаляем её страницу и саму категорию
+      // 2) если постер вёл на категорию — удаляем ВСЕ статьи этой категории и саму категорию
       if (link_type === "category" && link_slug) {
-        // сначала статьи этой категории
         await client.query(
           `DELETE FROM articles
-            WHERE type='category_page' AND category_slug=$1`,
+            WHERE category_slug=$1`,
           [link_slug]
         );
-        // затем категорию
         await client.query(
           `DELETE FROM categories
             WHERE slug=$1`,
