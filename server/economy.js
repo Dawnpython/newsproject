@@ -91,7 +91,7 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
     }
   });
 
-  // PATCH /economy/:id  (admin) — умеет безопасно переименовывать slug категории
+  // PATCH /economy/:id  (admin) — безопасно переименовывает slug категории и синхронизирует заголовки
   r.patch("/:id", authMiddleware, adminOnly, async (req, res) => {
     const client = await pool.connect();
     try {
@@ -181,8 +181,6 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
         if (catRes.rowCount > 0) {
           const cat = catRes.rows[0];
 
-          // ВАЖНО: копируем только базовые поля, которые точно есть.
-          // Остальные (hero и т.д.) можно перенастроить в админке при желании.
           await client.query(
             `INSERT INTO categories (slug, title, label, is_active)
              VALUES ($1, $2, $3, $4)`,
@@ -208,6 +206,34 @@ export default function registerEconomyRoutes(app, pool, authMiddleware, adminOn
           `DELETE FROM categories
             WHERE slug=$1`,
           [oldSlug]
+        );
+      }
+
+      // 2.1. СИНХРОНИЗАЦИЯ title/label категории и title/seo_meta_title статей
+      // Работает КАЖДЫЙ РАЗ, когда есть title и link_type='category'
+      const effectiveSlug =
+        newLinkType === "category"
+          ? (newLinkSlug || oldSlug)
+          : null;
+
+      if (effectiveSlug && newTitle) {
+        // обновляем категорию
+        await client.query(
+          `UPDATE categories
+              SET title=$1,
+                  label=$1
+            WHERE slug=$2`,
+          [newTitle, effectiveSlug]
+        );
+
+        // обновляем заголовки страниц категории
+        await client.query(
+          `UPDATE articles
+              SET title=$1,
+                  seo_meta_title=$1
+            WHERE category_slug=$2
+              AND type='category_page'`,
+          [newTitle, effectiveSlug]
         );
       }
 
