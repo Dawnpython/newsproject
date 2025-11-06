@@ -73,7 +73,7 @@
   width: 180px;
   height: 58px;
   border-radius: 10px;
-  transform: rotate(-55deg) translateX(-10px) translateY(7px);
+  transform: rotate(-10deg) translateX(-10px) translateY(7px);
 }
 .formkeycon .formkey .formkeyBackground {
   position: absolute;
