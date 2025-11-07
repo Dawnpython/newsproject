@@ -1,6 +1,6 @@
 {
-  "name": "My Game",
-  "short_name": "MyGame",
+  "name": "Телецкое озеро",
+  "short_name": "Телецкое озеро",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -12,9 +12,9 @@
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/src/assets/512-2.jpg",
       "sizes": "512x512",
-      "type": "/src/assets/512-2.jpg"
+      "type": "image/png"
     }
   ]
 }
